@@ -1,0 +1,31 @@
+{
+  "name": "restify_waterline_scaffold",
+  "version": "0.0.1",
+  "description": "Simple baseline scaffold to get you started using Restify and Waterline with TypeScript.",
+  "main": "main.js",
+  "author": "Samuel Marks <samuelmarks@gmail.com>",
+  "repository": "https://github.com/SamuelMarks/restify_waterline_scaffold",
+  "license": "Apache-2.0",
+  "scripts": {
+    "start": "tsc && node main.js",
+    "prepublish": "tsc",
+    "pretest": "tsc",
+    "test": "mocha test --recursive"
+  },
+  "dependencies": {
+    "async": "^1.5.0",
+    "esprima": "^2.7.0",
+    "hiredis": "^0.4.1",
+    "node-uuid": "^1.4.3",
+    "redis": "^2.3.0",
+    "restify": "^4.0.3",
+    "sails-postgresql": "^0.10.16",
+    "tv4": "^1.2.7",
+    "waterline": "^0.10.26"
+  },
+  "devDependencies": {
+    "chai": "^3.4.1",
+    "mocha": "^2.3.3",
+    "supertest": "^1.1.0"
+  }
+}

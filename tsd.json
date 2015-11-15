@@ -1,0 +1,63 @@
+{
+  "version": "v4",
+  "repo": "borisyankov/DefinitelyTyped",
+  "ref": "master",
+  "path": "typings",
+  "bundle": "typings/tsd.d.ts",
+  "installed": {
+    "node/node.d.ts": {
+      "commit": "aed176536a202b9a2475ce1989ea6d2d0226a185"
+    },
+    "lodash/lodash.d.ts": {
+      "commit": "001ca36ba58cef903c4c063555afb07bbc36bb58"
+    },
+    "esprima/esprima.d.ts": {
+      "commit": "eb59a40d3c2f3257e34ec2ede181046230814a41"
+    },
+    "estree/estree.d.ts": {
+      "commit": "eb59a40d3c2f3257e34ec2ede181046230814a41"
+    },
+    "bunyan/bunyan.d.ts": {
+      "commit": "001ca36ba58cef903c4c063555afb07bbc36bb58"
+    },
+    "restify/restify.d.ts": {
+      "commit": "001ca36ba58cef903c4c063555afb07bbc36bb58"
+    },
+    "tv4/tv4.d.ts": {
+      "commit": "001ca36ba58cef903c4c063555afb07bbc36bb58"
+    },
+    "supertest/supertest.d.ts": {
+      "commit": "421d6610bdb09e1015b71f5991d7a68d079eca21"
+    },
+    "superagent/superagent.d.ts": {
+      "commit": "421d6610bdb09e1015b71f5991d7a68d079eca21"
+    },
+    "mocha/mocha.d.ts": {
+      "commit": "421d6610bdb09e1015b71f5991d7a68d079eca21"
+    },
+    "assertion-error/assertion-error.d.ts": {
+      "commit": "421d6610bdb09e1015b71f5991d7a68d079eca21"
+    },
+    "chai/chai.d.ts": {
+      "commit": "421d6610bdb09e1015b71f5991d7a68d079eca21"
+    },
+    "async/async.d.ts": {
+      "commit": "421d6610bdb09e1015b71f5991d7a68d079eca21"
+    },
+    "node-uuid/node-uuid.d.ts": {
+      "commit": "785c18f0c897c44ea7fa1a47f3bcb48110658520"
+    },
+    "node-uuid/node-uuid-cjs.d.ts": {
+      "commit": "785c18f0c897c44ea7fa1a47f3bcb48110658520"
+    },
+    "node-uuid/node-uuid-base.d.ts": {
+      "commit": "785c18f0c897c44ea7fa1a47f3bcb48110658520"
+    },
+    "node_redis/node_redis.d.ts": {
+      "commit": "9ec8be78f815b89ab78ab539e6d6676a7cf2baed"
+    },
+    "redis/redis.d.ts": {
+      "commit": "9ec8be78f815b89ab78ab539e6d6676a7cf2baed"
+    }
+  }
+}
