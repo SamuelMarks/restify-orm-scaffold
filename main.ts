@@ -10,6 +10,9 @@ import * as sails_postgresql from 'sails-postgresql';
 import {trivial_merge, uri_to_config} from './utils/helpers';
 const package_ = require('./package');
 
+// Merge custom errors
+import * as _errors from './utils/errors';
+
 // Import models
 import * as user_models from './api/user/models';
 import * as auth_models from './api/auth/models';

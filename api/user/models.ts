@@ -14,14 +14,12 @@ export const User = {
             type: 'string',
             required: true
         },
+        toJSON: function toJSON() {
+            let user = this.toObject();
+            delete user.password;
+            for (const key in user)
+                if (!user[key]) delete user[key];
+            return user;
+        }
     }
 };
-
-export function toJSON(res) {
-    // This should be in User.attributes. Opened bug: https://github.com/balderdashy/waterline/issues/1214
-    let user = res.toObject();
-    delete user.password;
-    for (const key in user)
-        if (!user[key]) delete user[key];
-    return user;
-}

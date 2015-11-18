@@ -1,15 +1,19 @@
 /// <reference path='./../../typings/restify/restify.d.ts' />
 /// <reference path='./../../typings/tv4/tv4.d.ts' />
+/// <reference path='./../../typings/async/async.d.ts' />
 /// <reference path='./../../cust_typings/waterline.d.ts' />
 /// <reference path='./models.d.ts' />
 
 import * as restify from 'restify';
+import * as async from 'async'
 
 import {mk_valid_body_mw, mk_valid_body_mw_ignore, has_body} from './../../utils/validators';
 import {collections} from './../../main';
 import {fmtError} from './../../utils/helpers';
+import {NotFoundError} from './../../utils/errors';
 import {has_auth} from './middleware';
 import {AccessToken} from './models';
+
 
 const user_schema: tv4.JsonSchema = require('./../../test/api/user/schema');
 
@@ -17,20 +21,19 @@ export function login(app: restify.Server, namespace: string = ""): void {
     app.post(`${namespace}`, has_body, mk_valid_body_mw(user_schema),
         function(req: restify.Request, res: restify.Response, next: restify.Next) {
             const User: waterline.Query = collections['user_tbl'];
-            User.findOne({
-                email: req.body.email,
-                password: req.body.password // LOL
-            }, (error: waterline.Error, user: user.IUser) => {
-                if (error) res.json(400, fmtError(error));
-                else if (!user) res.json(404, {
-                    error: 'NotFound',
-                    error_message: 'User not found'
-                });
-                else res.json(201, {
-                    access_token: AccessToken().add(
-                        req.body.email, 'login'
-                    )
-                });
+
+            async.waterfall([
+                cb => User.findOne({
+                    email: req.body.email,
+                    password: req.body.password // LOL
+                }, (err: any, user) =>
+                        cb(err ? err : !user ? new NotFoundError('User') : null)
+                ),
+                cb => cb(null, AccessToken().add(req.body.email, 'login'))
+            ], (error: any, access_token: string) => {
+                next.ifError(error);
+                res.setHeader('X-Access-Token', access_token)
+                res.json(201, { access_token: access_token });
                 return next();
             });
         }

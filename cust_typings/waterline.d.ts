@@ -158,7 +158,7 @@ declare module waterline {
     }
 
     export interface cb {
-        (error: waterline.Error, result?: any): any;
+        (error: waterline.WLError, result?: any): any;
     }
 
     export interface Adapter {
@@ -187,7 +187,7 @@ declare module waterline {
         updatedAt: Date;
     }
 
-    export interface Error {
+    export interface WLError {
         invalidAttributes: any;
         model: string;
         _e: any;

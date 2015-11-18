@@ -1,5 +1,6 @@
 /// <reference path='./../typings/node/node.d.ts' />
 /// <reference path='./../cust_typings/waterline.d.ts' />
+/// <reference path='./../cust_typings/waterline-error.d.ts' />
 
 export function trivial_merge(obj, ...objects: Array<{}>) {
     for (const key in objects)
@@ -67,15 +68,22 @@ export function uri_to_config(uri: string) {
     })(uri.slice('postgres'.length + 3).split(':'))
 }
 
-export function fmtError(error: waterline.Error) {
-    return error ? {
-        error: error.code,
-        error_message: error.reason,
-        error_metadata: {
-            details: error.details.split('\n'),
-            invalidAttributes: error.invalidAttributes
-        }
-    } : {}
+export function fmtError(error: waterline.WLError | Error | any, statusCode = 400): {statusCode: number, error: {}} | any {
+    if (!error) return {};
+    else if (error.invalidAttributes) return {
+        'error': {
+            error: error.code,
+            error_message: error.reason,
+            error_metadata: {
+                details: error.details.split('\n'),
+
+                invalidAttributes: error.invalidAttributes
+            }
+        },
+        statusCode: statusCode
+    }
+    else if (error instanceof Error) return error;
+    else throw TypeError('Unhandled input to fmtError:' + error)
 }
 
 export function isShallowSubset(o0: {} | Array<any>, o1: {} | Array<any>) {

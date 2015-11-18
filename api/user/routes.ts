@@ -1,14 +1,16 @@
 /// <reference path='./../../typings/restify/restify.d.ts' />
 /// <reference path='./../../typings/tv4/tv4.d.ts' />
 /// <reference path='./../../cust_typings/waterline.d.ts' />
+/// <reference path='./../../typings/async/async.d.ts' />
 /// <reference path='./models.d.ts' />
 
 import * as restify from 'restify';
+import * as async from 'async'
 
-import {toJSON} from './models';
 import {has_body, mk_valid_body_mw, mk_valid_body_mw_ignore, remove_from_body} from './../../utils/validators';
 import {collections} from './../../main';
 import {fmtError, isShallowSubset} from './../../utils/helpers';
+import {NotFoundError} from './../../utils/errors';
 import {has_auth} from './../auth/middleware';
 import {AccessToken} from './../auth/models';
 
@@ -19,10 +21,19 @@ export function create(app: restify.Server, namespace: string = ""): void {
         function(req: restify.Request, res: restify.Response, next: restify.Next) {
             const User: waterline.Query = collections['user_tbl'];
 
-            User.create(req.body, function(error: waterline.Error, user: user.IUser) {
-                if (error) res.json(400, fmtError(error));
-                res.setHeader('X-Access-Token', 'foo');
-                res.json(201, toJSON(user));
+            async.waterfall([
+                cb => User.create(req.body, cb),
+                (user, cb) => cb(null, {
+                    access_token: AccessToken().add(req.body.email, 'login'),
+                    user: user
+                })
+            ], (error: any, result: { access_token: string, user: user.IUser }) => {
+                if (error) {
+                    const e = <{ statusCode: number, error: {} }>fmtError(error);
+                    return res.json(e.statusCode, e.error);
+                };
+                res.setHeader('X-Access-Token', result.access_token)
+                res.json(201, result.user);
                 return next();
             });
         }
@@ -35,10 +46,10 @@ export function read(app: restify.Server, namespace: string = ""): void {
             const User: waterline.Query = collections['user_tbl'];
 
             User.findOne({ email: req['user_id'] },
-                (error: waterline.Error, user: user.IUser) => {
+                (error: waterline.WLError, user: user.IUser) => {
                     if (error) res.json(400, fmtError(error));
-                    else if (!user) res.json(404, { error: 'NotFound', error_message: 'User not found' });
-                    else res.json(toJSON(user));
+                    else if (!user) next(new NotFoundError('User'));
+                    else res.json(user);
                     return next();
                 }
             );
@@ -52,23 +63,30 @@ export function update(app: restify.Server, namespace: string = ""): void {
         mk_valid_body_mw_ignore(user_schema, ['Missing required property']), has_auth(),
         function(req: restify.Request, res: restify.Response, next: restify.Next) {
             if (!isShallowSubset(req.body, user_schema.properties))
-                res.json(400, { error: 'ValidationError', error_message: 'Invalid keys detected in body' }) && next();
+                return res.json(400, { error: 'ValidationError', error_message: 'Invalid keys detected in body' }) && next();
             else if (!req.body || !Object.keys(req.body).length)
-                res.json(400, { error: 'ValidationError', error_message: 'Body required' }) && next();
+                return res.json(400, { error: 'ValidationError', error_message: 'Body required' }) && next();
 
             const User: waterline.Query = collections['user_tbl'];
 
-            User.findOne({ email: req['user_id'] },
-                (error: waterline.Error, user: user.IUser) => {
-                    if (error) res.json(400, fmtError(error)) && next();
-                    else if (!user) res.json(404, { error: 'NotFound', error_message: 'User not found' }) && next();
-                    else User.update(user, req.body, (e, r) => {
-                        if (e) res.json(400, fmtError(e));
-                        else res.json(200, toJSON(r[0]));
-                        return next();
-                    });
+            async.waterfall([
+                cb => User.findOne({ email: req['user_id'] },
+                    (err: waterline.WLError, user: user.IUser) => {
+                        if (err) cb(err);
+                        else if (!user) cb(new NotFoundError('User'));
+                        return cb(err, user)
+                    }),
+                (user, cb) =>
+                    User.update(user, req.body, (e, r: user.IUser) => cb(e, r[0]))
+            ], (error, result) => {
+                if (error) {
+                    if (error instanceof restify.HttpError) return next(error);
+                    const e: any = fmtError(error);
+                    res.json(e.statusCode, e.error);
                 }
-            );
+                res.json(200, result);
+                return next()
+            });
         }
     );
 };
@@ -78,14 +96,18 @@ export function del(app: restify.Server, namespace: string = ""): void {
         function(req: restify.Request, res: restify.Response, next: restify.Next) {
             const User: waterline.Query = collections['user_tbl'];
 
-            AccessToken().logout({ user_id: req['user_id'] }, (err: any) =>
-                err ? res.json(400, fmtError(err)) && next()
-                    : User.destroy({ email: req['user_id'] }, (error: waterline.Error) => {
-                        if (error) res.json(400, fmtError(error));
-                        else res.send(204);
-                        return next();
-                    })
-            )
+            async.waterfall([
+                cb => AccessToken().logout({ user_id: req['user_id'] }, cb),
+                cb => User.destroy({ email: req['user_id'] }, cb)
+            ], (error) => {
+                if (error) {
+                    if (error instanceof restify.HttpError) return next(error);
+                    const e: any = fmtError(error);
+                    res.json(e.statusCode, e.error);
+                }
+                else res.send(204)
+                return next()
+            });
         }
     );
 };
