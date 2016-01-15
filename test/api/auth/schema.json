@@ -1,16 +1,17 @@
 {
-  "required": [
-    "email",
-    "password"
-  ],
-  "properties": {
-    "email": {
-      "type": "string"
-    },
-    "password": {
-      "type": "string"
-    },
-    "title": {
-      "type": "string"
+    "required": [
+        "email",
+        "password"
+    ],
+    "properties": {
+        "email": {
+            "type": "string"
+        },
+        "password": {
+            "type": "string"
+        },
+        "title": {
+            "type": "string"
+        }
     }
 }

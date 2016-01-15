@@ -27,18 +27,23 @@ export function login(app: restify.Server, namespace: string = ""): void {
                     email: req.body.email,
                     password: req.body.password // LOL
                 }, (err: any, user) =>
-                        cb(err ? err : !user ? new NotFoundError('User') : null)
+                        cb(err ? err: !user ? new NotFoundError('User') : null)
                 ),
                 cb => cb(null, AccessToken().add(req.body.email, 'login'))
             ], (error: any, access_token: string) => {
-                next.ifError(error);
+                // next.ifError(fmtError(error));
+                if (error) {
+                    const e: errors.CustomError = fmtError(error);
+                    res.send(e.statusCode, e.body);
+                    return next();
+                }
                 res.setHeader('X-Access-Token', access_token)
                 res.json(201, { access_token: access_token });
                 return next();
             });
         }
     );
-};
+}
 
 export function logout(app: restify.Server, namespace: string = ""): void {
     app.del(`${namespace}`, has_auth('login'),
@@ -51,4 +56,4 @@ export function logout(app: restify.Server, namespace: string = ""): void {
                 })
         }
     );
-};
+}

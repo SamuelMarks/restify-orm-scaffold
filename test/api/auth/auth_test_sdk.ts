@@ -43,7 +43,7 @@ export function test_sdk(app) {
                     else if (res.statusCode / 100 >= 3) return cb(new Error(JSON.stringify(res.text, null, 4)));
                     Object.keys(user).map(
                         attr => expect(user[attr] === res.body[attr])
-                    )
+                    );
                     return cb(err, res);
                 })
         },
@@ -62,7 +62,7 @@ export function test_sdk(app) {
                     .delete('/api/user')
                     .set({ 'X-Access-Token': ident.access_token })
                     .expect(204)
-                    .end(cb)
+                    .end(cb);
             else
                 supertest(app)
                     .delete('/api/user')

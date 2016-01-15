@@ -1,25 +1,20 @@
 /// <reference path='./cust_typings/waterline.d.ts' />
 /// <reference path='./cust_typings/sails-postgresql.d.ts' />
 /// <reference path='./typings/redis/redis.d.ts' />
+/// <reference path='./typings/bunyan/bunyan.d.ts' />
+/// <reference path='./utils/helpers.d.ts' />
 
 import * as restify from 'restify';
 import * as redis from 'redis';
 import * as Waterline from 'waterline';
 import * as sails_postgresql from 'sails-postgresql';
+import {createLogger} from 'bunyan';
 
-import {trivial_merge, uri_to_config} from './utils/helpers';
+import {trivial_merge, uri_to_config, populateModelRoutes} from './utils/helpers';
 const package_ = require('./package');
 
 // Merge custom errors
 import * as _errors from './utils/errors';
-
-// Import models
-import * as user_models from './api/user/models';
-import * as auth_models from './api/auth/models';
-
-// Import routes
-import * as user_routes from './api/user/routes';
-import * as auth_routes from './api/auth/routes';
 
 // Database config
 const config = {
@@ -35,17 +30,7 @@ const config = {
     }
 };
 
-export interface IModelRoute {
-    [key: string]: {
-        routes?: any;
-        models?: any;
-    }
-}
-
-export const all_models_and_routes: IModelRoute = {
-    user: { routes: user_routes, models: user_models },
-    auth: { routes: auth_routes, models: auth_models }
-};
+export const all_models_and_routes: helpers.IModelRoute = populateModelRoutes('.');
 
 export const cursors: { redis: redis.RedisClient } = {
     redis: null
@@ -53,21 +38,25 @@ export const cursors: { redis: redis.RedisClient } = {
 
 export let collections: waterline.Query[] = null;
 
-export function main(
-    models_and_routes: IModelRoute,
-    cb?: (app: restify.Server, connections?: any[]) => void,
-    skip_db: boolean = false
-) {
+export function main(models_and_routes: helpers.IModelRoute,
+                     cb?: (app: restify.Server, connections?: any[]) => void,
+                     skip_db: boolean = false) {
     // Init server obj
     let app = restify.createServer();
     const root: string = '/api';
     app.use(restify.queryParser());
     app.use(restify.bodyParser());
+    app.on('after', restify.auditLogger({
+        log: createLogger({
+            name: 'audit',
+            stream: process.stdout
+        })
+    }));
 
     ['/', '/version', '/api', '/api/version'].map(route_path => app.get(
         route_path,
         (req: restify.Request, res: restify.Response, next: restify.Next) =>
-            res.json({ version: package_.version })
+            res.json({version: package_.version})
     ));
 
     // Init database obj
@@ -87,9 +76,9 @@ export function main(
             Object.keys(models_and_routes[entity].models).map(
                 model =>
                     models_and_routes[entity].models
-                        && (models_and_routes[entity].models[model].identity
-                            ||
-                            models_and_routes[entity].models[model].tableName)
+                    && (models_and_routes[entity].models[model].identity
+                    ||
+                    models_and_routes[entity].models[model].tableName)
                         ?
                         waterline.loadCollection(
                             Waterline.Collection.extend(
@@ -103,7 +92,7 @@ export function main(
     if (cb && skip_db) return cb(app);
 
     cursors.redis = redis.createClient();
-    cursors.redis.on('error', function(err) {
+    cursors.redis.on('error', function (err) {
         console.error(`Redis::error event -
             ${cursors.redis['host']}:${cursors.redis['port']}
             - ${err}`);
@@ -111,7 +100,7 @@ export function main(
     });
 
     // Create/init database models, populated exported collections, serve API
-    waterline.initialize(config, function(err, ontology) {
+    waterline.initialize(config, function (err, ontology) {
         if (err !== null) throw err;
 
         // Tease out fully initialised models.
@@ -122,7 +111,7 @@ export function main(
 
         if (cb) return cb(app, ontology.connections); // E.g.: for testing
         else // Start API server
-            app.listen(process.env.PORT || 3000, function() {
+            app.listen(process.env.PORT || 3000, function () {
                 console.info('%s listening at %s', app.name, app.url);
             });
     });

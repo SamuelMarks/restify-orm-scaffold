@@ -3,6 +3,7 @@
 /// <reference path='./../../cust_typings/waterline.d.ts' />
 /// <reference path='./../../typings/async/async.d.ts' />
 /// <reference path='./models.d.ts' />
+/// <reference path='./../../utils/errors.d.ts'/>
 
 import * as restify from 'restify';
 import * as async from 'async'
@@ -28,17 +29,19 @@ export function create(app: restify.Server, namespace: string = ""): void {
                     user: user
                 })
             ], (error: any, result: { access_token: string, user: user.IUser }) => {
+                // next.ifError(fmtError(error));
                 if (error) {
-                    const e = <{ statusCode: number, error: {} }>fmtError(error);
-                    return res.json(e.statusCode, e.error);
-                };
-                res.setHeader('X-Access-Token', result.access_token)
+                    const e: errors.CustomError = fmtError(error);
+                    res.send(e.statusCode, e.body);
+                    return next();
+                }
+                res.setHeader('X-Access-Token', result.access_token);
                 res.json(201, result.user);
                 return next();
             });
         }
     );
-};
+}
 
 export function read(app: restify.Server, namespace: string = ""): void {
     app.get(namespace, has_auth(),
@@ -47,15 +50,15 @@ export function read(app: restify.Server, namespace: string = ""): void {
 
             User.findOne({ email: req['user_id'] },
                 (error: waterline.WLError, user: user.IUser) => {
-                    if (error) res.json(400, fmtError(error));
-                    else if (!user) next(new NotFoundError('User'));
+                    next.ifError(fmtError(error));
+                    if (!user) next(new NotFoundError('User'));
                     else res.json(user);
                     return next();
                 }
             );
         }
     );
-};
+}
 
 export function update(app: restify.Server, namespace: string = ""): void {
     app.put(namespace, remove_from_body(['email']),
@@ -79,17 +82,18 @@ export function update(app: restify.Server, namespace: string = ""): void {
                 (user, cb) =>
                     User.update(user, req.body, (e, r: user.IUser) => cb(e, r[0]))
             ], (error, result) => {
+                // next.ifError(fmtError(error));
                 if (error) {
-                    if (error instanceof restify.HttpError) return next(error);
-                    const e: any = fmtError(error);
-                    res.json(e.statusCode, e.error);
+                    const e: errors.CustomError = fmtError(error);
+                    res.send(e.statusCode, e.body);
+                    return next();
                 }
                 res.json(200, result);
                 return next()
             });
         }
     );
-};
+}
 
 export function del(app: restify.Server, namespace: string = ""): void {
     app.del(namespace, has_auth(),
@@ -100,14 +104,15 @@ export function del(app: restify.Server, namespace: string = ""): void {
                 cb => AccessToken().logout({ user_id: req['user_id'] }, cb),
                 cb => User.destroy({ email: req['user_id'] }, cb)
             ], (error) => {
+                // next.ifError(fmtError(error));
                 if (error) {
-                    if (error instanceof restify.HttpError) return next(error);
-                    const e: any = fmtError(error);
-                    res.json(e.statusCode, e.error);
+                    const e: errors.CustomError = fmtError(error);
+                    res.send(e.statusCode, e.body);
+                    return next();
                 }
-                else res.send(204)
+                res.send(204);
                 return next()
             });
         }
     );
-};
+}

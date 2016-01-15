@@ -1,83 +1,17 @@
 {
-  "required": [
-    "email",
-    "password"
-  ],
-  "properties": {
-    "email": {
-      "type": "string"
-    },
-    "password": {
-      "type": "string"
-    },
-    "title": {
-      "type": "string"
-    },
-    "first_name": {
-      "type": "string"
-    },
-    "last_names": {
-      "type": "string"
-    },
-    "profession": {
-      "type": "string"
-    },
-    "associations": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "clinics": {
-      "type": "array",
-      "items": {
-        "properties": {
-          "company": {
-            "type": "string",
-            "description": "OPSM, SpecSavers, Independant &etc."
-          },
-          "name": {
+    "required": [
+        "email",
+        "password"
+    ],
+    "properties": {
+        "email": {
             "type": "string"
-          },
-          "street_address": {
+        },
+        "password": {
             "type": "string"
-          },
-          "city": {
+        },
+        "title": {
             "type": "string"
-          },
-          "state": {
-            "type": "string"
-          },
-          "postcode": {
-            "type": "string"
-          },
-          "executive": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "provider_no": {
-            "type": "string"
-          },
-          "extra_info": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
         }
-      }
-    },
-    "created_at": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "extra_info": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
     }
-  }
 }

@@ -14,7 +14,7 @@ export const AccessToken = () => {
         }),
         deleteOne: (access_token) => redis.del(access_token),
         add: (user_id, scope): string => {
-            const new_key: string = `${scope}::${uuid_v4()}`
+            const new_key: string = `${scope}::${uuid_v4()}`;
             const t = redis.multi();
             t.set(new_key, user_id);
             t.sadd(user_id, new_key);
@@ -35,7 +35,7 @@ export const AccessToken = () => {
                         if (errors.length) return cb(JSON.stringify(errors));
                         t.del(id.user_id, (e, r) => {
                             if (e) errors.push(e);
-                        })
+                        });
                         t.exec();
                         if (errors.length) return cb(JSON.stringify(errors));
                         return cb(null);
@@ -46,7 +46,7 @@ export const AccessToken = () => {
                         else if (!user_id) return cb({
                             error: 'AlreadyDone',
                             error_message: 'User already logged out'
-                        })
+                        });
                         return logout(redis)({ user_id: user_id }, cb);
                     });
                 else

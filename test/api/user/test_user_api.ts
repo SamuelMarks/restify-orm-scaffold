@@ -3,6 +3,7 @@
 /// <reference path='./../../../typings/mocha/mocha.d.ts' />
 /// <reference path='./../../../typings/chai/chai.d.ts' />
 /// <reference path='./../../../typings/async/async.d.ts' />
+/// <reference path='./../../../utils/helpers.d.ts' />
 /// <reference path='./../auth/auth_test_sdk.d.ts' />
 
 import * as supertest from 'supertest';
@@ -10,15 +11,15 @@ import * as restify from 'restify';
 import {expect} from 'chai';
 import * as async from 'async';
 
-import {main, all_models_and_routes, IModelRoute} from './../../../main';
+import {main, all_models_and_routes} from './../../../main';
 import {test_sdk, unregister_all} from './../auth/auth_test_sdk';
 import {AccessToken} from './../../../api/auth/models';
 import {user_mocks} from './user_mocks';
 
-const user_models_and_routes: IModelRoute = {
+const user_models_and_routes: helpers.IModelRoute = {
     user: all_models_and_routes['user'],
     auth: all_models_and_routes['auth'],
-}
+};
 
 describe('User::routes', () => {
     before(done => main(user_models_and_routes,

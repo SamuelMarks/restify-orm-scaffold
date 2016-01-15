@@ -1,11 +1,16 @@
 /// <reference path='./../typings/node/node.d.ts' />
+/// <reference path='./../typings/restify/restify.d.ts' />
 /// <reference path='./../cust_typings/waterline.d.ts' />
-/// <reference path='./../cust_typings/waterline-error.d.ts' />
+
+import {RestError} from 'restify';
+import * as errors from './errors';
+import {readdirSync, statSync} from 'fs';
+import {normalize, sep, join} from 'path';
 
 export function trivial_merge(obj, ...objects: Array<{}>) {
     for (const key in objects)
-        if (isNaN(parseInt(key))) obj[key] = objects[key]
-        else for (const k in objects[key]) obj[k] = objects[key][k]
+        if (isNaN(parseInt(key))) obj[key] = objects[key];
+        else for (const k in objects[key]) obj[k] = objects[key][k];
     return obj
 }
 
@@ -17,37 +22,39 @@ interface config {
 }
 
 export function uri_to_config(uri: string) {
-    return (function(arr: string[]): config {
+    return (function (arr: string[]): config {
         switch (arr.length) {
             case 3: // User, [passwd@]host, [port@db]
                 return <config>(trivial_merge(
                     {
-                        user: arr[0]
+                        user: arr[0],
+                        identity: arr[0]
                     }, function passwd_host(): { host: string, pass?: string } {
                         const at_at: number = arr[1].search('@');
-                        if (at_at === -1) return { host: arr[1] };
+                        if (at_at === -1) return {host: arr[1]};
                         return {
                             pass: arr[1].substr(0, at_at),
                             host: arr[1].substr(at_at + 1)
                         }
-                    } (),
+                    }(),
                     function port_db(): { database: string, port?: string } {
                         const slash_at: number = arr[2].search('/');
-                        if (slash_at === -1) return { database: arr[2] };
+                        if (slash_at === -1) return {database: arr[2]};
                         return {
                             port: arr[2].substr(0, slash_at),
                             database: arr[2].substr(slash_at + 1)
                         }
-                    } ()
+                    }()
                 ));
             case 2: // User, [password@]host[/database]
                 return trivial_merge(
                     {
-                        user: arr[0]
+                        user: arr[0],
+                        identity: arr[0]
                     }, function passwd_host_db(): { host: string, password?: string } {
                         function host_db(s: string): { host: string, database?: string } {
                             const slash_at = s.search('/');
-                            if (slash_at === -1) return { host: s };
+                            if (slash_at === -1) return {host: s};
                             return {
                                 host: s.substr(0, slash_at),
                                 database: s.substr(slash_at + 1)
@@ -57,10 +64,10 @@ export function uri_to_config(uri: string) {
                         const at_at: number = arr[1].search('@');
                         if (at_at === -1) return host_db(arr[1]);
                         return trivial_merge(
-                            { password: arr[1].substr(0, at_at) },
+                            {password: arr[1].substr(0, at_at)},
                             host_db(arr[1].substr(at_at + 1))
                         );
-                    } ()
+                    }()
                 );
             default:
                 return {};
@@ -68,21 +75,10 @@ export function uri_to_config(uri: string) {
     })(uri.slice('postgres'.length + 3).split(':'))
 }
 
-export function fmtError(error: waterline.WLError | Error | any, statusCode = 400): {statusCode: number, error: {}} | any {
-    if (!error) return {};
-    else if (error.invalidAttributes) return {
-        'error': {
-            error: error.code,
-            error_message: error.reason,
-            error_metadata: {
-                details: error.details.split('\n'),
-
-                invalidAttributes: error.invalidAttributes
-            }
-        },
-        statusCode: statusCode
-    }
-    else if (error instanceof Error) return error;
+export function fmtError(error: waterline.WLError | Error | any, statusCode = 400) {
+    if (!error) return null;
+    else if (error.invalidAttributes || error.originalError /*waterline error*/) return new errors.WaterlineError(error);
+    else if (error instanceof RestError) return error;
     else throw TypeError('Unhandled input to fmtError:' + error)
 }
 
@@ -102,4 +98,57 @@ export function binarySearch(a: any[], e: any, c = (a, b) => a > b) {
     for (let l = 0; l <= u;)
         c(e, a[m = (l + u) >> 1]) ? l = m + 1 : u = e == a[m] ? -2 : m - 1;
     return u == -2 ? m : -1
+}
+
+export function trivialWalk(dir, excludeDirs?) {
+    return readdirSync(dir).reduce(function (list, file) {
+        const name = join(dir, file);
+        if (statSync(name).isDirectory()) {
+            if (excludeDirs && excludeDirs.length) {
+                excludeDirs = excludeDirs.map(d => normalize(d));
+                const idx = name.indexOf(sep);
+                const directory = name.slice(0, idx === -1 ? name.length : idx);
+                if (excludeDirs.indexOf(directory) !== -1)
+                    return list;
+            }
+            return list.concat(trivialWalk(name, excludeDirs));
+        }
+        return list.concat([name]);
+    }, []);
+}
+
+export function populateModelRoutes(dir: string): helpers.IModelRoute {
+    return <helpers.IModelRoute>objListToObj(
+        Array.prototype.concat.apply([],
+            trivialWalk(dir, ['node_modules', 'typings', 'bower_components', '.git', '.idea', 'test']).map(p => {
+                const fst = (_idx => _idx === -1 ? p.length : _idx)(p.indexOf(sep));
+                const snd = (_idx => _idx === -1 ? p.length : _idx)(p.indexOf(sep, fst + 1));
+                const allowedFnames = ['models.js', 'routes.js', 'admin.js'];
+                const fname = (f => allowedFnames.indexOf(f) !== -1 ? f : null)(p.slice(snd + 1, p.length));
+                return fname ? {
+                    [p.slice(fst + 1, snd)]: {
+                        [p.slice(p.lastIndexOf(sep) + 1, p.indexOf('.'))]: require(['.', '..', p].join(sep).split(sep).join('/'))
+                    }
+                } : undefined;
+            })).filter(_=>_)
+    );
+}
+
+export function objListToObj(objList: Array<{}>): {} {
+    /* Takes an objList without null/undefined */
+    let obj = {};
+    objList.forEach(o => (key => obj[key] = obj[key] ? trivial_merge(obj[key], o[key]) : o[key])(Object.keys(o)));
+    return obj;
+}
+
+export function groupBy(array: Array<any>, f: Function) {
+    var groups = {};
+    array.forEach(function (o) {
+        var group = JSON.stringify(f(o));
+        groups[group] = groups[group] || [];
+        groups[group].push(o);
+    });
+    return Object.keys(groups).map(function (group) {
+        return groups[group];
+    });
 }

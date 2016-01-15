@@ -57,8 +57,13 @@
         "typings/supertest/supertest.d.ts",
         "typings/tsd.d.ts",
         "typings/tv4/tv4.d.ts",
+        "utils/errors.d.ts",
         "utils/errors.ts",
+        "utils/helpers.d.ts",
         "utils/helpers.ts",
         "utils/validators.ts"
-    ]
+    ],
+    "atom": {
+        "rewriteTsconfig": true
+    }
 }
