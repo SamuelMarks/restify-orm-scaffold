@@ -1,5 +1,3 @@
-/// <reference path='./../../typings/node-uuid/node-uuid.d.ts' />
-
 import {v4 as uuid_v4} from 'node-uuid';
 import {cursors} from './../../main';
 

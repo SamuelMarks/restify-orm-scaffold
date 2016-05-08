@@ -1,3 +1,5 @@
+import {IUser} from './models.d';
+
 export const User = {
     identity: 'user_tbl',
     connection: 'postgres',
@@ -15,10 +17,10 @@ export const User = {
             required: true
         },
         toJSON: function toJSON() {
-            let user = this.toObject();
+            let user: IUser = this.toObject();
             delete user.password;
             for (const key in user)
-                if (!user[key]) delete user[key];
+                if (user.hasOwnProperty(key) && !user[key]) delete user[key];
             return user;
         }
     }

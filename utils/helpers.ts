@@ -1,11 +1,6 @@
-/// <reference path='./../typings/node/node.d.ts' />
-/// <reference path='./../typings/restify/restify.d.ts' />
-/// <reference path='./../cust_typings/waterline.d.ts' />
-
-import {RestError} from 'restify';
-import * as errors from './errors';
 import {readdirSync, statSync} from 'fs';
 import {normalize, sep, join} from 'path';
+import {IModelRoute} from './helpers.d';
 
 export function trivial_merge(obj, ...objects: Array<{}>) {
     for (const key in objects)
@@ -15,20 +10,22 @@ export function trivial_merge(obj, ...objects: Array<{}>) {
 }
 
 interface config {
-    user?: string;
+    user: string;
     password?: string;
     host?: string;
     database?: string;
+    identity: string;
 }
 
 export function uri_to_config(uri: string) {
     return (function (arr: string[]): config {
         switch (arr.length) {
             case 3: // User, [passwd@]host, [port@db]
+                const user = arr[0]; // arr[0].substr(arr[0].search('//')+2);
                 return <config>(trivial_merge(
                     {
-                        user: arr[0],
-                        identity: arr[0]
+                        user: user,
+                        identity: user
                     }, function passwd_host(): { host: string, pass?: string } {
                         const at_at: number = arr[1].search('@');
                         if (at_at === -1) return {host: arr[1]};
@@ -47,10 +44,11 @@ export function uri_to_config(uri: string) {
                     }()
                 ));
             case 2: // User, [password@]host[/database]
+                const u = arr[0].substr(arr[0].search('//') + 2);
                 return trivial_merge(
                     {
-                        user: arr[0],
-                        identity: arr[0]
+                        user: u,
+                        identity: u
                     }, function passwd_host_db(): { host: string, password?: string } {
                         function host_db(s: string): { host: string, database?: string } {
                             const slash_at = s.search('/');
@@ -69,23 +67,23 @@ export function uri_to_config(uri: string) {
                         );
                     }()
                 );
+            case 1:
+                // host
+                return {
+                    user: 'postgres',
+                    identity: 'postgres',
+                    host: arr[0].substr(arr[0].search('//') + 2)
+                };
             default:
-                return {};
+                throw TypeError('Unable to acquire config from uri');
         }
     })(uri.slice('postgres'.length + 3).split(':'))
 }
 
-export function fmtError(error: waterline.WLError | Error | any, statusCode = 400) {
-    if (!error) return null;
-    else if (error.invalidAttributes || error.originalError /*waterline error*/) return new errors.WaterlineError(error);
-    else if (error instanceof RestError) return error;
-    else throw TypeError('Unhandled input to fmtError:' + error)
-}
-
-export function isShallowSubset(o0: {} | Array<any>, o1: {} | Array<any>) {
+export function isShallowSubset(o0: {} | Array<any>, o1: {} | Array<any>): boolean {
     const
-        l0_keys = (o0 instanceof Array ? o0 : Object.keys(o0)).sort(),
-        l1_keys = (o1 instanceof Array ? o1 : Object.keys(o1)).sort();
+        l0_keys: Array<string> = (o0 instanceof Array ? o0 : Object.keys(o0)).sort(),
+        l1_keys: Array<string> = (o1 instanceof Array ? o1 : Object.keys(o1)).sort();
 
     if (l0_keys.length > l1_keys.length) return false;
     for (const i in l0_keys)
@@ -117,8 +115,8 @@ export function trivialWalk(dir, excludeDirs?) {
     }, []);
 }
 
-export function populateModelRoutes(dir: string): helpers.IModelRoute {
-    return <helpers.IModelRoute>objListToObj(
+export function populateModelRoutes(dir: string): IModelRoute {
+    return <IModelRoute>objListToObj(
         Array.prototype.concat.apply([],
             trivialWalk(dir, ['node_modules', 'typings', 'bower_components', '.git', '.idea', 'test']).map(p => {
                 const fst = (_idx => _idx === -1 ? p.length : _idx)(p.indexOf(sep));
@@ -151,4 +149,9 @@ export function groupBy(array: Array<any>, f: Function) {
     return Object.keys(groups).map(function (group) {
         return groups[group];
     });
+}
+
+export function getUTCDate(now = new Date()) {
+    return new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
+        now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds());
 }

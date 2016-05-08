@@ -1,0 +1,24 @@
+{
+  "ambientDependencies": {
+    "assertion-error": "registry:dt/assertion-error#1.0.0+20160316155526",
+    "async": "registry:dt/async#1.4.2+20160501155344",
+    "bunyan": "registry:dt/bunyan#0.0.0+20160412155112",
+    "chai": "registry:dt/chai#3.4.0+20160317120654",
+    "esprima": "registry:dt/esprima#2.1.0+20160317120654",
+    "estree": "registry:dt/estree#0.0.0+20160317120654",
+    "lodash": "registry:dt/lodash#3.10.0+20160330154726",
+    "mocha": "registry:dt/mocha#2.2.5+20160317120654",
+    "node": "registry:dt/node#4.0.0+20160501135006",
+    "node_redis": "registry:dt/node_redis#0.8.0+20160316155526",
+    "redis": "registry:dt/redis#0.12.1+20160316155526",
+    "restify": "registry:dt/restify#2.0.0+20160425141054",
+    "superagent": "registry:dt/superagent#1.4.0+20160317120654",
+    "supertest": "registry:dt/supertest#1.1.0+20160317120654",
+    "tv4": "registry:dt/tv4#1.2.5+20160317120654"
+  },
+  "dependencies": {
+    "node-uuid": "registry:npm/node-uuid#1.4.0+20160224202522",
+    "sails-postgresql": "github:SamuelMarks/cust_typings/sails-postgresql/sails-postgresql.d.ts",
+    "waterline": "github:SamuelMarks/cust_typings/waterline/waterline.d.ts"
+  }
+}

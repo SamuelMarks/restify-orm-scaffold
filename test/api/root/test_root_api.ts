@@ -1,13 +1,9 @@
-/// <reference path='./../../../typings/restify/restify.d.ts' />
-/// <reference path='./../../../typings/supertest/supertest.d.ts' />
-/// <reference path='./../../../typings/mocha/mocha.d.ts' />
-/// <reference path='./../../../typings/chai/chai.d.ts' />
-
 import * as supertest from 'supertest';
-import * as restify from 'restify';
+import {Response} from 'supertest';
 import {expect} from 'chai';
-
 import {main} from './../../../main';
+
+process.env.NO_SAMPLE_DATA = true;
 
 describe('Root::routes', () => {
     before(done =>
@@ -15,24 +11,31 @@ describe('Root::routes', () => {
             {},
             app => {
                 this.app = app;
-                done();
+                return done();
             },
             true
         )
     );
 
     describe('/', () => {
-        it('should get version', (done) =>
+        it('should get version', done =>
             supertest(this.app)
                 .get('/')
                 .expect('Content-Type', /json/)
-                .expect('Content-Length', '19')
                 .expect(200)
-                .end((err, res) => {
+                .end((err, res: Response) => {
                     if (err) return done(err);
-                    expect(res.statusCode).to.be.equal(200);
-                    expect(res.body).to.have.property('version').with.length(5);
-                    return done();
+                    try {
+                        expect(res.status).to.be.equal(200);
+                        expect(res.body).to.have.property('version');
+                        expect(
+                            res.body.version.split('.').length - 1
+                        ).to.be.equal(2);
+                    } catch (e) {
+                        err = <Chai.AssertionError>e;
+                    } finally {
+                        done(err, res.body);
+                    }
                 })
         );
     });

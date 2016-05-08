@@ -1,12 +1,10 @@
-/// <reference path=',/../../../cust_typings/waterline.d.ts' />
+import {Model, Record} from 'waterline';
 
-declare module user {
-    export interface IUser extends waterline.Record, waterline.Model, IUserBase {
-    }
+export interface IUser extends Model, Record, IUserBase {
+}
 
-    export interface IUserBase {
-        email: string;
-        password?: string;
-        title?: string;
-    }
+export interface IUserBase {
+    email: string;
+    password?: string;
+    title?: string;
 }

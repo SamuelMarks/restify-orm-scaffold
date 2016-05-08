@@ -1,27 +1,20 @@
-/// <reference path='./../cust_typings/waterline.d.ts' />
+import {WLError} from 'waterline';
 
-declare var errors: errors.errors;
-
-declare module errors {
-    export interface errors {
-        CustomError: CustomError;
-        NotFoundError(string): void;
-        WaterlineError(wl_error: waterline.WLError, statusCode: number): void;
-    }
-
-    export interface CustomError {
-        body: {
-            error: string,
-            error_message: string,
-            error_metadata?: {}
-        };
-        statusCode: number;
-        message: string;
-        constructorOpt: Function;
-        restCode: string;
-    }
+export interface errors {
+    fmtError(error: WLError | Error | any, statusCode: number);
+    CustomError: CustomError;
+    NotFoundError(string): void;
+    WaterlineError(wl_error: WLError, statusCode: number): void;
 }
 
-declare module "errors" {
-    export = errors;
+export interface CustomError {
+    body: {
+        error: string,
+        error_message: string,
+        error_metadata?: {}
+    };
+    statusCode: number;
+    message: string;
+    constructorOpt: Function;
+    restCode: string;
 }

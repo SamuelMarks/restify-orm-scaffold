@@ -1,6 +1,3 @@
-/// <reference path='./../typings/restify/restify.d.ts' />
-/// <reference path='./../typings/tv4/tv4.d.ts' />
-
 import * as restify from 'restify';
 import {validateMultiple as tv4_validateMultiple} from 'tv4';
 import {trivial_merge} from './helpers';
