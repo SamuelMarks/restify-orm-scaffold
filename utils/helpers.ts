@@ -4,8 +4,12 @@ import {IModelRoute} from './helpers.d';
 
 export function trivial_merge(obj, ...objects: Array<{}>) {
     for (const key in objects)
-        if (isNaN(parseInt(key))) obj[key] = objects[key];
-        else for (const k in objects[key]) obj[k] = objects[key][k];
+        if (objects.hasOwnProperty(key)) {
+            if (isNaN(parseInt(key))) obj[key] = objects[key];
+            else for (const k in objects[key])
+                if (objects[key].hasOwnProperty(k))
+                    obj[k] = objects[key][k];
+        }
     return obj
 }
 
@@ -87,7 +91,7 @@ export function isShallowSubset(o0: {} | Array<any>, o1: {} | Array<any>): boole
 
     if (l0_keys.length > l1_keys.length) return false;
     for (const i in l0_keys)
-        if (binarySearch(l1_keys, l0_keys[i]) < 0) return false;
+        if (l0_keys.hasOwnProperty(i) && binarySearch(l1_keys, l0_keys[i]) < 0) return false;
     return true;
 }
 
@@ -154,4 +158,10 @@ export function groupBy(array: Array<any>, f: Function) {
 export function getUTCDate(now = new Date()) {
     return new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
         now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds());
+}
+
+export function sanitiseSchema(schema: {}, omit: Array<string>) {
+    return objListToObj(Object.keys(schema).map(k => {
+        return {[k]: k === 'required' ? schema[k].filter(x => omit.indexOf(x) === -1) : schema[k]}
+    }));
 }

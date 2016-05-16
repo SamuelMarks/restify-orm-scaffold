@@ -10,7 +10,7 @@ import {AccessToken} from './models';
 const user_schema: tv4.JsonSchema = require('./../../test/api/user/schema');
 
 export function login(app: restify.Server, namespace: string = ""): void {
-    app.post(`${namespace}`, has_body, mk_valid_body_mw(user_schema),
+    app.post(namespace, has_body, mk_valid_body_mw(user_schema),
         function (req: restify.Request, res: restify.Response, next: restify.Next) {
             const User: Query = collections['user_tbl'];
 
@@ -33,7 +33,7 @@ export function login(app: restify.Server, namespace: string = ""): void {
 }
 
 export function logout(app: restify.Server, namespace: string = ""): void {
-    app.del(`${namespace}`, has_auth('login'),
+    app.del(namespace, has_auth('login'),
         function (req: restify.Request, res: restify.Response, next: restify.Next) {
             AccessToken().logout(
                 {access_token: req.headers['x-access-token']}, (error) => {

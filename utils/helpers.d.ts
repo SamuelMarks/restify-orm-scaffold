@@ -11,6 +11,7 @@ export interface helpers {
     objListToObj(objList: Array<{}>): {};
     populateModelRoutes(dir: string): IModelRoute;
     getUTCDate(now: Date): Date;
+    sanitiseSchema(schema: {}, omit: Array<string>);
 }
 
 export interface IModelRoute {

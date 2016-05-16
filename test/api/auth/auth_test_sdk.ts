@@ -1,11 +1,20 @@
 import * as supertest from 'supertest';
 import {Response} from 'supertest';
+import * as chai from 'chai';
 import {expect} from 'chai';
 import * as async from 'async';
 import {ITestSDK} from './auth_test_sdk.d';
 import {cb} from '../../share_interfaces.d';
 import {IUser, IUserBase} from '../../../api/user/models.d';
 import {user_mocks} from '../user/user_mocks';
+import * as chaiJsonSchema from 'chai-json-schema';
+import {sanitiseSchema} from '../../../utils/helpers';
+import {User} from '../../../api/user/models';
+
+const user_schema = sanitiseSchema(require('./../user/schema.json'), User._omit);
+const auth_schema = require('./schema.json');
+
+chai.use(chaiJsonSchema);
 
 export class AuthTestSDK implements ITestSDK {
     constructor(public app) {
@@ -22,9 +31,9 @@ export class AuthTestSDK implements ITestSDK {
                 if (err) return cb(err);
                 else if (res.error) return cb(res.error);
                 try {
-                    expect(res.body).to.be.an('object');
                     expect(res.status).to.be.equal(201);
-                    expect(res.body).to.have.all.keys('createdAt', 'email', 'updatedAt');
+                    expect(res.body).to.be.an('object');
+                    expect(res.body).to.be.jsonSchema(user_schema);
                 } catch (e) {
                     err = <Chai.AssertionError>e;
                 } finally {
@@ -45,7 +54,9 @@ export class AuthTestSDK implements ITestSDK {
                 if (err) return cb(err);
                 else if (res.error) return cb(res.error);
                 try {
+                    expect(res.body).to.be.an('object');
                     expect(res.body).to.have.property('access_token');
+                    expect(res.body).to.be.jsonSchema(auth_schema);
                 } catch (e) {
                     err = <Chai.AssertionError>e;
                 } finally {
@@ -64,9 +75,11 @@ export class AuthTestSDK implements ITestSDK {
                 if (err) return cb(err);
                 else if (res.error) return cb(res.error);
                 try {
+                    expect(res.body).to.be.an('object');
                     Object.keys(user).map(
                         attr => expect(user[attr] === res.body[attr])
                     );
+                    expect(res.body).to.be.jsonSchema(user_schema);
                 } catch (e) {
                     err = <Chai.AssertionError>e;
                 } finally {

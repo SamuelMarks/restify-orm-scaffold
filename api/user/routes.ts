@@ -35,7 +35,7 @@ export function read(app: restify.Server, namespace: string = ""): void {
             User.findOne({email: req['user_id']},
                 (error: WLError, user: IUser) => {
                     if (error) return next(fmtError(error));
-                    else if (!user) next(new NotFoundError('User'));
+                    else if (!user) return next(new NotFoundError('User'));
                     res.json(user);
                     return next();
                 }

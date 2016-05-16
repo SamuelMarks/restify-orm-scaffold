@@ -1,17 +1,11 @@
 {
-    "required": [
-        "email",
-        "password"
-    ],
+    "type": "object",
     "properties": {
-        "email": {
-            "type": "string"
-        },
-        "password": {
-            "type": "string"
-        },
-        "title": {
+        "access_token": {
             "type": "string"
         }
-    }
+    },
+    "required": [
+        "access_token"
+    ]
 }
