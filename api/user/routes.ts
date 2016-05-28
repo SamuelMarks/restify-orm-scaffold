@@ -1,10 +1,10 @@
 import * as restify from 'restify';
 import * as async from 'async';
 import {Query, WLError} from 'waterline';
-import {has_body, mk_valid_body_mw, mk_valid_body_mw_ignore, remove_from_body} from './../../utils/validators';
+import {has_body, mk_valid_body_mw, mk_valid_body_mw_ignore, remove_from_body} from 'restify-validators';
 import {collections} from './../../main';
-import {isShallowSubset} from './../../utils/helpers';
-import {NotFoundError, fmtError} from './../../utils/errors';
+import {isShallowSubset} from 'nodejs-utils';
+import {NotFoundError, fmtError} from 'restify-errors';
 import {has_auth} from './../auth/middleware';
 import {AccessToken} from './../auth/models';
 import {IUser} from './models.d';

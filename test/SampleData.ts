@@ -1,11 +1,17 @@
-///<reference path="helpers.ts"/>
-
 import * as async from 'async';
 import {RequestOptions, IncomingMessage, ClientRequest, request as http_request} from 'http';
 import * as url from 'url';
-import {trivial_merge} from './helpers';
-import {user_mocks} from '../test/api/user/user_mocks';
+import {trivial_merge} from 'nodejs-utils';
 import {HttpError} from 'restify';
+import {user_mocks} from './api/user/user_mocks';
+
+export interface ISampleData {
+    token: string;
+    userMocks: Array<any>;
+    login(cb);
+    registerLogin(cb);
+    unregister(cb);
+}
 
 interface callback {
     (res: IncomingMessageF): void;

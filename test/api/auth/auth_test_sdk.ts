@@ -8,7 +8,7 @@ import {cb} from '../../share_interfaces.d';
 import {IUser, IUserBase} from '../../../api/user/models.d';
 import {user_mocks} from '../user/user_mocks';
 import * as chaiJsonSchema from 'chai-json-schema';
-import {sanitiseSchema} from '../../../utils/helpers';
+import {sanitiseSchema} from 'nodejs-utils';
 import {User} from '../../../api/user/models';
 
 const user_schema = sanitiseSchema(require('./../user/schema.json'), User._omit);

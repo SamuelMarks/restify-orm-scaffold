@@ -5,10 +5,9 @@ import * as Waterline from 'waterline';
 import {Query, WLError, waterline, Collection} from 'waterline';
 import * as sails_postgresql from 'sails-postgresql';
 import {createLogger} from 'bunyan';
-import {trivial_merge, uri_to_config, populateModelRoutes} from './utils/helpers';
-import {SampleData} from './utils/SampleData';
-import {WaterlineError} from './utils/errors';
-import {IModelRoute} from './utils/helpers.d';
+import {trivial_merge, uri_to_config, populateModelRoutes, IModelRoute} from 'nodejs-utils';
+import {WaterlineError} from 'restify-errors';
+import {SampleData} from './test/SampleData';
 
 const package_ = require('./package');
 const logger = createLogger({

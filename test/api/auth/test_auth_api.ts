@@ -4,7 +4,7 @@ import {AuthTestSDK} from './../auth/auth_test_sdk';
 import {AccessToken} from './../../../api/auth/models';
 import {user_mocks} from './../user/user_mocks';
 import {ITestSDK} from './auth_test_sdk.d';
-import {IModelRoute} from '../../../utils/helpers.d';
+import {IModelRoute} from 'nodejs-utils';
 
 const user_models_and_routes: IModelRoute = {
     user: all_models_and_routes['user'],

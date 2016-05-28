@@ -31,6 +31,6 @@ When not add *.js to `.gitignore`, clean out compiled js with this GNU findutils
 
 Or delete all '*.js' outside of `node_modules` with:
 
-    find \( -name node_modules -prune \) -o -name '*.js' -type f -exec rm {} \;
+    find \( -name node_modules -prune \) -o -name '*.js' -type f -exec rm {} \;find \( -name node_modules -prune \) -o -name '*.js' -type f -exec rm {} \;
 
 More complicated solution handling "foo.ts" & "foo.js" without "foo.js.map" coming at some point.

@@ -1,9 +1,9 @@
 import * as restify from 'restify';
 import * as async from 'async';
 import {Query} from 'waterline';
-import {mk_valid_body_mw, has_body} from './../../utils/validators';
+import {has_body, mk_valid_body_mw} from 'restify-validators';
+import {NotFoundError, fmtError} from 'restify-errors';
 import {collections} from './../../main';
-import {NotFoundError, fmtError} from './../../utils/errors';
 import {has_auth} from './middleware';
 import {AccessToken} from './models';
 
