@@ -17,7 +17,7 @@
         "nodejs-utils": "github:SamuelMarks/nodejs-utils/nodejs-utils.d.ts",
         "restify-errors": "github:SamuelMarks/restify-errors/restify-errors.d.ts",
         "restify-validators": "github:SamuelMarks/restify-validators/restify-validators.d.ts",
-        "sails-postgresql": "github:SamuelMarks/cust_typings/sails-postgresql/sails-postgresql.d.ts",
+        "waterline-postgresql": "github:SamuelMarks/cust_typings/waterline-postgresql/waterline-postgresql.d.ts",
         "waterline": "github:SamuelMarks/cust_typings/waterline/waterline.d.ts"
     }
 }

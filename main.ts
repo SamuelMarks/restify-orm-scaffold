@@ -3,7 +3,7 @@ import * as restify from 'restify';
 import * as redis from 'redis';
 import * as Waterline from 'waterline';
 import {Query, WLError, waterline, Collection} from 'waterline';
-import * as sails_postgresql from 'sails-postgresql';
+import * as waterline_postgres from 'waterline-postgresql';
 import {createLogger} from 'bunyan';
 import {trivial_merge, uri_to_config, populateModelRoutes, IModelRoute} from 'nodejs-utils';
 import {WaterlineError} from 'restify-errors';
@@ -32,7 +32,7 @@ const config = {
     /* TODO: Put this all in tiered environment-variable powered .json file */
     adapters: {
         url: db_uri,
-        postgres: sails_postgresql
+        postgres: waterline_postgres
     },
     defaults: {
         migrate: 'create',

@@ -1,7 +1,7 @@
-/// <reference path='./../../cust_typings/waterline.d.ts' />
+import {Record, Model} from 'waterline';
 
 declare module auth {
-    export interface IAccessToken extends waterline.Record, waterline.Model {
+    export interface IAccessToken extends Record, Model {
         scope: string;
         token: string;
         user_id: string;
