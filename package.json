@@ -1,6 +1,6 @@
 {
   "name": "restify_waterline_scaffold",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Simple baseline scaffold to get you started using Restify and Waterline with TypeScript.",
   "main": "main.js",
   "author": "Samuel Marks <samuelmarks@gmail.com>",
@@ -12,7 +12,7 @@
     "start": "tsc && node main.js",
     "prepublish": "tsc",
     "pretest": "tsc",
-    "test": "mocha test --recursive"
+    "test": "mocha test --recursive --require ts-node/register"
   },
   "dependencies": {
     "async": "^2.0.0-rc.4",
@@ -22,6 +22,7 @@
     "redis": "^2.6.0-2",
     "restify": "^4.0.4",
     "restify-errors": "https://api.github.com/repos/SamuelMarks/restify-errors-dist/tarball",
+    "restify-utils": "https://api.github.com/repos/SamuelMarks/restify-utils-dist/tarball",
     "restify-validators": "https://api.github.com/repos/SamuelMarks/restify-validators-dist/tarball",
     "tv4": "^1.2.7",
     "typescript": "^1.9.0-dev.20160504",
@@ -32,6 +33,8 @@
     "chai": "^3.5.0",
     "chai-json-schema": "^1.2.0",
     "mocha": "^2.4.5",
-    "supertest": "^1.2.0"
+    "supertest": "^1.2.0",
+    "ts-node": "^0.7.3",
+    "typescript": "^1.8.10"
   }
 }

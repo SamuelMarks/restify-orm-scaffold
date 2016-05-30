@@ -1,8 +1,8 @@
 import {v4 as uuid_v4} from 'node-uuid';
-import {cursors} from './../../main';
+import {redis_cursors} from './../../main';
 
 export const AccessToken = () => {
-    const redis = cursors.redis;
+    const redis = redis_cursors.redis;
     return {
         _type: 'redis',
         findOne: (access_token, cb) => redis.get(access_token, (err, res) => {

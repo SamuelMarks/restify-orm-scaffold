@@ -2,7 +2,7 @@ import * as restify from 'restify';
 import * as async from 'async';
 import {Query, WLError} from 'waterline';
 import {has_body, mk_valid_body_mw, mk_valid_body_mw_ignore, remove_from_body} from 'restify-validators';
-import {collections} from './../../main';
+import {c} from './../../main';
 import {isShallowSubset} from 'nodejs-utils';
 import {NotFoundError, fmtError} from 'restify-errors';
 import {has_auth} from './../auth/middleware';
@@ -15,7 +15,7 @@ const user_schema: tv4.JsonSchema = require('./../../test/api/user/schema');
 export function create(app: restify.Server, namespace: string = ""): void {
     app.post(namespace, has_body, mk_valid_body_mw(user_schema),
         function (req: restify.Request, res: restify.Response, next: restify.Next) {
-            const User: Query = collections['user_tbl'];
+            const User: Query = c.collections['user_tbl'];
 
             User.create(req.body).exec((error, user: IUser) => {
                 if (error) return next(fmtError(error));
@@ -30,7 +30,7 @@ export function create(app: restify.Server, namespace: string = ""): void {
 export function read(app: restify.Server, namespace: string = ""): void {
     app.get(namespace, has_auth(),
         function (req: restify.Request, res: restify.Response, next: restify.Next) {
-            const User: Query = collections['user_tbl'];
+            const User: Query = c.collections['user_tbl'];
 
             User.findOne({email: req['user_id']},
                 (error: WLError, user: IUser) => {
@@ -57,7 +57,7 @@ export function update(app: restify.Server, namespace: string = ""): void {
             else if (!req.body || !Object.keys(req.body).length)
                 return res.json(400, {error: 'ValidationError', error_message: 'Body required'}) && next();
 
-            const User: Query = collections['user_tbl'];
+            const User: Query = c.collections['user_tbl'];
 
             async.waterfall([
                 cb => User.findOne({email: req['user_id']},
@@ -80,7 +80,7 @@ export function update(app: restify.Server, namespace: string = ""): void {
 export function del(app: restify.Server, namespace: string = ""): void {
     app.del(namespace, has_auth(),
         function (req: restify.Request, res: restify.Response, next: restify.Next) {
-            const User: Query = collections['user_tbl'];
+            const User: Query = c.collections['user_tbl'];
 
             async.waterfall([
                 cb => AccessToken().logout({user_id: req['user_id']}, cb),

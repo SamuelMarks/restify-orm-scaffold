@@ -1,11 +1,14 @@
 import * as supertest from 'supertest';
 import {expect} from 'chai';
 import * as async from 'async';
-import {main, all_models_and_routes} from './../../../main';
+import {IModelRoute} from 'nodejs-utils';
+import {strapFramework} from 'restify-utils';
+import {all_models_and_routes, strapFrameworkKwargs, IObjectCtor, c} from './../../../main';
 import {AuthTestSDK} from './../auth/auth_test_sdk';
 import {AccessToken} from './../../../api/auth/models';
 import {user_mocks} from './user_mocks';
-import {IModelRoute} from 'nodejs-utils';
+
+declare var Object: IObjectCtor;
 
 const user_models_and_routes: IModelRoute = {
     user: all_models_and_routes['user'],
@@ -15,20 +18,23 @@ const user_models_and_routes: IModelRoute = {
 process.env.NO_SAMPLE_DATA = true;
 
 describe('User::routes', () => {
-    before(done => main(user_models_and_routes,
-        (app, connections) => {
+    before(done => strapFramework(Object.assign({}, strapFrameworkKwargs, {
+        models_and_routes: user_models_and_routes,
+        createSampleData: false,
+        callback: (app, connections, _collections) => {
             this.connections = connections;
+            c.collections = _collections;
             this.app = app;
             this.sdk = new AuthTestSDK(this.app);
-            return done();
+            done();
         }
-    ));
+    })));
 
     // Deregister database adapter connections
     after(done =>
         this.connections && async.parallel(Object.keys(this.connections).map(
             connection => this.connections[connection]._adapter.teardown
-        ), done)
+        ), done) || done()
     );
 
     describe('/api/user', () => {
@@ -67,7 +73,7 @@ describe('User::routes', () => {
                     ,
                     (r, cb) => {
                         if (r.statusCode / 100 >= 3) return cb(new Error(JSON.stringify(r.text, null, 4)));
-                        expect(Object.keys(r.body).sort()).to.deep.equal(['createdAt', 'email', 'title', 'updatedAt']);
+                        expect(r.body).to.have.all.keys(['createdAt', 'email', 'title', 'updatedAt']);
                         expect(r.body.title).equals('Mr');
                         return cb();
                     }

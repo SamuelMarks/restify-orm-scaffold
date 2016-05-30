@@ -1,21 +1,27 @@
 import * as supertest from 'supertest';
 import {Response} from 'supertest';
 import {expect} from 'chai';
-import {main} from './../../../main';
+import {strapFramework} from 'restify-utils';
+import {strapFrameworkKwargs} from './../../../main';
+
+interface IObjectCtor extends ObjectConstructor {
+    assign(target: any, ...sources: any[]): any;
+}
+declare var Object: IObjectCtor;
 
 process.env.NO_SAMPLE_DATA = true;
 
 describe('Root::routes', () => {
-    before(done =>
-        main(
-            {},
-            app => {
-                this.app = app;
-                return done();
-            },
-            true
-        )
-    );
+    before(done => strapFramework(Object.assign({}, strapFrameworkKwargs, {
+        models_and_routes: {},
+        createSampleData: false,
+        skip_db: true,
+        use_redis: false,
+        callback: app => {
+            this.app = app;
+            done();
+        }
+    })));
 
     describe('/', () => {
         it('should get version', done =>
@@ -27,6 +33,7 @@ describe('Root::routes', () => {
                     if (err) return done(err);
                     try {
                         expect(res.status).to.be.equal(200);
+                        expect(res.body).to.be.an.instanceOf(Object);
                         expect(res.body).to.have.property('version');
                         expect(
                             res.body.version.split('.').length - 1

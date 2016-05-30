@@ -3,12 +3,13 @@ import {Response} from 'supertest';
 import * as chai from 'chai';
 import {expect} from 'chai';
 import * as async from 'async';
+import {sanitiseSchema} from 'nodejs-utils';
+import {fmtError} from 'restify-errors';
+import * as chaiJsonSchema from 'chai-json-schema';
 import {ITestSDK} from './auth_test_sdk.d';
 import {cb} from '../../share_interfaces.d';
 import {IUser, IUserBase} from '../../../api/user/models.d';
 import {user_mocks} from '../user/user_mocks';
-import * as chaiJsonSchema from 'chai-json-schema';
-import {sanitiseSchema} from 'nodejs-utils';
 import {User} from '../../../api/user/models';
 
 const user_schema = sanitiseSchema(require('./../user/schema.json'), User._omit);
@@ -29,7 +30,8 @@ export class AuthTestSDK implements ITestSDK {
             .expect('Content-Type', /json/)
             .end((err, res: Response) => {
                 if (err) return cb(err);
-                else if (res.error) return cb(res.error);
+                else if (res.error) return cb(fmtError(res.error));
+
                 try {
                     expect(res.status).to.be.equal(201);
                     expect(res.body).to.be.an('object');

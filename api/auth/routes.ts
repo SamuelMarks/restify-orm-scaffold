@@ -3,7 +3,7 @@ import * as async from 'async';
 import {Query} from 'waterline';
 import {has_body, mk_valid_body_mw} from 'restify-validators';
 import {NotFoundError, fmtError} from 'restify-errors';
-import {collections} from './../../main';
+import {c} from './../../main';
 import {has_auth} from './middleware';
 import {AccessToken} from './models';
 
@@ -12,7 +12,7 @@ const user_schema: tv4.JsonSchema = require('./../../test/api/user/schema');
 export function login(app: restify.Server, namespace: string = ""): void {
     app.post(namespace, has_body, mk_valid_body_mw(user_schema),
         function (req: restify.Request, res: restify.Response, next: restify.Next) {
-            const User: Query = collections['user_tbl'];
+            const User: Query = c.collections['user_tbl'];
 
             async.waterfall([
                 cb => User.findOne({
