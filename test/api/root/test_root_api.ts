@@ -2,28 +2,30 @@ import * as supertest from 'supertest';
 import {Response} from 'supertest';
 import {expect} from 'chai';
 import {strapFramework} from 'restify-utils';
-import {strapFrameworkKwargs} from './../../../main';
+import {strapFrameworkKwargs, IObjectCtor} from './../../../main';
 
-interface IObjectCtor extends ObjectConstructor {
-    assign(target: any, ...sources: any[]): any;
-}
 declare var Object: IObjectCtor;
 
 process.env.NO_SAMPLE_DATA = true;
 
 describe('Root::routes', () => {
-    before(done => strapFramework(Object.assign({}, strapFrameworkKwargs, {
-        models_and_routes: {},
-        createSampleData: false,
-        skip_db: true,
-        use_redis: false,
-        callback: app => {
-            this.app = app;
-            done();
-        }
-    })));
+    before(done =>
+        strapFramework(Object.assign({}, strapFrameworkKwargs, {
+            models_and_routes: {},
+            createSampleData: false,
+            skip_db: true,
+            use_redis: false,
+            start_app: false,
+            app_name: 'test-root-api',
+            callback: (err, app) => {
+                if (err) return done(err);
+                this.app = app;
+                return done();
+            }
+        }))
+    );
 
-    describe('/', () => {
+    describe('/', () =>
         it('should get version', done =>
             supertest(this.app)
                 .get('/')
@@ -44,6 +46,6 @@ describe('Root::routes', () => {
                         done(err, res.body);
                     }
                 })
-        );
-    });
+        )
+    );
 });

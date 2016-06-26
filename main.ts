@@ -61,11 +61,12 @@ export const redis_cursors: { redis: redis.RedisClient } = {
     redis: null
 };
 
-export const c: {collections: Query[]} = {collections: null};
+export const c: {collections: Query[], connections: Array<any>} = {collections: null, connections: null};
 
 let _cache = {};
 
-export const strapFrameworkKwargs: IStrapFramework = <IStrapFramework>Object.freeze({
+export const strapFrameworkKwargs: IStrapFramework = Object.freeze(<IStrapFramework>{
+    app_name: package_.name,
     models_and_routes: all_models_and_routes,
     logger: logger,
     _cache: _cache,

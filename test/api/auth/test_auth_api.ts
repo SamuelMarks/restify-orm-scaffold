@@ -6,6 +6,8 @@ import {all_models_and_routes, strapFrameworkKwargs, IObjectCtor, c} from './../
 import {AuthTestSDK} from './../auth/auth_test_sdk';
 import {AccessToken} from './../../../api/auth/models';
 import {user_mocks} from './../user/user_mocks';
+import {tearDownConnections} from '../../shared_tests';
+import ITest = Mocha.ITest;
 
 declare var Object: IObjectCtor;
 
@@ -16,31 +18,37 @@ const user_models_and_routes: IModelRoute = {
 
 process.env.NO_SAMPLE_DATA = true;
 
+
 describe('Auth::routes', () => {
-    before(done => strapFramework(Object.assign({}, strapFrameworkKwargs, {
-        models_and_routes: user_models_and_routes,
-        createSampleData: false,
-        callback: (app, connections, _collections) => {
-            this.connections = connections;
-            c.collections = _collections;
-            this.app = app;
-            this.sdk = new AuthTestSDK(this.app);
-            done();
-        }
-    })));
+    before(done =>
+        async.series([
+            cb => tearDownConnections(c.connections, cb),
+            cb => strapFramework(Object.assign({}, strapFrameworkKwargs, {
+                models_and_routes: user_models_and_routes,
+                createSampleData: false,
+                start_app: false,
+                use_redis: true,
+                app_name: 'test-auth-api',
+                callback: (err, app, connections, _collections) => {
+                    if (err) return cb(err);
+                    c.connections = connections;
+                    c.collections = _collections;
+                    this.app = app;
+                    this.sdk = new AuthTestSDK(this.app);
+                    return cb();
+                }
+            }))], done)
+    );
 
     // Deregister database adapter connections
-    after(done =>
-        this.connections && async.parallel(Object.keys(this.connections).map(
-            connection => this.connections[connection]._adapter.teardown
-        ), done) || done()
-    );
+    after(done => tearDownConnections(c.connections, done));
 
     describe('/api/auth', () => {
         beforeEach(done => this.sdk.unregister_all(user_mocks.successes, () => done()));
         afterEach(done => this.sdk.unregister_all(user_mocks.successes, () => done()));
 
-        it('POST should login user', (done) => {
+        it('POST should login user', done => {
+            this.sdk = <ITestSDK>this.sdk;
             async.series([
                     cb => this.sdk.register(user_mocks.successes[1], cb),
                     cb => this.sdk.login(user_mocks.successes[1], cb)
@@ -49,15 +57,15 @@ describe('Auth::routes', () => {
             );
         });
 
-        it('DELETE should logout user', (done) => {
-            const sdk: ITestSDK = this.sdk;
+        it('DELETE should logout user', done => {
+            this.sdk = <ITestSDK>this.sdk;
             async.waterfall([
                     cb => this.sdk.register(user_mocks.successes[1], cb),
-                    (_, cb) => sdk.login(user_mocks.successes[1], (err, res) =>
+                    (_, cb) => this.sdk.login(user_mocks.successes[1], (err, res) =>
                         err ? cb(err) : cb(null, res.body.access_token)
                     ),
                     (access_token, cb) =>
-                        sdk.logout(access_token, (err, res) =>
+                        this.sdk.logout(access_token, (err, res) =>
                             cb(err, access_token)
                         )
                     ,
