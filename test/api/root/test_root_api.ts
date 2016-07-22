@@ -26,7 +26,7 @@ describe('Root::routes', () => {
     );
 
     describe('/', () =>
-        it('should get version', done =>
+        it('should get version', (done: any) =>
             supertest(this.app)
                 .get('/')
                 .expect('Content-Type', /json/)

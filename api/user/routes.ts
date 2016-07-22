@@ -1,13 +1,13 @@
 import * as restify from 'restify';
-import * as async from 'async';
+import {waterfall} from 'async';
 import {Query, WLError} from 'waterline';
 import {has_body, mk_valid_body_mw, mk_valid_body_mw_ignore, remove_from_body} from 'restify-validators';
-import {c} from './../../main';
 import {isShallowSubset} from 'nodejs-utils';
 import {NotFoundError, fmtError} from 'restify-errors';
 import {has_auth} from './../auth/middleware';
 import {AccessToken} from './../auth/models';
 import {IUser} from './models.d';
+import {c} from '../../main';
 
 
 const user_schema: tv4.JsonSchema = require('./../../test/api/user/schema');
@@ -32,8 +32,7 @@ export function read(app: restify.Server, namespace: string = ""): void {
         function (req: restify.Request, res: restify.Response, next: restify.Next) {
             const User: Query = c.collections['user_tbl'];
 
-            User.findOne({email: req['user_id']},
-                (error: WLError, user: IUser) => {
+            User.findOne({email: req['user_id']}, (error: WLError, user: IUser) => {
                     if (error) return next(fmtError(error));
                     else if (!user) return next(new NotFoundError('User'));
                     res.json(user);
@@ -59,7 +58,7 @@ export function update(app: restify.Server, namespace: string = ""): void {
 
             const User: Query = c.collections['user_tbl'];
 
-            async.waterfall([
+            waterfall([
                 cb => User.findOne({email: req['user_id']},
                     (err: WLError, user: IUser) => {
                         if (err) cb(err);
@@ -82,10 +81,10 @@ export function del(app: restify.Server, namespace: string = ""): void {
         function (req: restify.Request, res: restify.Response, next: restify.Next) {
             const User: Query = c.collections['user_tbl'];
 
-            async.waterfall([
+            waterfall([
                 cb => AccessToken().logout({user_id: req['user_id']}, cb),
                 cb => User.destroy({email: req['user_id']}, cb)
-            ], (error) => {
+            ], error => {
                 if (error) return next(fmtError(error));
                 res.send(204);
                 return next()

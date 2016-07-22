@@ -1,4 +1,4 @@
-import * as async from 'async';
+import {series} from 'async';
 import {RequestOptions, IncomingMessage, ClientRequest, request as http_request} from 'http';
 import * as url from 'url';
 import {trivial_merge} from 'nodejs-utils';
@@ -101,7 +101,7 @@ export class SampleData {
 
     registerLogin(cb) {
         const body = JSON.stringify(this.userMocks[0]);
-        async.series([
+        series([
             callback => httpPOST(
                 this.mergeOptions({path: '/api/user'}),
                 'registerLogin::user', body, () => callback()

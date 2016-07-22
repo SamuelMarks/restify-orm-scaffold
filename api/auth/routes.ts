@@ -1,11 +1,11 @@
 import * as restify from 'restify';
-import * as async from 'async';
+import {waterfall} from 'async';
 import {Query} from 'waterline';
 import {has_body, mk_valid_body_mw} from 'restify-validators';
 import {NotFoundError, fmtError} from 'restify-errors';
-import {c} from './../../main';
 import {has_auth} from './middleware';
 import {AccessToken} from './models';
+import {c} from '../../main';
 
 const user_schema: tv4.JsonSchema = require('./../../test/api/user/schema');
 
@@ -14,7 +14,7 @@ export function login(app: restify.Server, namespace: string = ""): void {
         function (req: restify.Request, res: restify.Response, next: restify.Next) {
             const User: Query = c.collections['user_tbl'];
 
-            async.waterfall([
+            waterfall([
                 cb => User.findOne({
                         email: req.body.email,
                         password: req.body.password // LOL

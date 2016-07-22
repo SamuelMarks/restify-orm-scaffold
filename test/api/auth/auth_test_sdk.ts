@@ -2,7 +2,7 @@ import * as supertest from 'supertest';
 import {Response} from 'supertest';
 import * as chai from 'chai';
 import {expect} from 'chai';
-import * as async from 'async';
+import {map, waterfall, series} from 'async';
 import {sanitiseSchema} from 'nodejs-utils';
 import {fmtError} from 'restify-errors';
 import * as chaiJsonSchema from 'chai-json-schema';
@@ -118,8 +118,8 @@ export class AuthTestSDK implements ITestSDK {
     }
 
     unregister_all(users: Array<IUser | IUserBase>, done: cb) {
-        async.map(users, (user, callback) =>
-                async.waterfall([
+        map(users, (user, callback) =>
+                waterfall([
                     cb => this.login(user, (err, res) =>
                         err ? cb(err) : cb(null, res.body.access_token)
                     ),
@@ -139,7 +139,7 @@ export class AuthTestSDK implements ITestSDK {
             num_or_done = 0;
         }
         user = user || user_mocks.successes[num_or_done];
-        async.series([
+        series([
                 cb => this.register(user, cb),
                 cb => this.login(user, cb)
             ], (err, results: Array<Response>) => {

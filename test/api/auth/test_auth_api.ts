@@ -1,4 +1,4 @@
-import * as async from 'async';
+import {series, waterfall} from 'async';
 import {IModelRoute} from 'nodejs-utils';
 import {strapFramework} from 'restify-utils';
 import {ITestSDK} from './auth_test_sdk.d';
@@ -7,7 +7,8 @@ import {AuthTestSDK} from './../auth/auth_test_sdk';
 import {AccessToken} from './../../../api/auth/models';
 import {user_mocks} from './../user/user_mocks';
 import {tearDownConnections} from '../../shared_tests';
-import ITest = Mocha.ITest;
+import {Collection, Connection} from 'waterline';
+import {Server} from 'restify';
 
 declare var Object: IObjectCtor;
 
@@ -18,10 +19,11 @@ const user_models_and_routes: IModelRoute = {
 
 process.env.NO_SAMPLE_DATA = true;
 
-
 describe('Auth::routes', () => {
+    let sdk: ITestSDK, app: Server;
+
     before(done =>
-        async.series([
+        series([
             cb => tearDownConnections(c.connections, cb),
             cb => strapFramework(Object.assign({}, strapFrameworkKwargs, {
                 models_and_routes: user_models_and_routes,
@@ -29,12 +31,12 @@ describe('Auth::routes', () => {
                 start_app: false,
                 use_redis: true,
                 app_name: 'test-auth-api',
-                callback: (err, app, connections, _collections) => {
+                callback: (err, _app, _connections: Connection[], _collections: Collection[]) => {
                     if (err) return cb(err);
-                    c.connections = connections;
+                    c.connections = _connections;
                     c.collections = _collections;
-                    this.app = app;
-                    this.sdk = new AuthTestSDK(this.app);
+                    app = _app;
+                    sdk = new AuthTestSDK(app);
                     return cb();
                 }
             }))], done)
@@ -44,28 +46,27 @@ describe('Auth::routes', () => {
     after(done => tearDownConnections(c.connections, done));
 
     describe('/api/auth', () => {
-        beforeEach(done => this.sdk.unregister_all(user_mocks.successes, () => done()));
-        afterEach(done => this.sdk.unregister_all(user_mocks.successes, () => done()));
+        beforeEach(done => sdk.unregister_all(user_mocks.successes, () => done()));
+        afterEach(done => sdk.unregister_all(user_mocks.successes, () => done()));
 
         it('POST should login user', done => {
-            this.sdk = <ITestSDK>this.sdk;
-            async.series([
-                    cb => this.sdk.register(user_mocks.successes[1], cb),
-                    cb => this.sdk.login(user_mocks.successes[1], cb)
+            sdk = <ITestSDK>sdk;
+            series([
+                    cb => sdk.register(user_mocks.successes[1], cb),
+                    cb => sdk.login(user_mocks.successes[1], cb)
                 ],
                 done
             );
         });
 
         it('DELETE should logout user', done => {
-            this.sdk = <ITestSDK>this.sdk;
-            async.waterfall([
-                    cb => this.sdk.register(user_mocks.successes[1], cb),
-                    (_, cb) => this.sdk.login(user_mocks.successes[1], (err, res) =>
+            waterfall([
+                    cb => sdk.register(user_mocks.successes[1], err => cb(err)),
+                    cb => sdk.login(user_mocks.successes[1], (err, res) =>
                         err ? cb(err) : cb(null, res.body.access_token)
                     ),
                     (access_token, cb) =>
-                        this.sdk.logout(access_token, (err, res) =>
+                        sdk.logout(access_token, (err, res) =>
                             cb(err, access_token)
                         )
                     ,

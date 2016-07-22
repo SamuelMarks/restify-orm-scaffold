@@ -1,5 +1,5 @@
 import * as redis from 'redis';
-import {Query} from 'waterline';
+import {Collection, Connection} from 'waterline';
 import * as waterline_postgres from 'waterline-postgresql';
 import {createLogger} from 'bunyan';
 import {trivial_merge, uri_to_config, populateModelRoutes, IModelRoute} from 'nodejs-utils';
@@ -61,7 +61,7 @@ export const redis_cursors: { redis: redis.RedisClient } = {
     redis: null
 };
 
-export const c: {collections: Query[], connections: Array<any>} = {collections: null, connections: null};
+export const c: {collections: Collection[], connections: Connection[]} = {collections: [], connections: []};
 
 let _cache = {};
 
@@ -87,7 +87,7 @@ export const strapFrameworkKwargs: IStrapFramework = Object.freeze(<IStrapFramew
 
 if (require.main === module) {
     strapFramework(Object.assign({
-        start_app: true, callback: (_app, _connections, _collections) =>
+        start_app: true, callback: (_app, _connections: Connection[], _collections: Collection[]) =>
             c.collections = _collections
     }, strapFrameworkKwargs));
 }
