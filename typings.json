@@ -1,21 +1,10 @@
 {
     "globalDependencies": {
-        "async": "registry:dt/async#1.4.2+20160602152629",
-        "bunyan": "registry:dt/bunyan#0.0.0+20160412155112",
-        "chai": "registry:dt/chai#3.4.0+20160601211834",
-        "chai-json-schema": "github:SamuelMarks/cust_typings/chai-json-schema/chai-json-schema.d.ts",
-        "mocha": "registry:dt/mocha#2.2.5+20160720003353",
-        "node": "registry:dt/node#6.0.0+20160720070758",
-        "redis": "registry:dt/redis#0.12.1+20160619023014",
-        "restify": "registry:dt/restify#2.0.0+20160709054712",
-        "superagent": "registry:dt/superagent#1.4.0+20160317120654",
-        "supertest": "registry:dt/supertest#1.1.0+20160317120654",
-        "tv4": "registry:dt/tv4#1.2.5+20160317120654"
+        "chai-json-schema": "github:SamuelMarks/cust_typings/chai-json-schema/chai-json-schema.d.ts"
     },
     "dependencies": {
-        "node-uuid": "registry:npm/node-uuid#1.4.7+20160503013124",
         "nodejs-utils": "github:SamuelMarks/nodejs-utils/nodejs-utils.d.ts",
-        "restify-errors": "github:SamuelMarks/restify-errors/restify-errors.d.ts",
+        "restify-errors": "github:SamuelMarks/restify-errors/restify-errors.d.ts#master",
         "restify-utils": "github:SamuelMarks/restify-utils/restify-utils.d.ts",
         "restify-validators": "github:SamuelMarks/restify-validators/restify-validators.d.ts",
         "waterline": "github:SamuelMarks/cust_typings/waterline/waterline.d.ts",

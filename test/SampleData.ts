@@ -1,37 +1,32 @@
-import {series} from 'async';
-import {RequestOptions, IncomingMessage, ClientRequest, request as http_request} from 'http';
 import * as url from 'url';
-import {trivial_merge} from 'nodejs-utils';
-import {HttpError} from 'restify';
-import {user_mocks} from './api/user/user_mocks';
+import { series } from 'async';
+import { ClientRequest, IncomingMessage, request as http_request, RequestOptions } from 'http';
+import { trivial_merge } from 'nodejs-utils';
+import { HttpError } from 'restify';
+import { AsyncResultCallback, Connection, Query } from 'waterline';
+import { c } from '../main';
 
 export interface ISampleData {
     token: string;
-    userMocks: Array<any>;
-    login(cb);
-    registerLogin(cb);
-    unregister(cb);
+    login(user: string, cb);
+    registerLogin(user: string, cb);
+    unregister(user: string, cb);
 }
 
-interface callback {
-    (res: IncomingMessageF): void;
-}
-
-interface cb {
-    (err: IncomingMessageF, res?: IncomingMessageF): void;
-}
+type Callback = (res: IncomingMessageF) => void;
+type Cb = (err: IncomingMessageF, res?: IncomingMessageF) => void;
 
 export interface IncomingMessageF extends IncomingMessage {
     func_name: string;
 }
 
-function httpF(method: 'POST'|'PUT'|'PATCH'|'HEAD'|'GET'|'DELETE') {
+const httpF = (method: 'POST' | 'PUT' | 'PATCH' | 'HEAD' | 'GET' | 'DELETE') => {
     return (options: RequestOptions,
             func_name: string,
-            body_or_cb: string|callback|cb|AsyncResultCallback<{}>,
-            cb?: callback|cb|AsyncResultCallback<{}>): ClientRequest => {
+            body_or_cb: string | Callback | Cb | AsyncResultCallback<{}>,
+            cb?: Callback | Cb | AsyncResultCallback<{}>): ClientRequest => {
         if (!cb) {
-            cb = <callback|cb|AsyncResultCallback<{}>>body_or_cb;
+            cb = body_or_cb as Callback | Cb | AsyncResultCallback<{}>;
             body_or_cb = null;
         }
 
@@ -39,59 +34,49 @@ function httpF(method: 'POST'|'PUT'|'PATCH'|'HEAD'|'GET'|'DELETE') {
 
         if (body_or_cb)
             if (!options)
-                options = {'headers': {'Content-Length': Buffer.byteLength(<string>body_or_cb)}};
+                options = {headers: {'Content-Length': Buffer.byteLength(body_or_cb as string)}};
             else if (!options.headers)
-                options.headers = {'Content-Length': Buffer.byteLength(<string>body_or_cb)};
+                options.headers = {'Content-Length': Buffer.byteLength(body_or_cb as string)};
             else if (!options.headers['Content-Length'])
-                options.headers['Content-Length'] = Buffer.byteLength(<string>body_or_cb);
+                options.headers['Content-Length'] = Buffer.byteLength(body_or_cb as string);
 
         const req = http_request(options, (res: IncomingMessageF) => {
             res.func_name = func_name;
-            if (!res) return (<cb>cb)(res);
-            else if ((res.statusCode / 100 | 0) > 3) return (<cb>cb)(res);
-            return (<cb>cb)(null, res);
+            if (!res) return (cb as Cb)(res);
+            /* tslint:disable:no-bitwise */
+            else if ((res.statusCode / 100 | 0) > 3) return (cb as Cb)(res);
+            return (cb as Cb)(null, res);
         });
-        //body_or_cb ? req.end(<string>body_or_cb, cb) : req.end();
+        // body_or_cb ? req.end(<string>body_or_cb, cb) : req.end();
+        /* tslint:disable:no-unused-expression */
         body_or_cb && req.write(body_or_cb);
         req.end();
 
         return req;
-    }
-}
+    };
+};
 
-const httpHEAD = httpF('HEAD'),
-    httpGET = httpF('GET'),
-    httpPOST = httpF('POST'),
-    httpPUT = httpF('PUT'),
-    httpPATCH = httpF('PATCH'),
-    httpDELETE = httpF('DELETE');
+const httpHEAD = httpF('HEAD');
+const httpGET = httpF('GET');
+const httpPOST = httpF('POST');
+const httpPUT = httpF('PUT');
+const httpPATCH = httpF('PATCH');
+const httpDELETE = httpF('DELETE');
 
-export class SampleData {
-    public userMocks = user_mocks.successes;
+export class SampleData implements ISampleData {
     public token: string;
     private uri: url.Url;
 
-    constructor(uri: string) {
+    constructor(uri: string, connections: Connection[], collections: Query[]) {
         this.uri = url.parse(uri);
+        c.connections = connections;
+        c.collections = collections;
     }
 
-    private mergeOptions(options, body?) {
-        return trivial_merge({
-            host: this.uri.host === `[::]:${this.uri.port}` ? 'localhost' :
-                `${this.uri.host.substr(this.uri.host.lastIndexOf(this.uri.port) + this.uri.port.length)}`,
-            port: parseInt(this.uri.port),
-            headers: trivial_merge({
-                'Content-Type': 'application/json',
-                'Content-Length': body ? Buffer.byteLength(body) : 0
-            }, this.token ? {'X-Access-Token': this.token} : {})
-        }, options)
-    }
-
-    login(cb) {
-        const body = JSON.stringify(this.userMocks[0]);
+    public login(user: string, cb) {
         httpPOST(
             this.mergeOptions({path: '/api/auth'}),
-            'login::auth', body, (err, res) => {
+            'login', user, (err, res) => {
                 if (err) return cb(err);
                 else if (!res.headers) return cb(new HttpError('HTTP request failed'));
                 this.token = res.headers['x-access-token'];
@@ -99,36 +84,60 @@ export class SampleData {
             });
     }
 
-    registerLogin(cb) {
-        const body = JSON.stringify(this.userMocks[0]);
-        series([
-            callback => httpPOST(
-                this.mergeOptions({path: '/api/user'}),
-                'registerLogin::user', body, () => callback()
-            ),
-            callback => this.login(callback),
-        ], (err, res: Array<IncomingMessageF>) => {
+    public logout(access_token: string, cb) {
+        const options = this.mergeOptions({path: '/api/auth'});
+        options.headers['x-access-token'] = access_token || this.token;
+        httpDELETE(options, 'logout', (err, res) => {
             if (err) return cb(err);
-            else if (res[1].headers) this.token = res[1].headers['x-access-token'];
+            else if (!res.headers) return cb(new HttpError('HTTP request failed'));
+            delete this.token;
             return cb(err, this.token);
         });
     }
 
-    unregister(cb) {
-        const body = JSON.stringify(this.userMocks[0]);
-
-        const unregisterUser = () => httpDELETE(
+    public register(user: string, cb) {
+        httpPOST(
             this.mergeOptions({path: '/api/user'}),
-            'unregister::user', body, (error, result) => {
-                if (error) return cb(error);
+            'registerLogin', user, cb
+        );
+    }
+
+    public registerLogin(user: string, cb) {
+        series([
+            callback => this.register(user, callback),
+            callback => this.login(user, callback),
+        ], (err, res: IncomingMessageF[]) => {
+            if (err) return cb(err);
+            else if (res[1].headers) this.token = res[1].headers['x-access-token'] as string;
+            return cb(err, this.token);
+        });
+    }
+
+    public unregister(user: string, cb) {
+        const unregisterUser = (_user, callback) => httpDELETE(
+            this.mergeOptions({path: '/api/user'}),
+            'unregister', _user, (error, result) => {
+                if (error) return callback(error);
                 else if (result.statusCode !== 204)
-                    return cb(new Error(`Expected status code of 204 got ${result.statusCode}`));
-                return cb(error, result.statusMessage);
+                    return callback(new Error(`Expected status code of 204 got ${result.statusCode}`));
+                return callback(error, result.statusMessage);
             }
         );
 
-        this.token ? unregisterUser() : this.login((err, access_token: string) =>
-            err ? cb() : unregisterUser()
+        this.token ? unregisterUser(user, cb) : this.login(user, (err, access_token: string) =>
+            err ? cb() : unregisterUser(user, cb)
         );
+    }
+
+    private mergeOptions(options, body?) {
+        return trivial_merge({
+            host: this.uri.host === `[::]:${this.uri.port}` ? 'localhost' :
+                `${this.uri.host.substr(this.uri.host.lastIndexOf(this.uri.port) + this.uri.port.length)}`,
+            port: parseInt(this.uri.port, 10),
+            headers: trivial_merge({
+                'Content-Type': 'application/json',
+                'Content-Length': body ? Buffer.byteLength(body) : 0
+            }, this.token ? {'X-Access-Token': this.token} : {})
+        }, options);
     }
 }

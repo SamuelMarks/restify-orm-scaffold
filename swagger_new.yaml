@@ -1,0 +1,227 @@
+swagger: '2.0'
+info:
+  title: restify_waterline_scaffold API
+  description: Simple user+auth scaffold using Waterline, Restify and Redis
+  version: "1.0.0"
+
+schemes:
+  - http
+  - https
+
+basePath: /api
+produces:
+  - application/json
+paths:
+  /user:
+    get:
+      summary: Retrieve user data
+      parameters:
+        - name: X-Access-Token
+          in: header
+          description: Valid Access Token from which user can be found at
+          required: true
+          type: string
+          #$ref: '#/definitions/AccessToken'
+      responses:
+        200:
+          description: User associated with that access token
+          schema:
+            $ref: '#/definitions/User'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create user
+      parameters:
+        - name: user
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        201:
+          description: Created user
+          schema:
+            $ref: '#/definitions/User'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Update user
+      parameters:
+        - name: user
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        200:
+          description: Updated user
+          schema:
+            $ref: '#/definitions/User'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Delete user
+      parameters:
+        - name: X-Access-Token
+          in: header
+          description: Valid Access Token from which user can be found at
+          required: true
+          type: string
+      responses:
+        204:
+          description: User associated with that access token
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /auth:
+    post:
+      summary: Login user
+      parameters:
+        - name: user
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        201:
+          description: Created user
+          schema:
+            $ref: '#/definitions/Token'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Logout user
+      parameters:
+        - name: X-Access-Token
+          in: header
+          description: Valid Access Token from which user can be found at
+          required: true
+          type: string
+      responses:
+        204:
+          description: User associated with that access token
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /message/{to}:
+    parameters:
+      - in: path
+        name: to
+        description: Author to communicate with
+        required: true
+        type: string
+    get:
+      summary: Retrieve message thread
+      parameters:
+        - name: X-Access-Token
+          in: header
+          description: Valid Access Token from which user can be found at
+          required: true
+          type: string
+          #$ref: '#/definitions/AccessToken'
+      responses:
+        200:
+          description: Message thread
+          schema:
+            $ref: '#/definitions/Post'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Send message
+      parameters:
+        - name: user
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        201:
+          description: Created user
+          schema:
+            $ref: '#/definitions/User'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /message/{to}/{uuid}:
+    parameters:
+      - in: path
+        name: to
+        description: Author to communicate with
+        required: true
+        type: string
+      - in: path
+        name: uuid
+        description: uuid of message
+        required: true
+        type: string
+    put:
+      summary: Update message
+      responses:
+        200:
+          description: Updated message thread
+          schema:
+            $ref: '#/definitions/User'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Delete message
+      responses:
+        200:
+          description: Updated message thread
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+definitions:
+  User:
+    type: object
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      title:
+        type: string
+    required:
+      - email
+      - password
+  Post:
+    type: object
+    properties:
+      uuid:
+        type: string
+      message:
+        type: string
+      datetime:
+        type: date
+      author:
+        type: string
+  Token:
+    type: object
+    properties:
+       access_token:
+         type: string
+    required:
+      - access_token
+  Error:
+    type: object
+    properties:
+      error:
+        type: string
+      error_message:
+        type: string

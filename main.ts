@@ -1,59 +1,106 @@
+import { homedir } from 'os';
+import * as path from 'path';
+import * as fs from 'fs';
 import * as redis from 'redis';
-import {Collection, Connection} from 'waterline';
+import { Collection, Connection, Query } from 'waterline';
 import * as waterline_postgres from 'waterline-postgresql';
-import {createLogger} from 'bunyan';
-import {trivial_merge, uri_to_config, populateModelRoutes, IModelRoute} from 'nodejs-utils';
-import {SampleData} from './test/SampleData';
-import {strapFramework, IStrapFramework} from 'restify-utils';
+import { createLogger } from 'bunyan';
+import { Server } from 'restify';
+import { NotFoundError } from 'restify-errors';
+import { IModelRoute, populateModelRoutes, uri_to_config } from 'nodejs-utils';
+import { IStrapFramework, strapFramework } from 'restify-utils';
+import { SampleData } from './test/SampleData';
+import { user_mocks } from './test/api/user/user_mocks';
+import { saltSeeker, shakeSalt } from './api/user/utils';
 
-export const package_ = require('./package');
+/* tslint:disable:no-var-requires */
+export const package_ = Object.freeze(require('./package'));
 export const logger = createLogger({
     name: 'main'
 });
 
-if (!process.env.NO_DEBUG) {
-    var i = {};
-    Object.keys(process.env)
-        .sort()
-        .forEach(function (k) {
-            i[k] = process.env[k];
-        });
-    logger.info(JSON.stringify(i, null, 4));
-    logger.info('------------');
-}
+/* tslint:disable:no-unused-expression */
+process.env['NO_DEBUG'] || logger.info(Object.keys(process.env).sort().map(k => ({[k]: process.env[k]})));
 
 export interface IObjectCtor extends ObjectConstructor {
     assign(target: any, ...sources: any[]): any;
 }
 
-declare var Object: IObjectCtor;
+declare const Object: IObjectCtor;
 
 // Database waterline_config
-const db_uri: string = process.env.RDBMS_URI || process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const db_uri: string = process.env['RDBMS_URI'] || process.env['DATABASE_URL'] || process.env['POSTGRES_URL'];
 
+const db_path = (r => !!r ? r : path.join(homedir(), '.glaucoma_risk_calculator'))(
+    process.argv.length > 2 ? process.argv.slice(2).reduce((acc, arg) =>
+        ['--dbpath', '-d'].indexOf(acc) > -1 ? acc = arg : null
+    ) : path.join(homedir(), '.glaucoma_risk_calculator'));
 
-export const waterline_config = {
-    /* TODO: Put this all in tiered environment-variable powered .json file */
+const init_db_dir = (db_type, cb) => {
+    ['nedb', 'tingo'].indexOf(db_type) > -1 ?
+        fs.access(db_path, err => {
+            if (!err) return cb();
+            fs.mkdir(db_path, e => cb(err));
+        }) : cb();
+};
+
+/* TODO: Put this all in tiered environment-variable powered .json file */
+
+export const waterline_config = Object.freeze({
     adapters: {
         url: db_uri,
         postgres: waterline_postgres
     },
     defaults: {
-        migrate: 'create',
+        migrate: 'create'
     },
     connections: {
-        postgres: trivial_merge({
-            adapter: 'postgres'
-        }, !process.env.DOKKU_POSTGRES_REST_API_DB_PORT_5432_TCP_ADDR ?
-            uri_to_config(db_uri) : {
-            "database": db_uri.substr(db_uri.lastIndexOf('/') + 1),
-            "host": process.env.DOKKU_POSTGRES_REST_API_DB_PORT_5432_TCP_ADDR,
-            "identity": "postgres",
-            "password": process.env.DOKKU_POSTGRES_REST_API_DB_ENV_POSTGRES_PASSWORD,
-            "user": "postgres",
-        })
+        main_db: {
+            adapter: 'postgres',
+            connection: uri_to_config(db_uri),
+            pool: {
+                min: 2,
+                max: 20
+            }
+        }
     }
-};
+});
+
+// Other config examples:
+Object.freeze({
+    adapters: {
+        tingo: 'waterline_tango' // "import * as waterline_tingo from 'sails-tingo'"
+    },
+    connections: {
+        main_db: {
+            adapter: 'tingo',
+            connection: db_path,
+            dbPath: db_path,
+            nativeObjectID: false,
+            memStore: false
+        }
+    },
+    defaults: {
+        migrate: 'safe' // drop, alter, create, safe
+    }
+});
+
+Object.freeze({
+    adapters: {
+        nedb: 'waterline_nedb' // "import * as waterline_nedb from 'waterline-nedb';"
+    },
+    connections: {
+        main_db: {
+            adapter: 'nedb',
+            connection: db_path,
+            dbPath: db_path,
+            inMemoryOnly: false
+        }
+    },
+    defaults: {
+        migrate: 'safe'
+    }
+});
 
 export const all_models_and_routes: IModelRoute = populateModelRoutes('.');
 
@@ -61,33 +108,48 @@ export const redis_cursors: { redis: redis.RedisClient } = {
     redis: null
 };
 
-export const c: {collections: Collection[], connections: Connection[]} = {collections: [], connections: []};
+export const c: { collections: Query[], connections: Connection[] } = {collections: [], connections: []};
 
-let _cache = {};
-
-export const strapFrameworkKwargs: IStrapFramework = Object.freeze(<IStrapFramework>{
+const _cache = {};
+export const cache = {};
+const default_user: string = JSON.stringify(user_mocks.successes[98]);
+export const strapFrameworkKwargs: IStrapFramework = Object.freeze({
     app_name: package_.name,
     models_and_routes: all_models_and_routes,
-    logger: logger,
-    _cache: _cache,
-    package_: package_,
+    logger,
+    _cache,
+    package_,
     root: '/api',
     skip_db: false,
     collections: c.collections,
-    waterline_config: waterline_config,
+    waterline_config: waterline_config as any,
     use_redis: true,
-    redis_cursors: redis_cursors,
+    redis_cursors,
     createSampleData: true,
-    SampleData: SampleData,
-    sampleDataToCreate: (sampleData: any) => [
-        cb => sampleData.unregister(cb),
-        cb => sampleData.registerLogin(cb)
+    SampleData,
+    sampleDataToCreate: (sampleData: SampleData) => [
+        cb => saltSeeker(saltSeekerCb(cb)),
+        cb => sampleData.unregister(default_user, (err, res) => cb(err, 'removed default user; next: adding')),
+        cb => sampleData.registerLogin(default_user, cb)
     ]
-});
+} as IStrapFramework);
+
+export const saltSeekerCb = cb => (err, salt) => {
+    if (err)
+        return err instanceof NotFoundError ?
+            shakeSalt((e, s) => s ? cb(e, cache['global_salt'] = s) : cb(e)) :
+            cb(err);
+    return salt ? cb(err, cache['global_salt'] = salt) : cb(err);
+};
 
 if (require.main === module) {
-    strapFramework(Object.assign({
-        start_app: true, callback: (_app, _connections: Connection[], _collections: Collection[]) =>
-            c.collections = _collections
-    }, strapFrameworkKwargs));
+    init_db_dir(waterline_config.connections.main_db.adapter, _ =>
+        strapFramework(Object.assign({
+            start_app: true, callback: (err, _app: Server, _connections: Connection[], _collections: Collection[]) => {
+                if (err) throw err;
+                c.connections = _connections;
+                c.collections = _collections;
+            }
+        }, strapFrameworkKwargs))
+    );
 }
