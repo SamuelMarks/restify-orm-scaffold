@@ -18,8 +18,10 @@ export const hash_password = (record: { password: string, email?: string }, call
         : callback();
 };
 
-export const verify_password = (hashed: string, password: string): boolean => {
-    return false;
+export const verify_password = (hashed: string, password: string): Promise<boolean> => {
+    if (password.startsWith('$argon2'))
+        [hashed, password] = [password, hashed];
+    return argon2.verify(hashed, password);
 };
 
 export const User = {
