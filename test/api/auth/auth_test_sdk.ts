@@ -1,18 +1,17 @@
-import * as supertest from 'supertest';
-import { Response } from 'supertest';
+import { mapSeries, series, waterfall } from 'async';
 import * as chai from 'chai';
 import { expect } from 'chai';
-import { mapSeries, series, waterfall } from 'async';
-import { sanitiseSchema } from 'nodejs-utils';
-import { fmtError } from 'restify-errors';
 import * as chaiJsonSchema from 'chai-json-schema';
-import { IAuthSdk } from './auth_test_sdk.d';
-import { cb } from '../../share_interfaces.d';
+import { getError, HttpStrResp, IncomingMessageError, sanitiseSchema, superEndCb, TCallback } from 'nodejs-utils';
+import * as supertest from 'supertest';
+import { Response } from 'supertest';
+
+import { User } from '../../../api/user/models';
 import { IUser, IUserBase } from '../../../api/user/models.d';
 import { user_mocks } from '../user/user_mocks';
-import { Salt, User } from '../../../api/user/models';
-import { saltSeeker } from '../../../api/user/utils';
-import { saltSeekerCb } from '../../../main';
+import { IAuthSdk } from './auth_test_sdk.d';
+// import { saltSeeker } from '../../../api/user/utils';
+// import { saltSeekerCb } from '../../../main';
 
 /* tslint:disable:no-var-requires */
 const user_schema = sanitiseSchema(require('./../user/schema.json'), User._omit);
@@ -24,42 +23,32 @@ export class AuthTestSDK implements IAuthSdk {
     constructor(private app) {
     }
 
-    public register(user: IUserBase, cb: cb) {
-        const _register = callback => {
-            if (!user) return callback(new TypeError('user argument to register must be defined'));
+    public register(user: IUserBase, callback: TCallback<Error | IncomingMessageError, Response>) {
+        if (user == null) return callback(new TypeError('user argument to register must be defined'));
 
-            supertest(this.app)
-                .post('/api/user')
-                .set('Connection', 'keep-alive')
-                .send(user)
-                .expect('Content-Type', /json/)
-                .end((err, res: Response) => {
-                    if (err) return cb(err);
-                    else if (res.error) return cb(fmtError(res.error));
+        supertest(this.app)
+            .post('/api/user')
+            .set('Connection', 'keep-alive')
+            .send(user)
+            .expect('Content-Type', /json/)
+            .end((err, res: Response) => {
+                if (err != null) return superEndCb(callback)(err, res);
+                else if (res.error) return callback(getError(res.error));
 
-                    try {
-                        expect(res.status).to.be.equal(201);
-                        expect(res.body).to.be.an('object');
-                        expect(res.body).to.be.jsonSchema(user_schema);
-                    } catch (e) {
-                        err = e as Chai.AssertionError;
-                    } finally {
-                        callback(err, res);
-                    }
-                });
-        };
-
-        series(
-            [callb => saltSeeker(saltSeekerCb(callb)),
-                callb => _register(callb)], (error: Error, result: any[][2]) => {
-                if (error) return cb(error);
-                return cb(null, result[1]);
-            }
-        );
+                try {
+                    expect(res.status).to.be.equal(201);
+                    expect(res.body).to.be.an('object');
+                    expect(res.body).to.be.jsonSchema(user_schema);
+                } catch (e) {
+                    err = e as Chai.AssertionError;
+                } finally {
+                    superEndCb(callback)(err, res);
+                }
+            });
     }
 
-    public login(user: IUserBase, cb: cb) {
-        if (!user) return cb(new TypeError('user argument to login must be defined'));
+    public login(user: IUserBase, callback: TCallback<Error | IncomingMessageError, Response>) {
+        if (user == null) return callback(new TypeError('user argument to login must be defined'));
 
         supertest(this.app)
             .post('/api/auth')
@@ -68,8 +57,8 @@ export class AuthTestSDK implements IAuthSdk {
             .expect('Content-Type', /json/)
             .expect(201)
             .end((err, res: Response) => {
-                if (err) return cb(err);
-                else if (res.error) return cb(res.error);
+                if (err != null) return superEndCb(callback)(err, res);
+                else if (res.error) return callback(getError(res.error));
                 try {
                     expect(res.body).to.be.an('object');
                     expect(res.body).to.have.property('access_token');
@@ -77,21 +66,22 @@ export class AuthTestSDK implements IAuthSdk {
                 } catch (e) {
                     err = e as Chai.AssertionError;
                 } finally {
-                    cb(err, res);
+                    superEndCb(callback)(err, res);
                 }
             });
     }
 
-    public get_user(access_token: string, user: IUser | IUserBase, cb: cb) {
-        if (!access_token) return cb(new TypeError('access_token argument to get_user must be defined'));
+    public get_user(access_token: string,
+                    user: IUser | IUserBase, callback: TCallback<Error | IncomingMessageError, Response>) {
+        if (access_token == null) return callback(new TypeError('access_token argument to get_user must be defined'));
 
         supertest(this.app)
             .get('/api/user')
             .set('X-Access-Token', access_token)
             .set('Connection', 'keep-alive')
             .end((err, res: Response) => {
-                if (err) return cb(err);
-                else if (res.error) return cb(res.error);
+                if (err != null) return superEndCb(callback)(err, res);
+                else if (res.error) return callback(getError(res.error));
                 try {
                     expect(res.body).to.be.an('object');
                     Object.keys(user).map(
@@ -101,21 +91,21 @@ export class AuthTestSDK implements IAuthSdk {
                 } catch (e) {
                     err = e as Chai.AssertionError;
                 } finally {
-                    cb(err, res);
+                    superEndCb(callback)(err, res);
                 }
             });
     }
 
-    public get_all(access_token: string, cb: cb) {
-        if (!access_token) return cb(new TypeError('access_token argument to get_all must be defined'));
+    public get_all(access_token: string, callback: TCallback<Error | IncomingMessageError, Response>) {
+        if (access_token == null) return callback(new TypeError('access_token argument to get_all must be defined'));
 
         supertest(this.app)
             .get('/api/users')
             .set('X-Access-Token', access_token)
             .set('Connection', 'keep-alive')
             .end((err, res: Response) => {
-                if (err) return cb(err);
-                else if (res.error) return cb(res.error);
+                if (err != null) return superEndCb(callback)(err, res);
+                else if (res.error) return callback(getError(res.error));
                 try {
                     expect(res.body).to.be.an('object');
                     expect(res.body).to.have.property('users');
@@ -124,82 +114,84 @@ export class AuthTestSDK implements IAuthSdk {
                 } catch (e) {
                     err = e as Chai.AssertionError;
                 } finally {
-                    cb(err, res);
+                    superEndCb(callback)(err, res);
                 }
             });
     }
 
-    public logout(access_token: string, cb: cb) {
-        if (!access_token) return cb(new TypeError('access_token argument to logout must be defined'));
+    public logout(access_token: string, callback: HttpStrResp) {
+        if (access_token == null) return callback(new TypeError('access_token argument to logout must be defined'));
+        else if (typeof access_token !== 'string')
+            return callback(new TypeError(`Expected \`access_token\` of string, got: ${typeof access_token}`));
 
         supertest(this.app)
             .delete('/api/auth')
             .set('Connection', 'keep-alive')
             .set('X-Access-Token', access_token)
             .expect(204)
-            .end(cb);
+            .end(callback);
     }
 
-    public unregister(ident: { access_token?: string, user_id?: string }, cb: cb) {
-        if (!ident) return cb(new TypeError('ident argument to unregister must be defined'));
+    public unregister(ident: {access_token?: string, user_id?: string},
+                      callback: TCallback<Error | IncomingMessageError, Response>) {
+        if (ident == null) return callback(new TypeError('ident argument to unregister must be defined'));
 
-        if (ident.access_token)
+        if (ident.access_token != null)
             supertest(this.app)
                 .delete('/api/user')
                 .set('Connection', 'keep-alive')
                 .set('X-Access-Token', ident.access_token)
                 .expect(204)
-                .end(cb);
+                .end((err, res) => superEndCb(callback)(err, res));
         else
             supertest(this.app)
                 .delete('/api/user')
                 .set('Connection', 'keep-alive')
-                .send({email: ident.user_id})
+                .send({ email: ident.user_id })
                 .expect(204)
-                .end(cb);
+                .end((err, res) => superEndCb(callback)(err, res));
     }
 
-    public unregister_all(users: Array<IUser | IUserBase>, done: cb) {
-        mapSeries(users, (user, callback) =>
-                waterfall([
-                    cb => this.login(user, (err, res) =>
-                        err ? cb(err) : cb(null, res.body.access_token)
+    public unregister_all(users: Array<IUser | IUserBase>,
+                          callback: TCallback<Error | IncomingMessageError, Response>) {
+        mapSeries(users as any, (user: IUserBase, callb) =>
+            waterfall([
+                    call_back => this.login(user, (err, res) =>
+                        err == null ? call_back(null, res.header['x-access-token']) : call_back(err)
                     ),
-                    (access_token, cb) =>
-                        this.unregister({access_token}, (err, res) =>
-                            cb(err, access_token)
-                        )
-                    ,
-                ], callback)
-            , done
-        );
+                    (access_token, call_back) => this.unregister({ access_token }, (err, res) =>
+                        call_back(err, access_token)
+                    ),
+                ], callb
+            ), callback as any);
     }
 
-    public register_login(user: IUserBase, num_or_done, done?: cb) {
-        if (!done) {
-            done = num_or_done;
+    public register_login(user: IUserBase, num_or_done: number | TCallback<Error | IncomingMessageError, string>,
+                          callback?: TCallback<Error | IncomingMessageError, string>) {
+        if (callback == null) {
+            callback = num_or_done as TCallback<Error | IncomingMessageError, string>;
             num_or_done = 0;
         }
-        user = user || user_mocks.successes[num_or_done];
+        user = user || user_mocks.successes[num_or_done as number];
         series([
-                cb => this.register(user, cb),
-                cb => this.login(user, cb)
-            ], (err: Error, results: Response[]) => {
-                if (err) return done(err);
-                return done(err, results[1].get('x-access-token'));
-            }
-        );
+            callb => this.register(user, callb),
+            callb => this.login(user, callb)
+        ], (err: Error, results: Response[]) => {
+            if (err != null) return callback(err);
+            return callback(err, results[1].get('x-access-token'));
+        });
     }
 
-    public logout_unregister(user: IUserBase, num_or_done, done?: cb) {
-        if (!done) {
-            done = num_or_done;
+    public logout_unregister(user: IUserBase, num_or_done: number | TCallback<Error | IncomingMessageError, Response>,
+                             callback?: TCallback<Error | IncomingMessageError, Response>) {
+        if (callback == null) {
+            callback = num_or_done as TCallback<Error | IncomingMessageError, Response>;
             num_or_done = 0;
         }
-        user = user || user_mocks.successes[num_or_done];
-        if (!user)
-            return done(new TypeError('user undefined in `logout_unregister`'));
+        user = user || user_mocks.successes[num_or_done as number];
+        if (user == null)
+            return callback(new TypeError('user undefined in `logout_unregister`'));
 
-        this.unregister_all([user], done);
+        this.unregister_all([user], callback);
     }
 }

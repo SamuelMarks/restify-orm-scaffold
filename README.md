@@ -1,25 +1,28 @@
-restify_waterline_scaffold
-==========================
+restify-orm-scaffold
+====================
 
-Simple baseline scaffold to get you started using Waterline and Restify with TypeScript.
+Simple baseline scaffold to get you started using [Waterline](https://github.com/balderdashy/waterline) and/or [TypeORM](https://github.com/typeorm/typeorm) on [restify](https://github.com/restify/node-restify) with [TypeScript](https://github.com/Microsoft/TypeScript).
 
 
 ## Install prerequisites
 
-  0. node & npm (tested with node v4 and npm v3.3.4 on Ubuntu 15.04 x64)
-  1. Run: `npm install -g tsd typescript`
+### Node
+
+  0. node & npm (tested with node v8)
+  1. Run: `npm install -g typings typescript bunyan`
   2. `cd` to directory you've cloned this repo into
   3. Run: `typings install`
   4. Run: `npm install`
+
+### External
+
+  - Database, e.g.: Postgres. Set `RDBMS_URI` env var accordingly.
+  - Redis. Set `REDIS_URI` env var accordingly; otherwise defaults are used.
 
 ## Compile+run app
 
     tsc
     node main.js
-
-Or:
-
-    npm start
 
 ## Misc
 

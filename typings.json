@@ -4,8 +4,8 @@
     },
     "dependencies": {
         "nodejs-utils": "github:SamuelMarks/nodejs-utils/nodejs-utils.d.ts",
-        "restify-errors": "github:SamuelMarks/restify-errors/restify-errors.d.ts#master",
-        "restify-utils": "github:SamuelMarks/restify-utils/restify-utils.d.ts",
+        "custom-restify-errors": "github:SamuelMarks/custom-restify-errors/custom-restify-errors.d.ts#master",
+        "restify-orm-framework": "github:SamuelMarks/restify-orm-framework/restify-orm-framework.d.ts",
         "restify-validators": "github:SamuelMarks/restify-validators/restify-validators.d.ts",
         "waterline": "github:SamuelMarks/cust_typings/waterline/waterline.d.ts",
         "waterline-postgresql": "github:SamuelMarks/cust_typings/waterline-postgresql/waterline-postgresql.d.ts"

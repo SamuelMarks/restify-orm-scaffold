@@ -1,11 +1,9 @@
 import * as supertest from 'supertest';
 import { Response } from 'supertest';
 import { expect } from 'chai';
-import { strapFramework } from 'restify-utils';
+import { strapFramework } from 'restify-orm-framework';
 import { Server } from 'restify';
-import { IObjectCtor, strapFrameworkKwargs } from '../../../main';
-
-declare const Object: IObjectCtor;
+import { strapFrameworkKwargs } from '../../../main';
 
 describe('Root::routes', () => {
     let app: Server;
@@ -13,10 +11,10 @@ describe('Root::routes', () => {
     before(done =>
         strapFramework(Object.assign({}, strapFrameworkKwargs, {
             models_and_routes: {},
-            createSampleData: false,
-            skip_db: true,
-            use_redis: false,
-            start_app: false,
+            skip_waterline: true,
+            skip_typeorm: true,
+            skip_redis: true,
+            skip_start_app: true,
             app_name: 'test-root-api',
             callback: (err, _app: Server) => {
                 if (err) return done(err);
