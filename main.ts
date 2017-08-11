@@ -1,11 +1,11 @@
 import * as waterline_postgres from 'waterline-postgresql';
 import { series } from 'async';
-import { Collection, Connection, Query } from 'waterline';
+import { Connection, Query } from 'waterline';
 import { createLogger } from 'bunyan';
 import { Server } from 'restify';
 import { Connection as TypeOrmConnection } from 'typeorm';
 import { get_models_routes, IModelRoute, populateModelRoutes, raise, uri_to_config } from 'nodejs-utils';
-import { IStrapFramework, strapFramework } from 'restify-orm-framework';
+import { IOrmsOut, IStrapFramework, strapFramework } from 'restify-orm-framework';
 import { Redis } from 'ioredis';
 
 import { user_mocks } from './test/api/user/user_mocks';
@@ -74,19 +74,18 @@ export const strapFrameworkKwargs: IStrapFramework = Object.freeze({
     package_,
     root: '/api',
     skip_waterline: false,
-    skip_typeorm: false,
     waterline_collections: c.collections,
     waterline_config: waterline_config as any,
     typeorm_config: typeorm_config as any,
     skip_redis: false,
     skip_start_app: false,
     skip_app_logging: false,
+    skip_app_version_routes: false,
     redis_cursors,
-    onServerStart: (uri: string, connections: Connection[], collections: Query[],
-                    connection: TypeOrmConnection, _app: Server, next) => {
-        c.connections = connections;
-        c.collections = collections;
-        c.connection = connection;
+    onServerStart: (uri: string, _app: Server, orms_out: IOrmsOut, next) => {
+        c.connections = orms_out.waterline.connection;
+        c.collections = orms_out.waterline.collections;
+        c.connection = orms_out.typeorm.connection;
 
         const authSdk = new AuthTestSDK(_app);
 
@@ -96,20 +95,18 @@ export const strapFrameworkKwargs: IStrapFramework = Object.freeze({
                         'removed default user; next: adding')),
                 cb => authSdk.register_login(default_user, cb),
                 // cb => logger.info(`${_app.name} listening from ${_app.url}`) || cb(void 0)
-            ], (e: Error) => e == null ? next(void 0, _app, connections, collections, connection) : raise(e)
+            ], (e: Error) => e == null ? next(void 0, _app, orms_out) : raise(e)
         );
     }
 });
 
 if (require.main === module)
     strapFramework(Object.assign({
-            start_app: true, callback: (err, _app: Server,
-                                        _connections: Connection[], _collections: Collection[],
-                                        connection: TypeOrmConnection) => {
+        start_app: true, callback: (err, _app: Server, orms_out: IOrmsOut) => {
                 if (err != null) throw err;
-                c.connections = _connections;
-                c.collections = _collections;
-                c.connection = connection;
+                c.connections = orms_out.waterline.connection;
+                c.collections = orms_out.waterline.collections;
+                c.connection = orms_out.typeorm.connection;
                 logger.info('(require.main === module)::strapFramework::callback');
             }
         }, strapFrameworkKwargs)

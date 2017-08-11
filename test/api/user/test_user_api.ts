@@ -2,12 +2,12 @@ import { map, series, waterfall } from 'async';
 import { expect } from 'chai';
 import { IModelRoute } from 'nodejs-utils';
 import { Server } from 'restify';
-import { strapFramework } from 'restify-orm-framework';
+import { IOrmsOut, strapFramework, tearDownWaterlineConnections } from 'restify-orm-framework';
 import * as supertest from 'supertest';
-import { Collection, Connection } from 'waterline';
+import { Connection } from 'waterline';
+
 import { IUserBase } from '../../../api/user/models.d';
 import { all_models_and_routes_as_mr, c, strapFrameworkKwargs } from '../../../main';
-import { tearDownConnections } from '../../shared_tests';
 import { IAuthSdk } from '../auth/auth_test_sdk.d';
 import { AccessToken } from './../../../api/auth/models';
 import { AuthTestSDK } from './../auth/auth_test_sdk';
@@ -28,19 +28,19 @@ describe('User::routes', () => {
 
     before(done =>
         series([
-            cb => tearDownConnections(c.connections, cb),
+            cb => tearDownWaterlineConnections(c.connections, cb),
             cb => strapFramework(Object.assign({}, strapFrameworkKwargs, {
                 models_and_routes,
                 createSampleData: false,
                 skip_start_app: true,
                 skip_redis: false,
-                skip_waterline: false,
                 skip_typeorm: true,
+                skip_waterline: false,
                 app_name: 'test-user-api',
-                callback: (err, _app, _connections: Connection[], _collections: Collection[]) => {
+                callback: (err, _app: Server, orms_out: IOrmsOut) => {
                     if (err != null) return cb(err);
-                    c.connections = _connections;
-                    c.collections = _collections;
+                    c.connections = orms_out.waterline.connection;
+                    c.collections = orms_out.waterline.collections;
 
                     app = _app;
                     sdk = new AuthTestSDK(app);
@@ -48,9 +48,6 @@ describe('User::routes', () => {
                 }
             }))], done)
     );
-
-    // Deregister database adapter connections
-    after(done => tearDownConnections(c.connections, done));
 
     describe('/api/user', () => {
         beforeEach(done => sdk.unregister_all(mocks, () => done()));

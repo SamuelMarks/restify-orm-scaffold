@@ -17,7 +17,7 @@ Simple baseline scaffold to get you started using [Waterline](https://github.com
 ### External
 
   - Database, e.g.: Postgres. Set `RDBMS_URI` env var accordingly.
-  - Redis. Set `REDIS_URI` env var accordingly; otherwise defaults are used.
+  - Redis. Set `REDIS_URL` env var accordingly; otherwise defaults are used.
 
 ## Compile+run app
 
