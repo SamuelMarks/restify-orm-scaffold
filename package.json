@@ -1,6 +1,6 @@
 {
   "name": "restify-orm-scaffold",
-    "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Sample REST API scaffold built on Node.JS in TypeScript with restify and waterline (with TypeORM support).",
   "main": "main.js",
   "author": "Samuel Marks <samuel@offscale.io>",

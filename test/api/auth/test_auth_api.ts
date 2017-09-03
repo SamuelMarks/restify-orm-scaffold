@@ -50,6 +50,8 @@ describe('Auth::routes', () => {
         )
     );
 
+    after('tearDownConnections', done => tearDownConnections(_orms_out.orms_out, done));
+
     describe('/api/auth', () => {
         beforeEach(done => sdk.unregister_all(mocks, () => done()));
         afterEach(done => sdk.unregister_all(mocks, () => done()));

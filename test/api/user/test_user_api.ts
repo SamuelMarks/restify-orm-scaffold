@@ -54,6 +54,8 @@ describe('User::routes', () => {
         )
     );
 
+    after('tearDownConnections', done => tearDownConnections(_orms_out.orms_out, done));
+
     describe('/api/user', () => {
         beforeEach(done => sdk.unregister_all(mocks, () => done()));
         afterEach(done => sdk.unregister_all(mocks, () => done()));
