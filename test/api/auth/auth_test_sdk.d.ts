@@ -1,8 +1,7 @@
-import { HttpStrResp, TCallback } from 'nodejs-utils';
+import { HttpStrResp, IncomingMessageError, TCallback } from 'nodejs-utils';
 import { Response } from 'supertest';
 
 import { IUser, IUserBase } from '../../../api/user/models.d';
-import { IncomingMessageError } from '../../share_interfaces';
 
 export interface IAuthSdk {
     register(user: IUserBase, callback: TCallback<Error | IncomingMessageError, Response>): void;

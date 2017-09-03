@@ -1,12 +1,17 @@
-import { series } from 'async';
+import { series, waterfall } from 'async';
+import { createLogger } from 'bunyan';
 import { expect } from 'chai';
-import { IModelRoute } from 'nodejs-utils';
+import { IModelRoute, model_route_to_map } from 'nodejs-utils';
+import { tearDownConnections } from 'orm-mw';
+import { basename } from 'path';
 import { Server } from 'restify';
-import { IOrmsOut, strapFramework, tearDownWaterlineConnections } from 'restify-orm-framework';
 import { WLError } from 'waterline';
+
+import { AccessToken } from '../../../api/auth/models';
 import { IUserBase } from '../../../api/user/models.d';
+import { _orms_out } from '../../../config';
+import { all_models_and_routes_as_mr, setupOrmApp } from '../../../main';
 import { user_mocks } from '../user/user_mocks';
-import { all_models_and_routes_as_mr, c, strapFrameworkKwargs } from './../../../main';
 import { AuthTestSDK } from './../auth/auth_test_sdk';
 import { IAuthSdk } from './auth_test_sdk.d';
 import IAssertionError = Chai.AssertionError;
@@ -20,34 +25,30 @@ process.env['NO_SAMPLE_DATA'] = 'true';
 
 const mocks: IUserBase[] = user_mocks.successes.slice(0, 10);
 
+const tapp_name = `test::${basename(__dirname)}`;
+const logger = createLogger({ name: tapp_name });
+
 describe('Auth::routes', () => {
     let sdk: IAuthSdk;
 
     before(done =>
-        series([
-                cb => tearDownWaterlineConnections(c.connections, cb),
-                cb => strapFramework(Object.assign({}, strapFrameworkKwargs, {
-                    models_and_routes,
-                    createSampleData: false,
-                    skip_start_app: true,
-                    skip_redis: false,
-                    skip_typeorm: true,
-                    app_name: 'test-auth-api',
-                    callback: (err, _app: Server, orms_out: IOrmsOut) => {
-                        if (err != null) throw err;
-                        c.connections = orms_out.waterline.connection;
-                        c.collections = orms_out.waterline.collections;
-                        sdk = new AuthTestSDK(_app);
-                        return cb();
-                    }
-                }))
+        waterfall([
+                cb => tearDownConnections(_orms_out.orms_out, e => cb(e)),
+                cb => AccessToken.reset() || cb(void 0),
+                cb => setupOrmApp(
+                    model_route_to_map(models_and_routes), { logger },
+                    { skip_start_app: true, app_name: tapp_name, logger },
+                    cb
+                ),
             ],
-            done
+            (err: Error, _app: Server) => {
+                if (err != null) return done(err);
+                AccessToken.reset();
+                sdk = new AuthTestSDK(_app);
+                return done(void 0);
+            }
         )
     );
-
-    // Deregister database adapter connections
-    after(done => tearDownWaterlineConnections(c.connections, done));
 
     describe('/api/auth', () => {
         beforeEach(done => sdk.unregister_all(mocks, () => done()));

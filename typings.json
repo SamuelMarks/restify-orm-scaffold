@@ -3,10 +3,12 @@
         "chai-json-schema": "github:SamuelMarks/cust_typings/chai-json-schema/chai-json-schema.d.ts"
     },
     "dependencies": {
-        "nodejs-utils": "github:SamuelMarks/nodejs-utils/nodejs-utils.d.ts",
-        "custom-restify-errors": "github:SamuelMarks/custom-restify-errors/custom-restify-errors.d.ts#master",
-        "restify-orm-framework": "github:SamuelMarks/restify-orm-framework/restify-orm-framework.d.ts",
+        "custom-restify-errors": "github:SamuelMarks/custom-restify-errors/custom-restify-errors.d.ts",
+        "glaucoma-risk-quiz-engine": "github:glaucoma-australia/glaucoma-risk-calculator-engine/glaucoma-risk-calculator-engine.d.ts",
+        "nodejs-utils": "github:SamuelMarks/nodejs-utils/nodejs-utils.d.ts#master",
+        "orm-mw": "github:SamuelMarks/orm-mw/orm-mw.d.ts#master",
         "restify-validators": "github:SamuelMarks/restify-validators/restify-validators.d.ts",
+        "routes-merger": "github:SamuelMarks/routes-merger/routes-merger.d.ts",
         "waterline": "github:SamuelMarks/cust_typings/waterline/waterline.d.ts",
         "waterline-postgresql": "github:SamuelMarks/cust_typings/waterline-postgresql/waterline-postgresql.d.ts"
     }

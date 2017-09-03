@@ -1,28 +1,25 @@
+import { createLogger } from 'bunyan';
 import { expect } from 'chai';
+import { basename } from 'path';
 import { Server } from 'restify';
-import { strapFramework } from 'restify-orm-framework';
 import * as supertest from 'supertest';
 import { Response } from 'supertest';
-import { strapFrameworkKwargs } from '../../../main';
+
+import { setupOrmApp } from '../../../main';
+
+const tapp_name = `test::${basename(__dirname)}`;
+const logger = createLogger({ name: tapp_name });
 
 describe('Root::routes', () => {
     let app: Server;
 
-    before(done =>
-        strapFramework(Object.assign({}, strapFrameworkKwargs, {
-            models_and_routes: {},
-            createSampleData: false,
-            skip_waterline: true,
-            skip_typeorm: true,
-            skip_redis: true,
-            skip_start_app: true,
-            app_name: 'test-root-api',
-            callback: (err, _app: Server) => {
-                if (err != null) return done(err);
-                app = _app;
-                return done();
-            }
-        }))
+    before(done => setupOrmApp(
+        new Map(), { orms_in: undefined, logger }, { skip_start_app: true, app_name: tapp_name, logger },
+        (err: Error, _app: Server) => {
+            if (err != null) return done(err);
+            app = _app;
+            return done(void 0);
+        })
     );
 
     describe('/', () =>

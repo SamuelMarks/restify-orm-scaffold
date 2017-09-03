@@ -1,5 +1,6 @@
 import { forEachOfLimit } from 'async';
 import { NotFoundError } from 'custom-restify-errors';
+
 import { Response } from 'supertest';
 
 import { IUser, IUserBase } from '../api/user/models.d';

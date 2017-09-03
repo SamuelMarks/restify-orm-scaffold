@@ -1,13 +1,12 @@
 import { series } from 'async';
 import { ClientRequest, IncomingMessage, request as http_request, RequestOptions } from 'http';
-import { TCallback, trivial_merge } from 'nodejs-utils';
+import { IncomingMessageError, trivial_merge } from 'nodejs-utils';
 import { HttpError } from 'restify-errors';
-import { Connection as TypeOrmConnection } from 'typeorm';
 import * as url from 'url';
 import { AsyncResultCallback, Connection, Query } from 'waterline';
 
-import { c } from '../main';
-import { IncomingMessageError } from './share_interfaces.d';
+import { TCallback } from './shared_types';
+import { _orms_out } from '../config';
 
 export interface ISampleData {
     token: string;
@@ -69,15 +68,16 @@ const httpPUT = httpF('PUT');
 const httpPATCH = httpF('PATCH');
 const httpDELETE = httpF('DELETE');
 
+const zip = (a0: any[], a1: any[]) => a0.map((x, i) => [x, a1[i]]);
+
 export class SampleData implements ISampleData {
     public token: string;
     private uri: url.Url;
 
-    constructor(uri: string, connections: Connection[], collections: Query[], connection: TypeOrmConnection) {
+    constructor(uri: string, connection: Connection[], collections: Query[]) {
         this.uri = url.parse(uri);
-        c.connections = connections;
-        c.collections = collections;
-        c.connection = connection;
+        _orms_out.orms_out.waterline.connection = connection;
+        _orms_out.orms_out.waterline.collections = collections;
     }
 
     public login(user: string, callback: TCallback<HttpError, string>) {

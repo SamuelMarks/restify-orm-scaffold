@@ -157,7 +157,7 @@ export class AuthTestSDK implements IAuthSdk {
         mapSeries(users as any, (user: IUserBase, callb) =>
             waterfall([
                     call_back => this.login(user, (err, res) =>
-                        err == null ? call_back(null, res.header['x-access-token']) : call_back(err)
+                        err == null ? call_back(void 0, res.header['x-access-token']) : call_back(err)
                     ),
                     (access_token, call_back) => this.unregister({ access_token }, (err, res) =>
                         call_back(err, access_token)

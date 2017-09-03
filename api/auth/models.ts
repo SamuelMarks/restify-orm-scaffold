@@ -1,22 +1,27 @@
 import { AuthError, GenericError } from 'custom-restify-errors';
-import * as Redis from 'ioredis';
+import { Redis } from 'ioredis';
+
 import { numCb, strCbV, TCallback } from 'nodejs-utils';
 import { RestError } from 'restify-errors';
 import { v4 as uuid_v4 } from 'uuid';
-
-import { redis_cursors } from '../../main';
 
 type LogoutArg = {user_id: string; access_token?: never} | {user_id?: never; access_token: string};
 
 let accessToken: AccessToken;
 
 export class AccessToken {
-    public static get(): AccessToken {
-        if (typeof accessToken === 'undefined') accessToken = new AccessToken();
+    public static reset() {
+        accessToken = undefined;
+        delete global['accessToken'];
+    }
+
+    public static get(cursor: Redis): AccessToken {
+        if (typeof accessToken === 'undefined' || typeof accessToken.redis === 'undefined')
+            accessToken = new AccessToken(cursor);
         return accessToken;
     }
 
-    constructor(private redis: Redis.Redis = redis_cursors.redis as any) {}
+    constructor(private redis: Redis) {}
 
     public findOne(access_token: string, callback: strCbV) {
         return this.redis.get(access_token, (err: Error, user_id: string) => {
