@@ -6,7 +6,6 @@ import { IOrmsOut, tearDownConnections } from 'orm-mw';
 import { basename } from 'path';
 import { Server } from 'restify';
 import * as supertest from 'supertest';
-import { Connection } from 'waterline';
 
 import { IUserBase } from '../../../api/user/models.d';
 import { _orms_out } from '../../../config';
@@ -41,7 +40,6 @@ describe('User::routes', () => {
                     cb
                 ),
                 (_app: Server, orms_out: IOrmsOut, cb) => {
-                    AccessToken.reset();
                     app = _app;
                     _orms_out.orms_out = orms_out;
 
@@ -126,11 +124,12 @@ describe('User::routes', () => {
                             cb(err, access_token)
                         )
                     ,
-                    (access_token, cb) => AccessToken
-                        .get(_orms_out.orms_out.redis.connection)
-                        .findOne(access_token, e =>
-                            cb(e != null && e.message === 'Nothing associated with that access token' ? null : e)
-                        ),
+                    (access_token, cb) =>
+                        AccessToken
+                            .get(_orms_out.orms_out.redis.connection)
+                            .findOne(access_token, e =>
+                                cb(e != null && e.message === 'Nothing associated with that access token' ? null : e)
+                            ),
                     cb => sdk.login(mocks[3], e => cb(
                         e != null && typeof e['text'] !== 'undefined' && e['text'] !== JSON.stringify({
                             code: 'NotFoundError', message: 'User not found'

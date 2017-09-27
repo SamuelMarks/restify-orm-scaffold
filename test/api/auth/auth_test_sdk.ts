@@ -6,8 +6,10 @@ import { getError, HttpStrResp, IncomingMessageError, sanitiseSchema, superEndCb
 import * as supertest from 'supertest';
 import { Response } from 'supertest';
 
+import * as auth_routes from '../../../api/auth/routes';
 import { User } from '../../../api/user/models';
 import { IUser, IUserBase } from '../../../api/user/models.d';
+import * as user_routes from '../../../api/user/routes';
 import { user_mocks } from '../user/user_mocks';
 import { IAuthSdk } from './auth_test_sdk.d';
 // import { saltSeeker } from '../../../api/user/utils';
@@ -26,6 +28,7 @@ export class AuthTestSDK implements IAuthSdk {
     public register(user: IUserBase, callback: TCallback<Error | IncomingMessageError, Response>) {
         if (user == null) return callback(new TypeError('user argument to register must be defined'));
 
+        expect(user_routes.create).to.be.an.instanceOf(Function);
         supertest(this.app)
             .post('/api/user')
             .set('Connection', 'keep-alive')
@@ -50,6 +53,7 @@ export class AuthTestSDK implements IAuthSdk {
     public login(user: IUserBase, callback: TCallback<Error | IncomingMessageError, Response>) {
         if (user == null) return callback(new TypeError('user argument to login must be defined'));
 
+        expect(auth_routes.login).to.be.an.instanceOf(Function);
         supertest(this.app)
             .post('/api/auth')
             .set('Connection', 'keep-alive')
@@ -75,6 +79,7 @@ export class AuthTestSDK implements IAuthSdk {
                     user: IUser | IUserBase, callback: TCallback<Error | IncomingMessageError, Response>) {
         if (access_token == null) return callback(new TypeError('access_token argument to get_user must be defined'));
 
+        expect(user_routes.read).to.be.an.instanceOf(Function);
         supertest(this.app)
             .get('/api/user')
             .set('X-Access-Token', access_token)
@@ -99,6 +104,7 @@ export class AuthTestSDK implements IAuthSdk {
     public get_all(access_token: string, callback: TCallback<Error | IncomingMessageError, Response>) {
         if (access_token == null) return callback(new TypeError('access_token argument to get_all must be defined'));
 
+        expect(user_routes.getAll).to.be.an.instanceOf(Function);
         supertest(this.app)
             .get('/api/users')
             .set('X-Access-Token', access_token)
@@ -124,6 +130,7 @@ export class AuthTestSDK implements IAuthSdk {
         else if (typeof access_token !== 'string')
             return callback(new TypeError(`Expected \`access_token\` of string, got: ${typeof access_token}`));
 
+        expect(auth_routes.logout).to.be.an.instanceOf(Function);
         supertest(this.app)
             .delete('/api/auth')
             .set('Connection', 'keep-alive')
@@ -136,6 +143,7 @@ export class AuthTestSDK implements IAuthSdk {
                       callback: TCallback<Error | IncomingMessageError, Response>) {
         if (ident == null) return callback(new TypeError('ident argument to unregister must be defined'));
 
+        expect(auth_routes.logout).to.be.an.instanceOf(Function);
         if (ident.access_token != null)
             supertest(this.app)
                 .delete('/api/user')

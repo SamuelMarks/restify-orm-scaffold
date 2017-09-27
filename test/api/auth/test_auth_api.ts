@@ -2,7 +2,7 @@ import { series, waterfall } from 'async';
 import { createLogger } from 'bunyan';
 import { expect } from 'chai';
 import { IModelRoute, model_route_to_map } from 'nodejs-utils';
-import { tearDownConnections } from 'orm-mw';
+import { IOrmsOut, tearDownConnections } from 'orm-mw';
 import { basename } from 'path';
 import { Server } from 'restify';
 import { WLError } from 'waterline';
@@ -35,18 +35,18 @@ describe('Auth::routes', () => {
         waterfall([
                 cb => tearDownConnections(_orms_out.orms_out, e => cb(e)),
                 cb => AccessToken.reset() || cb(void 0),
-                cb => setupOrmApp(
-                    model_route_to_map(models_and_routes), { logger },
+                cb => setupOrmApp(model_route_to_map(models_and_routes), { logger },
                     { skip_start_app: true, app_name: tapp_name, logger },
                     cb
                 ),
-            ],
-            (err: Error, _app: Server) => {
-                if (err != null) return done(err);
-                AccessToken.reset();
-                sdk = new AuthTestSDK(_app);
-                return done(void 0);
-            }
+                (_app: Server, orms_out: IOrmsOut, cb) => {
+                    _orms_out.orms_out = orms_out;
+
+                    sdk = new AuthTestSDK(_app);
+
+                    return cb(void 0);
+                },
+            ], done
         )
     );
 

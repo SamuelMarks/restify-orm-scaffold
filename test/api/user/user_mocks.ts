@@ -1,4 +1,5 @@
 import * as faker from 'faker';
+
 import { IUserBase } from '../../../api/user/models.d';
 
 export const user_mocks: {successes: IUserBase[], failures: Array<{}>} = {
