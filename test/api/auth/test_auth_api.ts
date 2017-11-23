@@ -8,7 +8,7 @@ import { Server } from 'restify';
 import { WLError } from 'waterline';
 
 import { AccessToken } from '../../../api/auth/models';
-import { IUserBase } from '../../../api/user/models.d';
+import { User } from '../../../api/user/models';
 import { _orms_out } from '../../../config';
 import { all_models_and_routes_as_mr, setupOrmApp } from '../../../main';
 import { user_mocks } from '../user/user_mocks';
@@ -23,7 +23,7 @@ const models_and_routes: IModelRoute = {
 
 process.env['NO_SAMPLE_DATA'] = 'true';
 
-const mocks: IUserBase[] = user_mocks.successes.slice(0, 10);
+const mocks: User[] = user_mocks.successes.slice(0, 10);
 
 const tapp_name = `test::${basename(__dirname)}`;
 const logger = createLogger({ name: tapp_name });
@@ -51,6 +51,7 @@ describe('Auth::routes', () => {
     );
 
     after('tearDownConnections', done => tearDownConnections(_orms_out.orms_out, done));
+    after('closeApp', done => sdk.app.close(done));
 
     describe('/api/auth', () => {
         beforeEach(done => sdk.unregister_all(mocks, () => done()));

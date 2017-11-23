@@ -3,40 +3,44 @@ import { fmtError, NotFoundError } from 'custom-restify-errors';
 import { TCallback } from 'nodejs-utils';
 import { IOrmReq } from 'orm-mw';
 import * as restify from 'restify';
-import { Query, WLError } from 'waterline';
+import { WLError } from 'waterline';
 
 import { AccessToken } from '../auth/models';
-import { IUser } from './models.d';
+import { User } from './models';
 
-export interface IPostUser {
-    access_token: string;
-    user: IUser;
-}
-
-export const post = (req: restify.Request & IOrmReq & {body?: IPostUser}, callback: TCallback<Error, IPostUser>) => {
-    const User: Query = req.getOrm().waterline.collections['user_tbl'];
-
+export const post = (req: restify.Request & IOrmReq & {body?: User}, callback: TCallback<Error, User>) => {
     waterfall([
-            cb => User.create(req.body).exec((error: WLError, _user: IUser) => {
-                if (error != null) return cb(error);
-                else if (_user == null) return cb(new NotFoundError('User'));
-                return cb(void 0, _user);
-            }),
-            (_user: IUser, cb) =>
-                AccessToken.get(req.getOrm().redis.connection).add(_user.email, _user.roles, 'login',
-                    (err: Error, access_token: string) =>
-                        err != null ? cb(err) : cb(void 0, { access_token, user: _user })
-                )
-        ], (error: Error | WLError, result: IPostUser) => {
+            cb => {
+                const user = new User();
+                Object.keys(req.body).map(k => user[k] = req.body[k]);
+                return req.getOrm().typeorm.connection.manager
+                    .getRepository(User)
+                    .save(user)
+                    .then(() => cb(void 0, user))
+                    .catch(cb);
+            },
+            (user: User, cb) => req.getOrm().typeorm.connection.manager
+                .getRepository(User)
+                .findOne(user)
+                .then((_user: User) => cb(void 0, _user))
+                .catch(cb),
+            (user: User, cb) =>
+                AccessToken
+                    .get(req.getOrm().redis.connection)
+                    .add(user.email, User.rolesAsStr(user.roles), 'login',
+                        (err: Error, access_token: string) =>
+                            err != null ? cb(err) : cb(void 0, Object.assign(user, { access_token }))
+                    )
+        ], (error: Error | WLError, user: User) => {
             if (error != null)
                 return callback(fmtError(error));
-            else if (result == null)
+            else if (user == null)
                 return callback(new NotFoundError('User|AccessToken'));
-            else if (result.user == null)
+            else if (user.email == null)
                 return callback(new NotFoundError('User!'));
-            else if (result.access_token == null)
+            else if (user.access_token == null)
                 return callback(new NotFoundError('AccessToken'));
-            return callback(void 0, result);
+            return callback(void 0, user);
         }
     );
 };

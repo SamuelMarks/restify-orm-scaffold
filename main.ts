@@ -8,7 +8,7 @@ import { AccessToken } from './api/auth/models';
 
 import { AuthTestSDK } from './test/api/auth/auth_test_sdk';
 import { user_mocks } from './test/api/user/user_mocks';
-import { IUserBase } from './api/user/models.d';
+import { User } from './api/user/models';
 import * as config from './config';
 import { getOrmMwConfig } from './config';
 
@@ -44,7 +44,7 @@ export const setupOrmApp = (models_and_routes: Map<string, any>,
                 AccessToken.reset();
 
                 const authSdk = new AuthTestSDK(app);
-                const default_user: IUserBase = user_mocks.successes[0];
+                const default_user: User = user_mocks.successes[0];
 
                 series([
                         callb => authSdk.unregister_all([default_user], (err: Error & {status: number}) =>

@@ -1,18 +1,46 @@
 import * as Logger from 'bunyan';
-import { WaterlineError } from 'custom-restify-errors';
+import { uri_to_config } from 'nodejs-utils';
 import { IormMwConfig, IOrmsOut, RequestHandler } from 'orm-mw';
+import { Server } from 'restify';
 import { IRoutesMergerConfig } from 'routes-merger';
-import { ConfigOptions, WLError } from 'waterline';
-import * as waterline_postgres from 'waterline-postgresql';
+
+import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 
 /* TODO: Put this all in tiered environment-variable powered .json file */
 export const db_uri: string = process.env['RDBMS_URI'] || process.env['DATABASE_URL'] || process.env['POSTGRES_URL'];
 
+export const typeorm_config: PostgresConnectionOptions = Object.freeze(
+    Object.assign(Object.entries(uri_to_config(db_uri))
+            .map((kv: [string, any]) => ({ [kv[0] === 'user' ? 'username' : kv[0]]: kv[1] }))
+            .reduce((a, b) => Object.assign(a, b), {}),
+        {
+            type: 'postgres',
+            autoSchemaSync: true,
+            synchronize: true,
+            logging: { logQueries: true }
+        }
+    ) as any as PostgresConnectionOptions
+);
+
+// import * as sequelize from 'sequelize';
+export const sequelize_config /*: sequelize.Options*/ = {
+    dialect: 'postgres',
+    define: {
+        timestamps: false
+    }
+};
+
+/*
+"waterline": "https://api.github.com/repos/SamuelMarks/waterline/tarball/c91bdf46d400180ae7e800f684f8fb44f8fed9a5",
+"waterline-postgresql": "^0.50.0"
+ */
+/*import { ConfigOptions, WLError } from 'waterline';
+import * as waterline_postgres from 'waterline-postgresql';*/
 // Database waterline_config
-export const waterline_config: ConfigOptions = Object.freeze({
+export const waterline_config /*: ConfigOptions*/ = Object.freeze({
     adapters: {
         url: db_uri,
-        postgres: waterline_postgres
+        postgres: undefined // waterline_postgres
     },
     defaults: {
         migrate: 'create'
@@ -27,7 +55,7 @@ export const waterline_config: ConfigOptions = Object.freeze({
             }
         }
     }
-} as any as ConfigOptions);
+}); // as any as ConfigOptions
 
 // ONLY USE `_orms_out` FOR TESTS!
 export const _orms_out: {orms_out: IOrmsOut} = { orms_out: undefined };
@@ -43,13 +71,16 @@ export const getOrmMwConfig = (models: Map<string, any>, logger: Logger,
         },
         sequelize: {
             skip: true,
+            config: sequelize_config,
+            uri: db_uri
         },
         typeorm: {
-            skip: true
+            skip: false,
+            config: typeorm_config
         },
         waterline: {
-            skip: false,
-            config: waterline_config
+            skip: true/*,
+            config: waterline_config*/
         }
     },
     callback: (e: Error, mw: RequestHandler, orms_out: IOrmsOut) => {
@@ -58,11 +89,11 @@ export const getOrmMwConfig = (models: Map<string, any>, logger: Logger,
             throw e;
         }
         _orms_out.orms_out = orms_out;
-        return cb(void 0, _app => {
+        return cb(void 0, (_app: Server) => {
             _app.use(mw);
-            _app.on('WLError', (req, res, err: WLError, next) =>
+            /*_app.on('WLError', (req, res, err: WLError, next: Next) =>
                 next(new WaterlineError(err))
-            );
+            );*/
             return _app;
         }, orms_out);
     }

@@ -1,53 +1,33 @@
 import * as argon2 from 'argon2';
-import { IUser } from './models.d';
+import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryColumn } from 'typeorm';
+
 import { argon2_options } from './utils';
 
-export const hash_password = (record: {password: string, email?: string}, callback): void => {
-    const hash = cb => argon2.hash(record.password, argon2_options).then(hashed => {
-        record.password = hashed;
-        return cb();
-    }).catch(cb);
+@Entity('user_tbl')
+export class User {
+    public static _omit: string[] = ['password'];
+    public static rolesAsStr = (roles: string[]): string => roles && roles.length ?
+        roles.filter(role => role && role.length).join('::') : '';
 
-    return record != null && record.password != null && !record.password.startsWith('$argon2') ?
-        hash(callback) : callback();
-};
+    @PrimaryColumn({ type: 'varchar' })
+    public email: string;
 
-export const verify_password = (hashed: string, password: string): Promise<boolean> => {
-    if (password.startsWith('$argon2'))
-        [hashed, password] = [password, hashed];
-    return argon2.verify(hashed, password);
-};
+    @Column({ type: 'varchar', nullable: true, select: false })
+    public password: string;
 
-export const User = {
-    identity: 'user_tbl',
-    connection: 'main_db',
-    _omit: ['password'],
-    attributes: {
-        title: {
-            type: 'string'
-        },
-        email: {
-            type: 'string',
-            required: true,
-            primaryKey: true
-        },
-        password: {
-            type: 'string',
-            required: true
-        },
-        roles: {
-            type: 'string',
-            defaultsTo: 'registered;'
-        },
-        toJSON: function toJSON() {
-            const user: IUser = this.toObject();
-            User._omit.map(k => delete user[k]);
-            for (const key in user)
-                if (user.hasOwnProperty(key) && user[key] == null) delete user[key];
-            return user;
-        }
-    },
-    beforeValidate: hash_password,
-    beforeCreate: hash_password,
-    beforeUpdate: hash_password
-};
+    @Column('varchar', { nullable: true })
+    public title?: string;
+
+    @Column('simple-array', { nullable: false, 'default': 'registered' })
+    public roles: string[];
+
+    // Might get attached for tests or in middleware; NOT present in db
+    public access_token?: string;
+
+    @BeforeUpdate()
+    @BeforeInsert()
+    private async hashPassword?() {
+        this.password = this.password.startsWith('$argon2') ? this.password
+            : await argon2.hash(this.password, argon2_options);
+    }
+}

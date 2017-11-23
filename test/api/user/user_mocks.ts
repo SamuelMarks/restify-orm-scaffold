@@ -1,8 +1,7 @@
 import * as faker from 'faker';
+import { User } from '../../../api/user/models';
 
-import { IUserBase } from '../../../api/user/models.d';
-
-export const user_mocks: {successes: IUserBase[], failures: Array<{}>} = {
+export const user_mocks: {successes: User[], failures: Array<{}>} = {
     failures: [
         {},
         { email: 'foo@bar.com ' },
@@ -10,9 +9,9 @@ export const user_mocks: {successes: IUserBase[], failures: Array<{}>} = {
         { email: 'foo@bar.com', password: 'foo', bad_prop: true }
     ],
     successes: (() => {
-        const a: IUserBase[] = [];
+        const a: User[] = [];
         for (let i = 0; i < 100; i++)
-            a.push({ email: faker.internet.email(), password: faker.internet.password() });
+            a.push({ email: faker.internet.email(), password: faker.internet.password(), roles: ['registered'] });
         return a;
     })()
 };

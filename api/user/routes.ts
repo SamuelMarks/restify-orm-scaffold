@@ -1,16 +1,15 @@
-import { waterfall } from 'async';
-import { fmtError, NotFoundError } from 'custom-restify-errors';
+import { series } from 'async';
+import { fmtError, NotFoundError, restCatch } from 'custom-restify-errors';
 import { isShallowSubset } from 'nodejs-utils';
 import { IOrmReq } from 'orm-mw';
 import * as restify from 'restify';
-import { has_body, mk_valid_body_mw, mk_valid_body_mw_ignore, remove_from_body } from 'restify-validators';
+import { has_body, mk_valid_body_mw } from 'restify-validators';
 import { JsonSchema } from 'tv4';
-import { Query, WLError } from 'waterline';
 
 import { has_auth } from '../auth/middleware';
 import { AccessToken } from '../auth/models';
-import { IUser } from './models.d';
-import { IPostUser, post } from './sdk';
+import { User } from './models';
+import { post } from './sdk';
 
 /* tslint:disable:no-var-requires */
 const user_schema: JsonSchema = require('./../../test/api/user/schema');
@@ -18,10 +17,10 @@ const user_schema: JsonSchema = require('./../../test/api/user/schema');
 export const create = (app: restify.Server, namespace: string = ''): void => {
     app.post(namespace, has_body, mk_valid_body_mw(user_schema),
         (req: restify.Request & IOrmReq, res: restify.Response, next: restify.Next) => {
-            post(req, (err, result: IPostUser) => {
+            post(req, (err, user: User) => {
                 if (err != null) return next(err);
-                res.setHeader('X-Access-Token', result.access_token);
-                res.json(201, result.user);
+                res.setHeader('X-Access-Token', user.access_token);
+                res.json(201, user);
                 return next();
             });
         }
@@ -31,15 +30,14 @@ export const create = (app: restify.Server, namespace: string = ''): void => {
 export const read = (app: restify.Server, namespace: string = ''): void => {
     app.get(namespace, has_auth(),
         (req: restify.Request & IOrmReq, res: restify.Response, next: restify.Next) => {
-            const User: Query = req.getOrm().waterline.collections['user_tbl'];
-
-            User.findOne({ email: req['user_id'] }).exec((error: WLError, user: IUser) => {
-                    if (error != null) return next(fmtError(error));
-                    else if (user == null) return next(new NotFoundError('User'));
+            req.getOrm().typeorm.connection
+                .getRepository(User)
+                .findOne({ email: req['user_id'] })
+                .then((user: User) => {
+                    if (user == null) return next(new NotFoundError('User'));
                     res.json(user);
                     return next();
-                }
-            );
+                }).catch(restCatch(req, res, next));
         }
     );
 };
@@ -47,45 +45,43 @@ export const read = (app: restify.Server, namespace: string = ''): void => {
 export const getAll = (app: restify.Server, namespace: string = ''): void => {
     app.get(`${namespace}s`, has_auth(),
         (req: restify.Request & IOrmReq, res: restify.Response, next: restify.Next) => {
-            const User: Query = req.getOrm().waterline.collections['user_tbl'];
-
-            User.find().exec((error: WLError, users: IUser[]) => {
-                    if (error != null) return next(fmtError(error));
-                    else if (users == null || !users.length) return next(new NotFoundError('`User`s'));
+            req.getOrm().typeorm.connection
+                .getRepository(User)
+                .find()
+                .then((users: User[]) => {
+                    if (users == null || !users.length)
+                        return next(new NotFoundError('Users'));
                     res.json({ users });
                     return next();
-                }
-            );
+                }).catch(restCatch(req, res, next));
         }
     );
 };
 
 export const update = (app: restify.Server, namespace: string = ''): void => {
-    app.put(namespace, remove_from_body(['email']),
-        has_body, mk_valid_body_mw(user_schema, false),
-        mk_valid_body_mw_ignore(user_schema, ['Missing required property']), has_auth(),
+    app.put(namespace, has_auth(), has_body, /*remove_from_body(['email']),
+        mk_valid_body_mw(user_schema, false),
+        mk_valid_body_mw_ignore(user_schema, ['Missing required property']),*/
         (req: restify.Request & IOrmReq, res: restify.Response, next: restify.Next) => {
-            if (!isShallowSubset(req.body, user_schema.properties))
-                return res.json(400, {
+            if (!isShallowSubset(req.body, user_schema.properties)) {
+                res.json(400, {
                     error: 'ValidationError',
-                    error_portfolio: 'Invalid keys detected in body'
-                }) && next();
-            else if (req.body == null || !Object.keys(req.body).length)
-                return res.json(400, { error: 'ValidationError', error_portfolio: 'Body required' }) && next();
+                    error_message: 'Invalid keys detected in body'
+                });
+                return next();
+            }
 
-            const User: Query = req.getOrm().waterline.collections['user_tbl'];
-
-            waterfall([
-                cb => User.findOne({ email: req['user_id'] }).exec(
-                    (err: WLError, user: IUser) => {
-                        if (err != null) cb(err);
-                        else if (user == null) cb(new NotFoundError('User'));
-                        return cb(err, user);
-                    }),
-                (user, cb) =>
-                    User.update(user, req.body).exec(
-                        (err, updated_users: IUser[]) => cb(err, updated_users[0])
-                    )
+            series([
+                cb =>
+                    req.getOrm().typeorm.connection.manager
+                        .update(User, { email: req['user_id'] }, req.body)
+                        .then(_ => cb(void 0))
+                        .catch(cb),
+                cb =>
+                    req.getOrm().typeorm.connection.getRepository(User)
+                        .findOne({ email: req['user_id'] })
+                        .then((user: User) => cb(void 0, user))
+                        .catch(cb)
             ], (error, updated_user) => {
                 if (error != null) return next(fmtError(error));
                 res.json(200, updated_user);
@@ -98,11 +94,17 @@ export const update = (app: restify.Server, namespace: string = ''): void => {
 export const del = (app: restify.Server, namespace: string = ''): void => {
     app.del(namespace, has_auth(),
         (req: restify.Request & IOrmReq, res: restify.Response, next: restify.Next) => {
-            const User: Query = req.getOrm().waterline.collections['user_tbl'];
-
-            waterfall([
-                cb => AccessToken.get(req.getOrm().redis.connection).logout({ user_id: req['user_id'] }, cb),
-                cb => User.destroy({ email: req['user_id'] }, cb)
+            series([
+                cb =>
+                    AccessToken
+                        .get(req.getOrm().redis.connection)
+                        .logout({ user_id: req['user_id'] }, cb),
+                cb =>
+                    req.getOrm().typeorm.connection
+                        .getRepository(User)
+                        .remove({ email: req['user_id'] } as any)
+                        .then(() => cb(void 0))
+                        .catch(cb)
             ], error => {
                 if (error != null) return next(fmtError(error));
                 res.send(204);

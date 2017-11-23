@@ -5,9 +5,8 @@ import { IOrmReq } from 'orm-mw';
 import * as restify from 'restify';
 import { has_body, mk_valid_body_mw } from 'restify-validators';
 import { JsonSchema } from 'tv4';
-import { Query } from 'waterline';
+import { User } from '../user/models';
 
-import { IUser } from '../user/models.d';
 import { has_auth } from './middleware';
 import { AccessToken } from './models';
 // import { hash_password, verify_password } from '../user/models';
@@ -18,23 +17,34 @@ const user_schema: JsonSchema = require('./../../test/api/user/schema');
 export const login = (app: restify.Server, namespace: string = ''): void => {
     app.post(namespace, has_body, mk_valid_body_mw(user_schema),
         (req: restify.Request & IOrmReq, res: restify.Response, next: restify.Next) => {
-            const User: Query = req.getOrm().waterline.collections['user_tbl'];
-
             waterfall([
-                cb => User.findOne({ email: req.body.email }).exec((err: any, user: IUser) => {
-                    if (err != null) return cb(err);
-                    else if (user == null) return cb(new NotFoundError('User'));
-                    return cb(err, user);
-                }),
-                (user: IUser, cb) => argon2.verify(user.password, req.body.password).then(valid =>
-                    cb(valid ? null : new AuthError('Password invalid'), user)
-                ),
-                (user: IUser, cb) =>
-                    AccessToken.get(req.getOrm().redis.connection).add(req.body.email, user.roles, 'login', cb)
-            ], (error: any, access_token: string) => {
+                cb => req.getOrm().typeorm.connection
+                    .getRepository(User)
+                    .findOne({
+                        select: ['password', 'email', 'roles'],
+                        where: { email: req.body.email }
+                    })
+                    .then((user: User) => {
+                        if (user == null) return cb(new NotFoundError('User'));
+                        return cb(void 0, user);
+                    })
+                    .catch(cb),
+                (user: User, cb) =>
+                    argon2
+                        .verify(user.password, req.body.password)
+                        .then(valid => cb(valid ? null : new AuthError('Password invalid'), user)),
+                (user: User, cb) =>
+                    AccessToken
+                        .get(req.getOrm().redis.connection)
+                        .add(user.email, User.rolesAsStr(user.roles), 'login', (err, at) => {
+                            user.access_token = at;
+                            User._omit.forEach(attr => delete user[attr]);
+                            return cb(err, user);
+                        })
+            ], (error: any, user: User) => {
                 if (error != null) return next(fmtError(error));
-                res.setHeader('X-Access-Token', access_token);
-                res.json(201, { access_token });
+                res.setHeader('X-Access-Token', user.access_token);
+                res.json(201, user);
                 return next();
             });
         }

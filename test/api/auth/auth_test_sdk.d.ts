@@ -1,26 +1,28 @@
-import { HttpStrResp, IncomingMessageError, TCallback } from 'nodejs-utils';
+import { IncomingMessageError, TCallback } from 'nodejs-utils';
+import { Server } from 'restify';
 import { Response } from 'supertest';
 
-import { IUser, IUserBase } from '../../../api/user/models.d';
+import { User } from '../../../api/user/models';
 
 export interface IAuthSdk {
-    register(user: IUserBase, callback: TCallback<Error | IncomingMessageError, Response>): void;
+    app: Server;
 
-    login(user: IUserBase | IUser, callback: TCallback<Error | IncomingMessageError, Response>): void;
+    register(user: User, callback: TCallback<Error | IncomingMessageError, Response>): void;
 
-    get_user(access_token: string, user: IUser | IUserBase,
-             callback: TCallback<Error | IncomingMessageError, Response>);
+    login(user: User, callback: TCallback<Error | IncomingMessageError, Response>): void;
+
+    get_user(access_token: string, user: User, callback: TCallback<Error | IncomingMessageError, Response>);
 
     get_all(access_token: string, callback: TCallback<Error | IncomingMessageError, Response>);
 
-    logout(access_token: string, callback: HttpStrResp): void;
+    // logout(access_token: string, callback: HttpStrResp): void;
 
     unregister(ident: {access_token?: string, user_id?: string},
                callback: TCallback<Error | IncomingMessageError, Response>): void;
 
-    unregister_all(users: Array<IUser | IUserBase>, done: TCallback<Error | IncomingMessageError, Response>);
+    unregister_all(users: User[], done: TCallback<Error | IncomingMessageError, Response>);
 
-    register_login(user: IUserBase, done: TCallback<Error | IncomingMessageError, string>);
+    register_login(user: User, done: TCallback<Error | IncomingMessageError, string>);
 
-    logout_unregister(user: IUserBase, done: TCallback<Error | IncomingMessageError, Response>);
+    logout_unregister(user: User, done: TCallback<Error | IncomingMessageError, Response>);
 }

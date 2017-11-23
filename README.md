@@ -1,7 +1,7 @@
 restify-orm-scaffold
 ====================
 
-Simple baseline scaffold to get you started using [Waterline](https://github.com/balderdashy/waterline) and/or [TypeORM](https://github.com/typeorm/typeorm) on [restify](https://github.com/restify/node-restify) with [TypeScript](https://github.com/Microsoft/TypeScript).
+Simple baseline scaffold to get you started using [TypeORM](https://github.com/typeorm/typeorm) and/or [Sequelize](https://github.com/sequelize/sequelize) and/or [Waterline](https://github.com/balderdashy/waterline) on [restify](https://github.com/restify/node-restify) with [TypeScript](https://github.com/Microsoft/TypeScript).
 
 
 ## Install prerequisites

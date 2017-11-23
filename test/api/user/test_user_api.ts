@@ -1,19 +1,18 @@
 import { map, waterfall } from 'async';
 import { createLogger } from 'bunyan';
-import { expect } from 'chai';
 import { IModelRoute, model_route_to_map } from 'nodejs-utils';
 import { IOrmsOut, tearDownConnections } from 'orm-mw';
 import { basename } from 'path';
 import { Server } from 'restify';
-import * as supertest from 'supertest';
 
-import { IUserBase } from '../../../api/user/models.d';
-import { _orms_out } from '../../../config';
+import { User } from '../../../api/user/models';
+import { _orms_out, typeorm_config } from '../../../config';
 import { all_models_and_routes_as_mr, setupOrmApp } from '../../../main';
 import { IAuthSdk } from '../auth/auth_test_sdk.d';
 import { AccessToken } from './../../../api/auth/models';
 import { AuthTestSDK } from './../auth/auth_test_sdk';
 import { user_mocks } from './user_mocks';
+import { UserTestSDK } from './user_test_sdk';
 
 const models_and_routes: IModelRoute = {
     user: all_models_and_routes_as_mr['user'],
@@ -22,7 +21,7 @@ const models_and_routes: IModelRoute = {
 
 process.env['NO_SAMPLE_DATA'] = 'true';
 
-const mocks: IUserBase[] = user_mocks.successes.slice(10, 20);
+const mocks: User[] = user_mocks.successes.slice(10, 20);
 const tapp_name = `test::${basename(__dirname)}`;
 const logger = createLogger({ name: tapp_name });
 
@@ -35,7 +34,15 @@ describe('User::routes', () => {
                 cb => tearDownConnections(_orms_out.orms_out, e => cb(e)),
                 cb => AccessToken.reset() || cb(void 0),
                 cb => setupOrmApp(
-                    model_route_to_map(models_and_routes), { logger },
+                    model_route_to_map(models_and_routes), {
+                        logger,
+                        orms_in: {
+                            typeorm: { skip: false, config: typeorm_config },
+                            redis: { skip: false },
+                            sequelize: { skip: true },
+                            waterline: { skip: true }
+                        }
+                    },
                     { skip_start_app: true, app_name: tapp_name, logger },
                     cb
                 ),
@@ -53,6 +60,11 @@ describe('User::routes', () => {
     );
 
     after('tearDownConnections', done => tearDownConnections(_orms_out.orms_out, done));
+    after('closeApp', done => sdk.app.close(done));
+    after('destroy objects', done => {
+        Object.keys(this).forEach(k => delete this[k]);
+        return done();
+    });
 
     describe('/api/user', () => {
         beforeEach(done => sdk.unregister_all(mocks, () => done()));
@@ -75,32 +87,15 @@ describe('User::routes', () => {
             )
         );
 
-        it('PUT should edit user', done =>
+        it('PUT should update user', done =>
             waterfall([
-                    cb => sdk.register(mocks[2], (err, _) => cb(err)),
+                    cb => sdk.register(mocks[2], err => cb(err)),
                     cb => sdk.login(mocks[2], (err, res) =>
-                        err != null ? cb(err) : cb(void 0, res.body['access_token'])
+                        err ? cb(err) : cb(void 0, res.body['access_token'])
                     ),
-                    (access_token, cb) =>
-                        supertest(app)
-                            .put('/api/user')
-                            .set('X-Access-Token', access_token)
-                            .set('Connection', 'keep-alive')
-                            .send({ title: 'Mr' })
-                            .end(cb)
-                    ,
-                    (r, cb) => {
-                        if (r.statusCode / 100 >= 3) return cb(new Error(JSON.stringify(r.text, null, 4)));
-                        let err: Chai.AssertionError = null;
-                        try {
-                            expect(r.body).to.have.all.keys(['createdAt', 'email', 'roles', 'title', 'updatedAt']);
-                            expect(r.body.title).equals('Mr');
-                        } catch (e) {
-                            err = e as Chai.AssertionError;
-                        } finally {
-                            cb(err);
-                        }
-                    }
+                    (access_token, cb) => (new UserTestSDK(app)).update({ title: 'Sir' }, access_token,
+                        (e, r) => cb(e, r, access_token)),
+                    (user, access_token, cb) => sdk.get_user(access_token, user, cb)
                 ],
                 done
             )
