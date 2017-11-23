@@ -1,5 +1,5 @@
-restify-orm-scaffold
-====================
+restify-orm-scaffold (waterline branch)
+=======================================
 
 Simple baseline scaffold to get you started using [Waterline](https://github.com/balderdashy/waterline) and/or [TypeORM](https://github.com/typeorm/typeorm) on [restify](https://github.com/restify/node-restify) with [TypeScript](https://github.com/Microsoft/TypeScript).
 

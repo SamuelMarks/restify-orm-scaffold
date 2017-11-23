@@ -1,6 +1,5 @@
 import { AuthError, GenericError } from 'custom-restify-errors';
 import { Redis } from 'ioredis';
-
 import { numCb, strCbV, TCallback } from 'nodejs-utils';
 import { RestError } from 'restify-errors';
 import { v4 as uuid_v4 } from 'uuid';
@@ -32,7 +31,7 @@ export class AccessToken {
     }
 
     public deleteOne(access_token: string, callback: numCb) {
-        return this.redis.del(access_token, callback);
+        return callback(void 0, this.redis.del(access_token));
     }
 
     public logout(arg: LogoutArg, callback: (err?: Error | RestError) => void) {
@@ -40,7 +39,10 @@ export class AccessToken {
         // TODO: Rewrite this in Lua [maybe?]
             this.redis.smembers(arg.user_id, (err: Error, access_tokens: string[]) => {
                 if (err != null) return callback(err);
-                this.redis.multi().del(...access_tokens).exec(errors =>
+                (this['redis'] as any)
+                    ['multi']()
+                    ['del'](...access_tokens)
+                    ['exec'](errors =>
                     callback(errors != null && errors['length'] ? new GenericError({
                         statusCode: 400,
                         error: 'LogoutErrors',
