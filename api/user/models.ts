@@ -1,7 +1,14 @@
 import * as argon2 from 'argon2';
-import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryColumn } from 'typeorm';
+import { BeforeInsert, BeforeUpdate, Column, CreateDateColumn, Entity, PrimaryColumn } from 'typeorm';
 
 import { argon2_options } from './utils';
+
+export const hash_password = (password: string, callback): void => {
+    password.startsWith('$argon2') ? callback(void 0, password)
+        : argon2.hash(password, argon2_options).then(hashed =>
+            callback(void 0, hashed)
+        ).catch(callback);
+};
 
 @Entity('user_tbl')
 export class User {
@@ -12,11 +19,14 @@ export class User {
     @PrimaryColumn({ type: 'varchar' })
     public email: string;
 
-    @Column({ type: 'varchar', nullable: true, select: false })
+    @Column('varchar', { nullable: true, select: false })
     public password: string;
 
     @Column('varchar', { nullable: true })
     public title?: string;
+
+    @CreateDateColumn()
+    public createdAt?: Date;
 
     @Column('simple-array', { nullable: false, 'default': 'registered' })
     public roles: string[];
@@ -26,8 +36,10 @@ export class User {
 
     @BeforeUpdate()
     @BeforeInsert()
-    private async hashPassword?() {
+    public async hashPassword?() {
         this.password = this.password.startsWith('$argon2') ? this.password
             : await argon2.hash(this.password, argon2_options);
     }
+
+    // checkPassword() {}
 }

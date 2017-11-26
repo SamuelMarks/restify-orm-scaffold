@@ -4,8 +4,8 @@ import { get_models_routes, IModelRoute, populateModelRoutes, raise } from 'node
 import { IormMwConfig, IOrmsOut, ormMw } from 'orm-mw';
 import { Server } from 'restify';
 import { IRoutesMergerConfig, routesMerger, TApp } from 'routes-merger';
-import { AccessToken } from './api/auth/models';
 
+import { AccessToken } from './api/auth/models';
 import { AuthTestSDK } from './test/api/auth/auth_test_sdk';
 import { user_mocks } from './test/api/user/user_mocks';
 import { User } from './api/user/models';

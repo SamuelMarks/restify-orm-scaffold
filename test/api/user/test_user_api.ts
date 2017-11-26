@@ -1,18 +1,19 @@
-import { map, waterfall } from 'async';
+import { map, series, waterfall } from 'async';
 import { createLogger } from 'bunyan';
+import { expect } from 'chai';
 import { IModelRoute, model_route_to_map } from 'nodejs-utils';
 import { IOrmsOut, tearDownConnections } from 'orm-mw';
 import { basename } from 'path';
 import { Server } from 'restify';
 
+import { AccessToken } from '../../../api/auth/models';
 import { User } from '../../../api/user/models';
-import { _orms_out, typeorm_config } from '../../../config';
+import { _orms_out } from '../../../config';
 import { all_models_and_routes_as_mr, setupOrmApp } from '../../../main';
-import { IAuthSdk } from '../auth/auth_test_sdk.d';
-import { AccessToken } from './../../../api/auth/models';
-import { AuthTestSDK } from './../auth/auth_test_sdk';
+import { AuthTestSDK } from '../auth/auth_test_sdk';
 import { user_mocks } from './user_mocks';
 import { UserTestSDK } from './user_test_sdk';
+import IAssertionError = Chai.AssertionError;
 
 const models_and_routes: IModelRoute = {
     user: all_models_and_routes_as_mr['user'],
@@ -24,9 +25,11 @@ process.env['NO_SAMPLE_DATA'] = 'true';
 const mocks: User[] = user_mocks.successes.slice(10, 20);
 const tapp_name = `test::${basename(__dirname)}`;
 const logger = createLogger({ name: tapp_name });
+type AccessTokenType = string;
 
 describe('User::routes', () => {
-    let sdk: IAuthSdk;
+    let sdk: UserTestSDK;
+    let auth_sdk: AuthTestSDK;
     let app: Server;
 
     before(done =>
@@ -34,15 +37,7 @@ describe('User::routes', () => {
                 cb => tearDownConnections(_orms_out.orms_out, e => cb(e)),
                 cb => AccessToken.reset() || cb(void 0),
                 cb => setupOrmApp(
-                    model_route_to_map(models_and_routes), {
-                        logger,
-                        orms_in: {
-                            typeorm: { skip: false, config: typeorm_config },
-                            redis: { skip: false },
-                            sequelize: { skip: true },
-                            waterline: { skip: true }
-                        }
-                    },
+                    model_route_to_map(models_and_routes), { logger },
                     { skip_start_app: true, app_name: tapp_name, logger },
                     cb
                 ),
@@ -50,7 +45,8 @@ describe('User::routes', () => {
                     app = _app;
                     _orms_out.orms_out = orms_out;
 
-                    sdk = new AuthTestSDK(_app);
+                    sdk = new UserTestSDK(_app);
+                    auth_sdk = new AuthTestSDK(_app);
 
                     return cb(void 0);
                 }
@@ -67,21 +63,42 @@ describe('User::routes', () => {
     });
 
     describe('/api/user', () => {
-        beforeEach(done => sdk.unregister_all(mocks, () => done()));
-        afterEach(done => sdk.unregister_all(mocks, () => done()));
+        beforeEach(done => auth_sdk.unregister_all(mocks, () => done()));
+        afterEach(done => auth_sdk.unregister_all(mocks, () => done()));
 
         it('POST should create user', done =>
             sdk.register(mocks[0], done)
         );
 
+        it('POST should fail to register user twice', done =>
+            series([
+                    cb => sdk.register(mocks[1], cb),
+                    cb => sdk.register(mocks[1], cb)
+                ],
+                (err: Error) => {
+                    if (err != null) {
+                        const expected_err = 'E_UNIQUE';
+                        try {
+                            expect(err['text']).to.contain(expected_err);
+                            err = null;
+                        } catch (e) {
+                            err = e as IAssertionError;
+                        } finally {
+                            done(err);
+                        }
+                    } else return done();
+                }
+            )
+        );
+
         it('GET should retrieve user', done =>
             waterfall([
-                    cb => sdk.register(mocks[1], err => cb(err)),
-                    cb => sdk.login(mocks[1], (err, res) =>
+                    cb => sdk.register(mocks[2], err => cb(err)),
+                    cb => auth_sdk.login(mocks[2], (err, res) =>
                         err ? cb(err) : cb(void 0, res.body['access_token'])
                     ),
-                    (access_token, cb) =>
-                        sdk.get_user(access_token, mocks[1], cb)
+                    (access_token: AccessTokenType, cb) =>
+                        sdk.read(access_token, mocks[2], cb)
                 ],
                 done
             )
@@ -89,29 +106,28 @@ describe('User::routes', () => {
 
         it('PUT should update user', done =>
             waterfall([
-                    cb => sdk.register(mocks[2], err => cb(err)),
-                    cb => sdk.login(mocks[2], (err, res) =>
+                    cb => sdk.register(mocks[3], err => cb(err)),
+                    cb => auth_sdk.login(mocks[3], (err, res) =>
                         err ? cb(err) : cb(void 0, res.body['access_token'])
                     ),
-                    (access_token, cb) => (new UserTestSDK(app)).update({ title: 'Sir' }, access_token,
+                    (access_token: AccessTokenType, cb) => (new UserTestSDK(app)).update({ title: 'Sir' }, access_token,
                         (e, r) => cb(e, r, access_token)),
-                    (user, access_token, cb) => sdk.get_user(access_token, user, cb)
+                    (user: User, access_token: AccessTokenType, cb) => sdk.read(access_token, user, cb)
                 ],
                 done
             )
         );
 
-        type AccessTokenType = string;
         it('GET /users should get all users', done =>
-            map(mocks.slice(4, 10), sdk.register_login.bind(sdk), (err, res: AccessTokenType[]) =>
-                err ? done(err) : sdk.get_all(res[0], done)
+            map(mocks.slice(4, 10), auth_sdk.register_login.bind(auth_sdk), (err, res: AccessTokenType[]) =>
+                err ? done(err) : sdk.get_all(res[4], done)
             )
         );
 
         it('DELETE should unregister user', done =>
             waterfall([
-                    cb => sdk.register(mocks[3], err => cb(err)),
-                    cb => sdk.login(mocks[3], (err, res) =>
+                    cb => sdk.register(mocks[5], err => cb(err)),
+                    cb => auth_sdk.login(mocks[5], (err, res) =>
                         err ? cb(err) : cb(void 0, res.body['access_token'])
                     ),
                     (access_token, cb) =>
@@ -125,7 +141,7 @@ describe('User::routes', () => {
                             .findOne(access_token, e =>
                                 cb(e != null && e.message === 'Nothing associated with that access token' ? null : e)
                             ),
-                    cb => sdk.login(mocks[3], e => cb(
+                    cb => auth_sdk.login(mocks[5], e => cb(
                         e != null && typeof e['text'] !== 'undefined' && e['text'] !== JSON.stringify({
                             code: 'NotFoundError', message: 'User not found'
                         }) ? e : null)

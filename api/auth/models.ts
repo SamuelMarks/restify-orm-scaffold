@@ -1,6 +1,6 @@
 import { AuthError, GenericError } from 'custom-restify-errors';
 import { Redis } from 'ioredis';
-import { numCb, strCbV, TCallback } from 'nodejs-utils';
+import { numCb, strCb, strCbV } from 'nodejs-utils';
 import { RestError } from 'restify-errors';
 import { v4 as uuid_v4 } from 'uuid';
 
@@ -67,7 +67,7 @@ export class AccessToken {
             }));
     }
 
-    public add(user_id: string, roles: string, scope: 'login', callback: TCallback<Error, string>) {
+    public add(user_id: string, roles: string, scope: 'login', callback: strCb) {
         const new_key: string = `${roles}::${scope}::${uuid_v4()}`;
         const t = this.redis.multi();
         t.set(new_key, user_id);

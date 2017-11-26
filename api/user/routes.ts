@@ -47,7 +47,11 @@ export const getAll = (app: restify.Server, namespace: string = ''): void => {
         (req: restify.Request & IOrmReq, res: restify.Response, next: restify.Next) => {
             req.getOrm().typeorm.connection
                 .getRepository(User)
-                .find()
+                .find({
+                    order: {
+                        email: 'ASC'
+                    }
+                })
                 .then((users: User[]) => {
                     if (users == null || !users.length)
                         return next(new NotFoundError('Users'));

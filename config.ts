@@ -3,7 +3,6 @@ import { uri_to_config } from 'nodejs-utils';
 import { IormMwConfig, IOrmsOut, RequestHandler } from 'orm-mw';
 import { Server } from 'restify';
 import { IRoutesMergerConfig } from 'routes-merger';
-
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 
 /* TODO: Put this all in tiered environment-variable powered .json file */
@@ -30,13 +29,9 @@ export const sequelize_config /*: sequelize.Options*/ = {
     }
 };
 
-/*
-"waterline": "https://api.github.com/repos/SamuelMarks/waterline/tarball/c91bdf46d400180ae7e800f684f8fb44f8fed9a5",
-"waterline-postgresql": "^0.50.0"
- */
-/*import { ConfigOptions, WLError } from 'waterline';
-import * as waterline_postgres from 'waterline-postgresql';*/
 // Database waterline_config
+/*import { ConfigOptions } from 'waterline';
+import * as waterline_postgres from 'waterline-postgresql';*/
 export const waterline_config /*: ConfigOptions*/ = Object.freeze({
     adapters: {
         url: db_uri,
@@ -55,7 +50,7 @@ export const waterline_config /*: ConfigOptions*/ = Object.freeze({
             }
         }
     }
-}); // as any as ConfigOptions
+} /* as any as ConfigOptions */);
 
 // ONLY USE `_orms_out` FOR TESTS!
 export const _orms_out: {orms_out: IOrmsOut} = { orms_out: undefined };
@@ -79,7 +74,7 @@ export const getOrmMwConfig = (models: Map<string, any>, logger: Logger,
             config: typeorm_config
         },
         waterline: {
-            skip: true/*,
+            skip: true /*,
             config: waterline_config*/
         }
     },
@@ -91,6 +86,9 @@ export const getOrmMwConfig = (models: Map<string, any>, logger: Logger,
         _orms_out.orms_out = orms_out;
         return cb(void 0, (_app: Server) => {
             _app.use(mw);
+            // import { Next, Server } from 'restify';
+            // import { WaterlineError } from 'custom-restify-errors';
+            // import { WLError } from 'waterline';
             /*_app.on('WLError', (req, res, err: WLError, next: Next) =>
                 next(new WaterlineError(err))
             );*/

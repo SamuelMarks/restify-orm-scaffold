@@ -3,7 +3,6 @@ import { fmtError, NotFoundError } from 'custom-restify-errors';
 import { TCallback } from 'nodejs-utils';
 import { IOrmReq } from 'orm-mw';
 import * as restify from 'restify';
-import { WLError } from 'waterline';
 
 import { AccessToken } from '../auth/models';
 import { User } from './models';
@@ -19,11 +18,13 @@ export const post = (req: restify.Request & IOrmReq & {body?: User}, callback: T
                     .then(() => cb(void 0, user))
                     .catch(cb);
             },
-            (user: User, cb) => req.getOrm().typeorm.connection.manager
-                .getRepository(User)
-                .findOne(user)
-                .then((_user: User) => cb(void 0, _user))
-                .catch(cb),
+            /*(user: User, cb) => console.info('post::waterfall::before User.findOne, user=', user, ';') ||
+                req.getOrm().typeorm.connection.manager
+                    .getRepository(User)
+                    .findOne(user)
+                    .then((_user: User) => cb(void 0, _user))
+                    .catch(cb),
+                    console.info('post::waterfall::before AccessToken.get, user=', user, ';')*/
             (user: User, cb) =>
                 AccessToken
                     .get(req.getOrm().redis.connection)
@@ -31,7 +32,7 @@ export const post = (req: restify.Request & IOrmReq & {body?: User}, callback: T
                         (err: Error, access_token: string) =>
                             err != null ? cb(err) : cb(void 0, Object.assign(user, { access_token }))
                     )
-        ], (error: Error | WLError, user: User) => {
+        ], (error: Error, user: User) => {
             if (error != null)
                 return callback(fmtError(error));
             else if (user == null)
