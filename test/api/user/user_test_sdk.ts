@@ -98,7 +98,7 @@ export class UserTestSDK {
     public get_all(access_token: string, callback: TCallback<Error | IncomingMessageError, Response>) {
         if (access_token == null) return callback(new TypeError('access_token argument to get_all must be defined'));
 
-        expect(user_routes.getAll).to.be.an.instanceOf(Function);
+        expect(user_routes.readAll).to.be.an.instanceOf(Function);
         supertest(this.app)
             .get('/api/users')
             .set('X-Access-Token', access_token)

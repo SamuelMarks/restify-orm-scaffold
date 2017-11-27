@@ -1,11 +1,11 @@
-import { GenericError } from 'custom-restify-errors';
+import { AuthError, GenericError } from 'custom-restify-errors';
 import { IOrmReq } from 'orm-mw';
 import * as restify from 'restify';
 
 import { AccessToken } from './models';
 
 export const has_auth = (scope = 'login') =>
-    (req: restify.Request & IOrmReq, res: restify.Response, next: restify.Next) => {
+    (req: restify.Request & IOrmReq & {user_id: string}, res: restify.Response, next: restify.Next) => {
         if (req.headers['x-access-token'] == null)
             if (req.params.access_token != null)
                 req.headers['x-access-token'] = req.params.access_token;
@@ -16,16 +16,29 @@ export const has_auth = (scope = 'login') =>
                     statusCode: 403
                 }));
 
+        const access_token = req.headers['x-access-token'] as string;
+
+        if (access_token.indexOf(scope) < 0)
+            return next(new AuthError(`${scope} required to view; ` +
+                `you only have ${access_token.slice(access_token.lastIndexOf(':'))}`));
+
+        const body_id = req.body ? req.body.user_id || req.body.email : void 0;
+
+        if (access_token.indexOf('admin') > -1 && body_id) {
+            req.user_id = body_id;
+            return next();
+        }
+
         AccessToken
             .get(req.getOrm().redis.connection)
-            .findOne(req.headers['x-access-token'] as string, (err: Error, user_id: string) => {
+            .findOne(access_token, (err: Error, user_id: string) => {
                 if (err != null) return next(err);
                 else if (user_id == null) return next(new GenericError({
                     error: 'NotFound',
                     error_message: 'Invalid access token used',
                     statusCode: 403
                 }));
-                req['user_id'] = user_id;
+                req.user_id = user_id;
                 return next();
             });
     };

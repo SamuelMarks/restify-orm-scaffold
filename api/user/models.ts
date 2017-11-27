@@ -1,5 +1,5 @@
 import * as argon2 from 'argon2';
-import { BeforeInsert, BeforeUpdate, Column, CreateDateColumn, Entity, PrimaryColumn } from 'typeorm';
+import { BeforeInsert, BeforeUpdate, Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn } from 'typeorm';
 
 import { argon2_options } from './utils';
 
@@ -28,7 +28,10 @@ export class User {
     @CreateDateColumn()
     public createdAt?: Date;
 
-    @Column('simple-array', { nullable: false, 'default': 'registered' })
+    @UpdateDateColumn()
+    public updatedAt?: Date;
+
+    @Column('simple-array', { nullable: false })
     public roles: string[];
 
     // Might get attached for tests or in middleware; NOT present in db
@@ -41,5 +44,10 @@ export class User {
             : await argon2.hash(this.password, argon2_options);
     }
 
-    // checkPassword() {}
+    @BeforeUpdate()
+    @BeforeInsert()
+    public setRoles?() {
+        if (this.roles == null || !this.roles.length)
+            this.roles = ['registered', 'login'];
+    }
 }

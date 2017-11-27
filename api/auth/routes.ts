@@ -36,7 +36,7 @@ export const login = (app: restify.Server, namespace: string = ''): void => {
                 (user: User, cb) =>
                     AccessToken
                         .get(req.getOrm().redis.connection)
-                        .add(user.email, User.rolesAsStr(user.roles), 'login', (err, at) => {
+                        .add(user.email, User.rolesAsStr(user.roles), 'access', (err, at) => {
                             user.access_token = at;
                             User._omit.forEach(attr => delete user[attr]);
                             return cb(err, user);

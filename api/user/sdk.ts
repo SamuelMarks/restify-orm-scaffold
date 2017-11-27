@@ -1,13 +1,22 @@
-import { waterfall } from 'async';
-import { fmtError, NotFoundError } from 'custom-restify-errors';
-import { TCallback } from 'nodejs-utils';
+import { series, waterfall } from 'async';
+import { fmtError, GenericError, NotFoundError } from 'custom-restify-errors';
+import { isShallowSubset, numCb, TCallback } from 'nodejs-utils';
 import { IOrmReq } from 'orm-mw';
-import * as restify from 'restify';
+import { RestError } from 'restify-errors';
+import { JsonSchema } from 'tv4';
+import { Request } from 'restify';
 
 import { AccessToken } from '../auth/models';
 import { User } from './models';
 
-export const post = (req: restify.Request & IOrmReq & {body?: User}, callback: TCallback<Error, User>) => {
+/* tslint:disable:no-var-requires */
+export const schema: JsonSchema = require('./../../test/api/user/schema');
+
+export type UserBodyReq = Request & IOrmReq & {body?: User};
+export type UserBodyUserReq = UserBodyReq & {user_id: string};
+
+export const post = (req: UserBodyReq,
+                     callback: TCallback<Error, User>) => {
     waterfall([
             cb => {
                 const user = new User();
@@ -28,7 +37,7 @@ export const post = (req: restify.Request & IOrmReq & {body?: User}, callback: T
             (user: User, cb) =>
                 AccessToken
                     .get(req.getOrm().redis.connection)
-                    .add(user.email, User.rolesAsStr(user.roles), 'login',
+                    .add(user.email, User.rolesAsStr(user.roles), 'access',
                         (err: Error, access_token: string) =>
                             err != null ? cb(err) : cb(void 0, Object.assign(user, { access_token }))
                     )
@@ -43,5 +52,77 @@ export const post = (req: restify.Request & IOrmReq & {body?: User}, callback: T
                 return callback(new NotFoundError('AccessToken'));
             return callback(void 0, user);
         }
+    );
+};
+
+export const get = (req: UserBodyUserReq,
+                    callback: TCallback<Error | RestError, User>) =>
+    req.getOrm().typeorm.connection
+        .getRepository(User)
+        .findOne({ email: req.user_id })
+        .then((user: User) =>
+            user == null ? callback(new NotFoundError('User'))
+                : callback(void 0, user)
+        )
+        .catch(callback);
+
+export const getAll = (req: IOrmReq,
+                       callback: TCallback<Error | RestError, {users: User[]}>) =>
+    req.getOrm().typeorm.connection
+        .getRepository(User)
+        .find({
+            order: {
+                email: 'ASC'
+            }
+        })
+        .then((users: User[]) =>
+            (users == null || !users.length) ? callback(new NotFoundError('Users'))
+                : callback(void 0, { users }))
+        .catch(callback);
+
+export const update = (req: UserBodyUserReq,
+                       callback: TCallback<Error, User>) => {
+    if (!isShallowSubset(req.body, schema.properties)) {
+        const error = 'ValidationError';
+        return callback(new GenericError({
+            name: error, error,
+            error_message: 'Invalid keys detected in body',
+            statusCode: 400
+        }));
+    }
+
+    series([
+            cb =>
+                req.getOrm().typeorm.connection.manager
+                    .update(User, { email: req.user_id }, req.body)
+                    .then(_ => cb(void 0))
+                    .catch(cb),
+            cb =>
+                req.getOrm().typeorm.connection.getRepository(User)
+                    .findOne({ email: req.user_id })
+                    .then((user: User) => cb(void 0, user))
+                    .catch(cb)
+        ], (error, update_user) =>
+            error == null ? callback(void 0, update_user as any)
+                : callback(fmtError(error))
+    );
+};
+
+export const destroy = (req: IOrmReq & {body?: User, user_id: string},
+                        callback: numCb) => {
+    series([
+            cb =>
+                AccessToken
+                    .get(req.getOrm().redis.connection)
+                    .logout({ user_id: req.user_id }, cb),
+            cb =>
+                req.getOrm().typeorm.connection
+                    .getRepository(User)
+                    .remove({ email: req.user_id } as any)
+                    .then(() => cb(void 0))
+                    .catch(cb)
+        ], error =>
+            error == null ? callback(void 0, 204)
+                : callback(fmtError(error))
     );
 };

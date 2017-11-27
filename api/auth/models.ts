@@ -67,7 +67,7 @@ export class AccessToken {
             }));
     }
 
-    public add(user_id: string, roles: string, scope: 'login', callback: strCb) {
+    public add(user_id: string, roles: string, scope: 'access', callback: strCb) {
         const new_key: string = `${roles}::${scope}::${uuid_v4()}`;
         const t = this.redis.multi();
         t.set(new_key, user_id);
