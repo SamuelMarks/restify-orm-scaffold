@@ -1,7 +1,7 @@
 import { map, series, waterfall } from 'async';
 import { createLogger } from 'bunyan';
 import { expect } from 'chai';
-import { IModelRoute, model_route_to_map } from 'nodejs-utils';
+import { AccessTokenType, IModelRoute, model_route_to_map } from 'nodejs-utils';
 import { IOrmsOut, tearDownConnections } from 'orm-mw';
 import { basename } from 'path';
 import { Server } from 'restify';
@@ -13,7 +13,6 @@ import { all_models_and_routes_as_mr, setupOrmApp } from '../../../main';
 import { AuthTestSDK } from '../auth/auth_test_sdk';
 import { user_mocks } from './user_mocks';
 import { UserTestSDK } from './user_test_sdk';
-import { AccessTokenType } from '../../shared_types';
 import IAssertionError = Chai.AssertionError;
 
 const models_and_routes: IModelRoute = {

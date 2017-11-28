@@ -1,12 +1,11 @@
 import { series, waterfall } from 'async';
 import { fmtError, GenericError, NotFoundError } from 'custom-restify-errors';
-import { isShallowSubset, numCb, TCallback } from 'nodejs-utils';
+import { AccessTokenType, isShallowSubset, numCb, TCallback } from 'nodejs-utils';
 import { IOrmReq } from 'orm-mw';
 import { RestError } from 'restify-errors';
 import { JsonSchema } from 'tv4';
 import { Request } from 'restify';
 
-import { AccessTokenType } from '../../test/shared_types';
 import { AccessToken } from '../auth/models';
 import { User } from './models';
 

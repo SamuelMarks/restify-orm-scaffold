@@ -1,10 +1,10 @@
 import { forEachOfLimit } from 'async';
 import { NotFoundError } from 'custom-restify-errors';
 import { Response } from 'supertest';
+import { AccessTokenType } from 'nodejs-utils';
 
 import { User } from '../api/user/models';
 import { AuthTestSDK } from './api/auth/auth_test_sdk';
-import { AccessTokenType } from './shared_types';
 
 interface IResponse extends Response {
     readonly body: ReadableStream | null | any | {access_token: string};

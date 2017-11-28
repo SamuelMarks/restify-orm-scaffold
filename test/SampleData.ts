@@ -1,11 +1,10 @@
 import { series } from 'async';
 import { ClientRequest, IncomingMessage, request as http_request, RequestOptions } from 'http';
-import { IncomingMessageError, trivial_merge } from 'nodejs-utils';
+import { AccessTokenType, IncomingMessageError, TCallback, trivial_merge } from 'nodejs-utils';
 import { HttpError } from 'restify-errors';
 import * as url from 'url';
 import { AsyncResultCallback, Connection, Query } from 'waterline';
 
-import { AccessTokenType, TCallback } from './shared_types';
 import { _orms_out } from '../config';
 
 export interface ISampleData {

@@ -1,13 +1,12 @@
 import * as chai from 'chai';
 import { expect } from 'chai';
 import * as chaiJsonSchema from 'chai-json-schema';
-import { getError, sanitiseSchema, superEndCb } from 'nodejs-utils';
+import { AccessTokenType, getError, sanitiseSchema, superEndCb, SuperTestResp } from 'nodejs-utils';
 import * as supertest from 'supertest';
 import { Response } from 'supertest';
 import { User } from '../../../api/user/models';
 import * as user_routes from '../../../api/user/routes';
 import * as user_admin_routes from '../../../api/user/admin';
-import { AccessTokenType, SuperTestResp } from '../../shared_types';
 
 /* tslint:disable:no-var-requires */
 const user_schema = sanitiseSchema(require('./../user/schema.json'), User._omit);

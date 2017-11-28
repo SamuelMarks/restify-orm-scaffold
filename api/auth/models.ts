@@ -1,9 +1,8 @@
 import { AuthError, GenericError } from 'custom-restify-errors';
 import { Redis } from 'ioredis';
-import { numCb, strCbV } from 'nodejs-utils';
+import { AccessTokenType, numCb, strCbV } from 'nodejs-utils';
 import { RestError } from 'restify-errors';
 import { v4 as uuid_v4 } from 'uuid';
-import { AccessTokenType } from '../../test/shared_types';
 
 type LogoutArg = {user_id: string; access_token?: never} | {user_id?: never; access_token: AccessTokenType};
 
