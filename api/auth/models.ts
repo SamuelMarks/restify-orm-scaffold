@@ -1,10 +1,11 @@
 import { AuthError, GenericError } from 'custom-restify-errors';
 import { Redis } from 'ioredis';
-import { numCb, strCb, strCbV } from 'nodejs-utils';
+import { numCb, strCbV } from 'nodejs-utils';
 import { RestError } from 'restify-errors';
 import { v4 as uuid_v4 } from 'uuid';
+import { AccessTokenType } from '../../test/shared_types';
 
-type LogoutArg = {user_id: string; access_token?: never} | {user_id?: never; access_token: string};
+type LogoutArg = {user_id: string; access_token?: never} | {user_id?: never; access_token: AccessTokenType};
 
 let accessToken: AccessToken;
 
@@ -22,7 +23,7 @@ export class AccessToken {
 
     constructor(private redis: Redis) {}
 
-    public findOne(access_token: string, callback: strCbV) {
+    public findOne(access_token: AccessTokenType, callback: strCbV) {
         return this.redis.get(access_token, (err: Error, user_id: string) => {
             if (err != null) return callback(err);
             else if (user_id == null) return callback(new AuthError('Nothing associated with that access token'));
@@ -30,7 +31,7 @@ export class AccessToken {
         });
     }
 
-    public deleteOne(access_token: string, callback: numCb) {
+    public deleteOne(access_token: AccessTokenType, callback: numCb) {
         return callback(void 0, this.redis.del(access_token));
     }
 
@@ -67,7 +68,8 @@ export class AccessToken {
             }));
     }
 
-    public add(user_id: string, roles: string, scope: 'access', callback: strCb) {
+    public add(user_id: string, roles: string, scope: 'access',
+               callback: (err: Error, access_token: AccessTokenType) => void) {
         const new_key: string = `${roles}::${scope}::${uuid_v4()}`;
         const t = this.redis.multi();
         t.set(new_key, user_id);

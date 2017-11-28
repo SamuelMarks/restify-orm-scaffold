@@ -9,6 +9,12 @@
         },
         "title": {
             "type": "string"
+        },
+        "roles": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
         }
     },
     "required": [

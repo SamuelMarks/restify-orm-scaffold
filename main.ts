@@ -7,7 +7,6 @@ import { IRoutesMergerConfig, routesMerger, TApp } from 'routes-merger';
 
 import { AccessToken } from './api/auth/models';
 import { AuthTestSDK } from './test/api/auth/auth_test_sdk';
-import { user_mocks } from './test/api/user/user_mocks';
 import { User } from './api/user/models';
 import * as config from './config';
 import { getOrmMwConfig } from './config';
@@ -44,13 +43,17 @@ export const setupOrmApp = (models_and_routes: Map<string, any>,
                 AccessToken.reset();
 
                 const authSdk = new AuthTestSDK(app);
-                const default_user: User = user_mocks.successes[0];
+                const default_admin: User = {
+                    email: process.env.DEFAULT_ADMIN_EMAIL,
+                    password: process.env.DEFAULT_ADMIN_PASSWORD,
+                    roles: ['registered', 'login', 'admin']
+                };
 
                 series([
-                        callb => authSdk.unregister_all([default_user], (err: Error & {status: number}) =>
+                    callb => authSdk.unregister_all([default_admin], (err: Error & {status: number}) =>
                             callb(err != null && err.status !== 404 ? err : void 0,
                                 'removed default user; next: adding')),
-                        callb => authSdk.register_login(default_user, callb),
+                    callb => authSdk.register_login(default_admin, callb),
                         callb => logger.info(`${app.name} listening from ${app.url}`) || callb(void 0)
                     ], (e: Error) => e == null ? next(void 0, app, orms_out) : raise(e)
                 );

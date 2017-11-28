@@ -22,14 +22,22 @@ export const has_auth = (scope = 'login') =>
             return next(new AuthError(`${scope} required to view; ` +
                 `you only have ${access_token.slice(access_token.lastIndexOf(':'))}`));
 
-        const body_id = req.body ? req.body.user_id || req.body.email : void 0;
+        const body_id = req.params.email || req.body && (req.body.user_id || req.body.email);
 
-        if (access_token.indexOf('admin') > -1 && body_id) {
-            req.user_id = body_id;
-            return next();
-        }
-
-        AccessToken
+        if (access_token.indexOf('admin') > -1 && body_id)
+            AccessToken
+                .get(req.getOrm().redis.connection)
+                .findOne(access_token, (err: Error, user_id: string) => {
+                    if (err != null) return next(err);
+                    else if (user_id == null) return next(new GenericError({
+                        error: 'NotFound',
+                        error_message: 'Invalid access token used',
+                        statusCode: 403
+                    }));
+                    req.user_id = body_id;
+                    return next();
+                });
+        else AccessToken
             .get(req.getOrm().redis.connection)
             .findOne(access_token, (err: Error, user_id: string) => {
                 if (err != null) return next(err);

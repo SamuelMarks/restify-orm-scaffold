@@ -37,7 +37,7 @@
   "devDependencies": {
     "@types/async": "^2.0.45",
     "@types/bunyan": "1.8.3",
-    "@types/chai": "^4.0.5",
+    "@types/chai": "^4.0.6",
     "@types/faker": "^4.1.2",
     "@types/ioredis": "3.2.1",
     "@types/mathjs": "0.0.35",
@@ -56,6 +56,6 @@
     "mocha": "^4.0.1",
     "supertest": "^3.0.0",
     "ts-node": "^3.3.0",
-    "typescript": "^2.6.1"
+    "typescript": "^2.6.2"
   }
 }

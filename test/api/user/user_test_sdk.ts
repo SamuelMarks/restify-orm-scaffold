@@ -1,11 +1,13 @@
 import * as chai from 'chai';
 import { expect } from 'chai';
 import * as chaiJsonSchema from 'chai-json-schema';
-import { getError, IncomingMessageError, sanitiseSchema, superEndCb, TCallback } from 'nodejs-utils';
+import { getError, sanitiseSchema, superEndCb } from 'nodejs-utils';
 import * as supertest from 'supertest';
 import { Response } from 'supertest';
 import { User } from '../../../api/user/models';
 import * as user_routes from '../../../api/user/routes';
+import * as user_admin_routes from '../../../api/user/admin';
+import { AccessTokenType, SuperTestResp } from '../../shared_types';
 
 /* tslint:disable:no-var-requires */
 const user_schema = sanitiseSchema(require('./../user/schema.json'), User._omit);
@@ -16,7 +18,7 @@ export class UserTestSDK {
     constructor(public app) {
     }
 
-    public register(user: User, callback: TCallback<Error | IncomingMessageError, Response>) {
+    public register(user: User, callback: SuperTestResp) {
         if (user == null) return callback(new TypeError('user argument to register must be defined'));
 
         expect(user_routes.create).to.be.an.instanceOf(Function);
@@ -41,13 +43,14 @@ export class UserTestSDK {
             });
     }
 
-    public read(access_token: string, user: User,
-                callback: TCallback<Error | IncomingMessageError, Response>) {
-        if (access_token == null) return callback(new TypeError('access_token argument to get_user must be defined'));
+    public read(access_token: AccessTokenType, expected_user: User, callback: SuperTestResp) {
+        if (access_token == null)
+            return callback(new TypeError('access_token argument to get_user must be defined'));
 
         expect(user_routes.read).to.be.an.instanceOf(Function);
+        expect(user_admin_routes.read).to.be.an.instanceOf(Function);
         supertest(this.app)
-            .get('/api/user')
+            .get(`/api/user${access_token.indexOf('admin') > -1 ? '/' + expected_user.email : ''}`)
             .set('X-Access-Token', access_token)
             .set('Connection', 'keep-alive')
             .end((err, res: Response) => {
@@ -55,8 +58,8 @@ export class UserTestSDK {
                 else if (res.error) return callback(getError(res.error));
                 try {
                     expect(res.body).to.be.an('object');
-                    Object.keys(user).map(
-                        attr => expect(user[attr] === res.body[attr])
+                    Object.keys(expected_user).map(
+                        attr => expect(expected_user[attr] === res.body[attr])
                     );
                     expect(res.body).to.be.jsonSchema(user_schema);
                 } catch (e) {
@@ -67,13 +70,13 @@ export class UserTestSDK {
             });
     }
 
-    public update(user: Partial<User>, access_token: string,
-                  callback: TCallback<Error | IncomingMessageError, Response>) {
+    public update(access_token: AccessTokenType, user_id: string, user: Partial<User>, callback: SuperTestResp) {
         if (user == null) return callback(new TypeError('user argument to update must be defined'));
 
         expect(user_routes.update).to.be.an.instanceOf(Function);
+        expect(user_admin_routes.update).to.be.an.instanceOf(Function);
         supertest(this.app)
-            .put('/api/user')
+            .put(`/api/user${access_token.indexOf('admin') > -1 && user_id ? '/' + user_id : ''}`)
             .set('Connection', 'keep-alive')
             .set('X-Access-Token', access_token)
             .send(user)
@@ -95,10 +98,10 @@ export class UserTestSDK {
             });
     }
 
-    public get_all(access_token: string, callback: TCallback<Error | IncomingMessageError, Response>) {
+    public get_all(access_token: AccessTokenType, callback: SuperTestResp) {
         if (access_token == null) return callback(new TypeError('access_token argument to get_all must be defined'));
 
-        expect(user_routes.readAll).to.be.an.instanceOf(Function);
+        expect(user_admin_routes.readAll).to.be.an.instanceOf(Function);
         supertest(this.app)
             .get('/api/users')
             .set('X-Access-Token', access_token)
@@ -119,8 +122,7 @@ export class UserTestSDK {
             });
     }
 
-    public unregister(ident: {access_token?: string, user_id?: string},
-                      callback: TCallback<Error | IncomingMessageError, Response>) {
+    public unregister(ident: {access_token?: string, user_id?: string}, callback: SuperTestResp) {
         if (ident == null) return callback(new TypeError('ident argument to unregister must be defined'));
 
         expect(user_routes.del).to.be.an.instanceOf(Function);

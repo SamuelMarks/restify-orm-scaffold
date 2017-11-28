@@ -17,3 +17,5 @@ export type strCbV = (err?: Error, res?: string) => void;
 export type numCb = (err?: Error, res?: number) => string;
 export type TCallback<E, R> = (err?: E, res?: R) => R | void;
 export type HttpStrResp = (error: Error | IncomingMessageError, response?: Response) => string;
+export type SuperTestResp = TCallback<Error | IncomingMessageError, Response>;
+export type AccessTokenType = string;

@@ -52,7 +52,7 @@ export class AuthTestSDK {
             });
     }
 
-    /*public logout(access_token: string, callback: HttpStrResp) {
+    /*public logout(access_token: AccessTokenType, callback: HttpStrResp) {
         if (access_token == null) return callback(new TypeError('access_token argument to logout must be defined'));
         else if (typeof access_token !== 'string')
             return callback(new TypeError(`Expected \`access_token\` of string, got: ${typeof access_token}`));

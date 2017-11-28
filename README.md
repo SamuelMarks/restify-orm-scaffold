@@ -16,8 +16,9 @@ Simple baseline scaffold to get you started using [TypeORM](https://github.com/t
 
 ### External
 
-  - Database, e.g.: Postgres. Set `RDBMS_URI` env var accordingly.
+  - Database, e.g.: Postgres. Set `RDBMS_URI` env var accordingly, e.g.: `postgres://username:password@hostname/database_name`. Modify [config.ts](https://github.com/SamuelMarks/restify-orm-scaffold/blob/master/config.ts) to use a different database.
   - Redis. Set `REDIS_URL` env var accordingly; otherwise defaults are used.
+  - Set: `DEFAULT_ADMIN_EMAIL` and `DEFAULT_ADMIN_PASSWORD` env vars
 
 ## Compile+run app
 

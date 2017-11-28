@@ -67,7 +67,6 @@ function generateDocumentation(fileNames: string[], options: ts.CompilerOptions)
         const symbol = checker.getSymbolAtLocation(node.name);
 
         const details = serializeSymbol(symbol);
-        console.info('details =', details, ';');
         if (!details.decorators) return details;
         // Get the construct signatures
         details.decorators = node.decorators.map(serializeDecorator);

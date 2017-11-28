@@ -5,7 +5,7 @@ import { HttpError } from 'restify-errors';
 import * as url from 'url';
 import { AsyncResultCallback, Connection, Query } from 'waterline';
 
-import { TCallback } from './shared_types';
+import { AccessTokenType, TCallback } from './shared_types';
 import { _orms_out } from '../config';
 
 export interface ISampleData {
@@ -50,7 +50,7 @@ const httpF = (method: 'POST' | 'PUT' | 'PATCH' | 'HEAD' | 'GET' | 'DELETE') => 
             if (res == null) return (callback as Cb)(res);
             /* tslint:disable:no-bitwise */
             else if ((res.statusCode / 100 | 0) > 3) return (callback as Cb)(res);
-            return (callback as Cb)(null, res);
+            return (callback as Cb)(void 0, res);
         });
         // body_or_cb ? req.end(<string>body_or_cb, cb) : req.end();
         /* tslint:disable:no-unused-expression */
@@ -91,7 +91,7 @@ export class SampleData implements ISampleData {
             });
     }
 
-    public logout(access_token: string, callback: TCallback<HttpError, string>) {
+    public logout(access_token: AccessTokenType, callback: TCallback<HttpError, string>) {
         const options = this.mergeOptions({ path: '/api/auth' });
         options.headers['x-access-token'] = access_token || this.token;
         httpDELETE(options, 'logout', (err, res) => {
@@ -131,7 +131,7 @@ export class SampleData implements ISampleData {
             }
         );
 
-        this.token ? unregisterUser(user, callback) : this.login(user, (err, access_token: string) =>
+        this.token ? unregisterUser(user, callback) : this.login(user, (err, access_token: AccessTokenType) =>
             err ? callback() : unregisterUser(user, callback)
         );
     }

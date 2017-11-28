@@ -6,6 +6,7 @@ import { RestError } from 'restify-errors';
 import { JsonSchema } from 'tv4';
 import { Request } from 'restify';
 
+import { AccessTokenType } from '../../test/shared_types';
 import { AccessToken } from '../auth/models';
 import { User } from './models';
 
@@ -16,7 +17,7 @@ export type UserBodyReq = Request & IOrmReq & {body?: User};
 export type UserBodyUserReq = UserBodyReq & {user_id: string};
 
 export const post = (req: UserBodyReq,
-                     callback: TCallback<Error, User>) => {
+                     callback: TCallback<Error, User>) =>
     waterfall([
             cb => {
                 const user = new User();
@@ -38,7 +39,7 @@ export const post = (req: UserBodyReq,
                 AccessToken
                     .get(req.getOrm().redis.connection)
                     .add(user.email, User.rolesAsStr(user.roles), 'access',
-                        (err: Error, access_token: string) =>
+                        (err: Error, access_token: AccessTokenType) =>
                             err != null ? cb(err) : cb(void 0, Object.assign(user, { access_token }))
                     )
         ], (error: Error, user: User) => {
@@ -53,7 +54,6 @@ export const post = (req: UserBodyReq,
             return callback(void 0, user);
         }
     );
-};
 
 export const get = (req: UserBodyUserReq,
                     callback: TCallback<Error | RestError, User>) =>
@@ -109,7 +109,7 @@ export const update = (req: UserBodyUserReq,
 };
 
 export const destroy = (req: IOrmReq & {body?: User, user_id: string},
-                        callback: numCb) => {
+                        callback: numCb) =>
     series([
             cb =>
                 AccessToken
@@ -125,4 +125,3 @@ export const destroy = (req: IOrmReq & {body?: User, user_id: string},
             error == null ? callback(void 0, 204)
                 : callback(fmtError(error))
     );
-};
