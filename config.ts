@@ -6,7 +6,11 @@ import { IRoutesMergerConfig } from 'routes-merger';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 
 /* TODO: Put this all in tiered environment-variable powered .json file */
+
 export const db_uri: string = process.env['RDBMS_URI'] || process.env['DATABASE_URL'] || process.env['POSTGRES_URL'];
+
+if (db_uri == null || !db_uri.length)
+    throw ReferenceError('Database URI not set. See README.md for setup tutorial.');
 
 export const typeorm_config: PostgresConnectionOptions = Object.freeze(
     Object.assign(Object.entries(uri_to_config(db_uri))
