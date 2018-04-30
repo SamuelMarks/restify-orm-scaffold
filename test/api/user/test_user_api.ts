@@ -65,9 +65,9 @@ describe('User::routes', () => {
         beforeEach(done => auth_sdk.unregister_all(mocks, () => done()));
         afterEach(done => auth_sdk.unregister_all(mocks, () => done()));
 
-        it('POST should create user', done =>
-            sdk.register(mocks[0], done)
-        );
+        it('POST should create user', done => {
+            sdk.register(mocks[0], done);
+        });
 
         it('POST should fail to register user twice', done =>
             series([

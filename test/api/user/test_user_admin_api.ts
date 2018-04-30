@@ -69,9 +69,9 @@ describe('User::admin::routes', () => {
         );
         after(done => auth_sdk.unregister_all(mocks, () => done()));
 
-        it('GET should retrieve other user', done =>
-            sdk.read(mocks[0].access_token, mocks[2], done)
-        );
+        it('GET should retrieve other user', done => {
+            sdk.read(mocks[0].access_token, mocks[2], done);
+        });
 
         it('PUT should update other user', done =>
             waterfall([
@@ -84,9 +84,9 @@ describe('User::admin::routes', () => {
             )
         );
 
-        it('GET /api/users should get all users', done =>
-            sdk.get_all(mocks[0].access_token, done)
-        );
+        it('GET /api/users should get all users', done => {
+            sdk.get_all(mocks[0].access_token, done);
+        });
 
         it('DELETE should unregister other user', done =>
             waterfall([

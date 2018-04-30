@@ -57,7 +57,7 @@ function generateDocumentation(fileNames: string[], options: ts.CompilerOptions)
     function serializeSymbol(symbol: ts.Symbol): IDocEntry {
         return {
             name: symbol.getName(),
-            documentation: ts.displayPartsToString(symbol.getDocumentationComment()),
+            documentation: ts.displayPartsToString(symbol.getDocumentationComment(void 0)),
             type: checker.typeToString(checker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration))
         };
     }
@@ -89,7 +89,7 @@ function generateDocumentation(fileNames: string[], options: ts.CompilerOptions)
         return {
             parameters: signature.parameters.map(serializeSymbol),
             returnType: checker.typeToString(signature.getReturnType()),
-            documentation: ts.displayPartsToString(signature.getDocumentationComment())
+            documentation: ts.displayPartsToString(signature.getDocumentationComment(void 0))
         };
     }
 
