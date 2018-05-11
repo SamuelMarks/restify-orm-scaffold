@@ -45,8 +45,8 @@ export class AccessToken {
                     ['exec'](errors =>
                     callback(errors != null && errors['length'] ? new GenericError({
                         statusCode: 400,
-                        error: 'LogoutErrors',
-                        error_message: JSON.stringify(errors)
+                        name: 'LogoutErrors',
+                        message: JSON.stringify(errors)
                     }) : null)
                 );
             });
@@ -55,15 +55,15 @@ export class AccessToken {
                 if (err != null) return callback(err);
                 else if (user_id == null) return callback(new GenericError({
                     statusCode: 410,
-                    error: 'AlreadyDone',
-                    error_message: 'User already logged out'
+                    name: 'AlreadyDone',
+                    message: 'User already logged out'
                 }));
                 return this.logout({ user_id }, callback);
             });
         else return callback(new GenericError({
                 statusCode: 400,
-                error: 'ConstraintError',
-                error_message: 'Can\'t logout without user_id or access token'
+                name: 'ConstraintError',
+                message: 'Can\'t logout without user_id or access token'
             }));
     }
 

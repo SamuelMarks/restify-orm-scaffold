@@ -84,8 +84,8 @@ export const update = (req: UserBodyUserReq,
     if (!isShallowSubset(req.body, schema.properties)) {
         const error = 'ValidationError';
         return callback(new GenericError({
-            name: error, error,
-            error_message: 'Invalid keys detected in body',
+            name: error,
+            message: 'Invalid keys detected in body',
             statusCode: 400
         }));
     }

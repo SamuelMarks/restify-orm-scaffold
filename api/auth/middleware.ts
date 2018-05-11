@@ -11,8 +11,8 @@ export const has_auth = (scope = 'login') =>
                 req.headers['x-access-token'] = req.params.access_token;
             else
                 return next(new GenericError({
-                    error: 'NotFound',
-                    error_message: 'X-Access-Token header must be included',
+                    name: 'NotFound',
+                    message: 'X-Access-Token header must be included',
                     statusCode: 403
                 }));
 
@@ -30,8 +30,8 @@ export const has_auth = (scope = 'login') =>
                 .findOne(access_token, (err: Error, user_id: string) => {
                     if (err != null) return next(err);
                     else if (user_id == null) return next(new GenericError({
-                        error: 'NotFound',
-                        error_message: 'Invalid access token used',
+                        name: 'NotFound',
+                        message: 'Invalid access token used',
                         statusCode: 403
                     }));
                     req.user_id = body_id;
@@ -42,8 +42,8 @@ export const has_auth = (scope = 'login') =>
             .findOne(access_token, (err: Error, user_id: string) => {
                 if (err != null) return next(err);
                 else if (user_id == null) return next(new GenericError({
-                    error: 'NotFound',
-                    error_message: 'Invalid access token used',
+                    name: 'NotFound',
+                    message: 'Invalid access token used',
                     statusCode: 403
                 }));
                 req.user_id = user_id;
