@@ -10,6 +10,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "start": "node main.js | bunyan",
+    "build_start": "rm -rf typings node_modules; (typings i || true); tsc; npm i; node main.js | bunyan",
     "test": "mocha test --recursive"
   },
   "dependencies": {
