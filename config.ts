@@ -66,7 +66,11 @@ export const getOrmMwConfig = (models: Map<string, any>, logger: Logger,
     models, logger,
     orms_in: {
         redis: {
-            skip: false
+            skip: false,
+            config: {
+                port: parseInt(process.env.REDIS_PORT || 6379 as any, 10),
+                host: process.env.REDIS_HOST || 'localhost'
+            }
         },
         sequelize: {
             skip: true,

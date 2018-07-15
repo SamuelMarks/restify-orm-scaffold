@@ -1,9 +1,9 @@
 version: '2'
 services:
   redis:
-    image: "redis:alpine"
+    image: redis:alpine
   postgres:
-    image: "postgres:9.6.9-alpine"
+    image: postgres:9.6.9-alpine
     environment:
      POSTGRES_USER: rest_api_user
      POSTGRES_PASSWORD: rest_api_pass
@@ -11,7 +11,7 @@ services:
   web:
     build: .
     ports:
-     - "3000:3000"
+     - 3000:3000
     volumes:
      - .:/rest-api
     depends_on:
@@ -19,6 +19,9 @@ services:
       - redis
     environment:
       RDBMS_URI: postgres://rest_api_user:rest_api_pass@localhost/rest_api_db
+      REDIS_HOST: redis
       DEFAULT_ADMIN_EMAIL: foo
       DEFAULT_ADMIN_PASSWORD: bar
-    command: ["/bin/wait_for_it.sh", "postgres:5432", "--", "npm", "run-script", "build_start"]
+    command: ["/bin/wait_for_it.sh", "postgres:5432", "--",
+             # "/bin/wait_for_it.sh", "redis:6379", "--",
+              "npm", "run-script", "build_start"]
