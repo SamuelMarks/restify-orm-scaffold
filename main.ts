@@ -46,7 +46,7 @@ export const setupOrmApp = (models_and_routes: Map<string, any>,
 
                 const envs = ['DEFAULT_ADMIN_EMAIL', 'DEFAULT_ADMIN_PASSWORD'];
                 if (!envs.every(process.env.hasOwnProperty.bind(process.env)))
-                    throw ReferenceError(`${envs} must all be defined in your environment`);
+                    throw ReferenceError(`${envs.join(', ')} must all be defined in your environment`);
 
                 const default_admin: User = {
                     email: process.env.DEFAULT_ADMIN_EMAIL,
