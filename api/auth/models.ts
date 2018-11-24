@@ -30,8 +30,8 @@ export class AccessToken {
         });
     }
 
-    public deleteOne(access_token: AccessTokenType, callback: numCb) {
-        return callback(void 0, this.redis.del(access_token));
+    public deleteOne(access_token: AccessTokenType): Promise<number> {
+        return this.redis.del(access_token);
     }
 
     public logout(arg: LogoutArg, callback: (err?: Error | RestError) => void) {
