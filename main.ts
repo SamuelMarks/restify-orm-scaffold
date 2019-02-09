@@ -9,7 +9,7 @@ import { AccessToken } from './api/auth/models';
 import { AuthTestSDK } from './test/api/auth/auth_test_sdk';
 import { User } from './api/user/models';
 import * as config from './config';
-import { getOrmMwConfig } from './config';
+import { getOrmMwConfig, getPrivateIPAddress } from './config';
 
 /* tslint:disable:no-var-requires */
 export const package_ = Object.freeze(require('./package'));
@@ -37,6 +37,7 @@ export const setupOrmApp = (models_and_routes: Map<string, any>,
             skip_start_app: false,
             skip_app_logging: false,
             listen_port: process.env.PORT || 3000,
+            version_routes_kwargs: { private_ip: getPrivateIPAddress() },
             with_app,
             logger,
             onServerStart: (uri: string, app: Server, next) => {
@@ -55,10 +56,10 @@ export const setupOrmApp = (models_and_routes: Map<string, any>,
                 };
 
                 series([
-                    callb => authSdk.unregister_all([default_admin], (err: Error & {status: number}) =>
+                        callb => authSdk.unregister_all([default_admin], (err: Error & {status: number}) =>
                             callb(err != null && err.status !== 404 ? err : void 0,
                                 'removed default user; next: adding')),
-                    callb => authSdk.register_login(default_admin, callb),
+                        callb => authSdk.register_login(default_admin, callb),
                         callb =>
                             typeof logger.info(`${app.name} listening from ${app.url}`) === 'undefined' && callb(void 0)
                     ], (e: Error) => e == null ? next(void 0, app, orms_out) : raise(e)

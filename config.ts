@@ -4,6 +4,7 @@ import { IormMwConfig, IOrmsOut, RequestHandler } from 'orm-mw';
 import { Server } from 'restify';
 import { IRoutesMergerConfig } from 'routes-merger';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
+import { networkInterfaces } from 'os';
 
 /* TODO: Put this all in tiered environment-variable powered .json file */
 
@@ -104,3 +105,18 @@ export const getOrmMwConfig = (models: Map<string, any>, logger: Logger,
         }, orms_out);
     }
 });
+
+export const getPrivateIPAddress = (): string => {
+    const interfaces = networkInterfaces();
+    for (const devName in interfaces) {
+        if (!interfaces.hasOwnProperty(devName)) continue;
+        const iface = interfaces[devName];
+
+        for (const alias of iface) {
+            if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal)
+                return alias.address;
+        }
+    }
+
+    return '0.0.0.0';
+};

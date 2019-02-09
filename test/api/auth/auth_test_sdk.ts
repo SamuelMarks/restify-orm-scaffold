@@ -72,7 +72,7 @@ export class AuthTestSDK {
                     call_back => this.login(user, (err, res) =>
                         err == null ? call_back(void 0, res.header['x-access-token']) : call_back(err)
                     ),
-                (access_token, call_back) => this.user_sdk.unregister({ access_token }, (err, res) =>
+                    (access_token, call_back) => this.user_sdk.unregister({ access_token }, (err, res) =>
                         call_back(err, access_token)
                     ),
                 ], callb

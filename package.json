@@ -1,6 +1,6 @@
 {
   "name": "restify-orm-scaffold",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "description": "Sample REST API scaffold built on Node.JS in TypeScript with restify and TypeORM (with Waterline and Sequelize support also).",
   "main": "main.js",
   "author": "Samuel Marks <samuel@offscale.io>",
@@ -40,7 +40,7 @@
     "@types/faker": "^4.1.5",
     "@types/ioredis": "4.0.6",
     "@types/mocha": "^5.2.5",
-    "@types/node": "^10.12.23",
+    "@types/node": "^10.12.24",
     "@types/redis": "^2.8.10",
     "@types/restify": "^7.2.7",
     "@types/restify-errors": "^4.3.3",

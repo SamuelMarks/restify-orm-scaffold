@@ -1,24 +1,24 @@
 {
-    "type": "object",
-    "properties": {
-        "email": {
-            "type": "string"
-        },
-        "password": {
-            "type": "string"
-        },
-        "title": {
-            "type": "string"
-        },
-        "roles": {
-            "type": "array",
-            "items": {
-                "type": "string"
-            }
-        }
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string"
     },
-    "required": [
-        "email",
-        "password"
-    ]
+    "password": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "email",
+    "password"
+  ]
 }

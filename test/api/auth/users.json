@@ -1,32 +1,32 @@
 {
-    "failures": [
-        {},
-        {
-            "email": "foo@bar.com"
-        },
-        {
-            "password": "foo"
-        },
-        {
-            "email": "foo@bar.com",
-            "password": "foo",
-            "bad_prop": true
-        }
-    ],
-    "successes": [
-        {
-            "email": "foo@bar.com",
-            "password": "foo"
-        },
-        {
-            "email": "foo@bar.com",
-            "password": "foo",
-            "title": "Mr"
-        },
-        {
-            "email": "foobar.com",
-            "password": "foo",
-            "title": "Mr"
-        }
-    ]
+  "failures": [
+    {},
+    {
+      "email": "foo@bar.com"
+    },
+    {
+      "password": "foo"
+    },
+    {
+      "email": "foo@bar.com",
+      "password": "foo",
+      "bad_prop": true
+    }
+  ],
+  "successes": [
+    {
+      "email": "foo@bar.com",
+      "password": "foo"
+    },
+    {
+      "email": "foo@bar.com",
+      "password": "foo",
+      "title": "Mr"
+    },
+    {
+      "email": "foobar.com",
+      "password": "foo",
+      "title": "Mr"
+    }
+  ]
 }
