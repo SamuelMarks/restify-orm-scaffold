@@ -3,12 +3,12 @@ services:
     redis:
         image: redis:alpine
     postgres:
-        image: postgres:9.6.9-alpine
+        image: postgres:11.1-alpine
         environment:
             POSTGRES_USER: rest_api_user
             POSTGRES_PASSWORD: rest_api_pass
             POSTGRES_DB: rest_api_db
-    web:
+    api:
         build: .
         ports:
             - 3000:3000
@@ -18,7 +18,7 @@ services:
             - postgres
             - redis
         environment:
-            RDBMS_URI: postgres://rest_api_user:rest_api_pass@localhost/rest_api_db
+            RDBMS_URI: postgres://rest_api_user:rest_api_pass@postgres/rest_api_db
             REDIS_HOST: redis
             DEFAULT_ADMIN_EMAIL: foo
             DEFAULT_ADMIN_PASSWORD: bar
