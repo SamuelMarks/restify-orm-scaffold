@@ -1,25 +1,51 @@
 FROM node:10.15.3-alpine
 
+ENV RDBMS_URI ''
+
 WORKDIR /rest-api
 
-RUN apk add --no-cache python make openssl g++ netcat-openbsd curl && \
-    curl https://raw.githubusercontent.com/wilsonsilva/wait-for/8b8689221f9cfe6f7fcec61680fcad2eae25964b/wait-for -o /bin/wait_for_it.sh && \
-    chmod +x /bin/wait_for_it.sh && \
-    npm i -g npm; npm i -g typings typescript tslint bunyan mocha
+#RUN addgroup -g 1500 -S nodejs \
+#    && adduser -u 1500 -S nodejs -G nodejs \
+#    && chown -R nodejs:nodejs /usr/local/lib/node_modules /usr/local/bin /rest-api
+#USER nodejs
+
+ADD https://raw.githubusercontent.com/wilsonsilva/wait-for/8b86892/wait-for /bin/wait_for_it.sh
+
+#    chmod +x /bin/wait_for_it.sh && \
 
 ADD . .
 
-RUN if [[ -f typings.json && ! -d typings ]]; then typings i; fi; if [ ! -d node_modules ]; then npm i; fi; tsc
-RUN which bunyan && which node
+RUN apk --no-cache --virtual build-dependencies add \
+    git \
+    python \
+    build-base \
+    openssl \
+    netcat-openbsd \
+    && npm i -g npm \
+    && mkdir -p /root/.node-gyp/10.15.3 /usr/local/lib/node_modules/bunyan/node_modules/dtrace-provider \
+    && npm i -g \
+    typings \
+    typescript@'3.3.3333' \
+    tslint \
+    bunyan \
+    mocha \
+    && npm i -g --unsafe-perms --allow-root node-gyp \
+    && typings install \
+    && npm install --unsafe-perms --allow-root \
+    && apk del build-dependencies
+
+RUN which npm
+
+ENTRYPOINT ["/usr/local/bin/node", "main.js"]
 
 # CMD npm run-script build_start
 
-FROM scratch
-
-WORKDIR /rest-api
-
-COPY --from=0 /rest-api /rest-api
-
-ADD https://nodejs.org/dist/v10.15.3/node-v10.15.3-linux-x64.tar.xz /
-
-RUN ["/node-v10.15.3-linux-x64/bin/node", "main.js"]
+#FROM scratch
+#
+#WORKDIR /rest-api
+#
+#COPY --from=0 /rest-api /rest-api
+#
+#ADD https://nodejs.org/dist/v10.15.3/node-v10.15.3-linux-x64.tar.xz /
+#
+#RUN ["/node-v10.15.3-linux-x64/bin/node", "main.js"]
