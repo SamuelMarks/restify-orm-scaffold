@@ -1,6 +1,8 @@
 FROM node:10.15.3-alpine
 
 ENV RDBMS_URI ''
+ENV REDIS_HOST 'localhost'
+ENV REDIS_PORT 6379
 
 WORKDIR /rest-api
 
@@ -32,9 +34,8 @@ RUN apk --no-cache --virtual build-dependencies add \
     && npm i -g --unsafe-perms --allow-root node-gyp \
     && typings install \
     && npm install --unsafe-perms --allow-root \
+    && tsc \
     && apk del build-dependencies
-
-RUN which npm
 
 ENTRYPOINT ["/usr/local/bin/node", "main.js"]
 

@@ -41,11 +41,11 @@
     "@types/faker": "^4.1.5",
     "@types/ioredis": "4.0.10",
     "@types/mocha": "^5.2.6",
-    "@types/node": "^10.14.2",
-    "@types/redis": "^2.8.11",
+    "@types/node": "^11.12.0",
+    "@types/redis": "^2.8.12",
     "@types/restify": "^7.2.9",
     "@types/restify-errors": "^4.3.3",
-    "@types/superagent": "^3.8.6",
+    "@types/superagent": "^4.1.1",
     "@types/supertest": "^2.0.7",
     "@types/tv4": "^1.2.29",
     "@types/uuid": "^3.4.4",
@@ -55,6 +55,6 @@
     "mocha": "^6.0.2",
     "supertest": "^4.0.2",
     "ts-node": "^8.0.3",
-    "typescript": "~3.3.3333"
+    "typescript": "~3.3.4000"
   }
 }
