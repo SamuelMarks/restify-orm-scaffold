@@ -1,6 +1,6 @@
 import * as Logger from 'bunyan';
 import { uri_to_config } from 'nodejs-utils';
-import { IormMwConfig, IOrmsOut, RequestHandler } from 'orm-mw';
+import { IOrmMwConfig, IOrmsOut, RequestHandler } from 'orm-mw';
 import { Server } from 'restify';
 import { IRoutesMergerConfig } from 'routes-merger';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
@@ -28,7 +28,7 @@ export const typeorm_config: PostgresConnectionOptions = Object.freeze(
 
 // import * as sequelize from 'sequelize';
 export const sequelize_config /*: sequelize.Options*/ = {
-    dialect: 'postgres',
+    dialect: 'postgres' as 'mysql' | 'postgres' | 'sqlite' | 'mariadb' | 'mssql' | 'mariadb',
     define: {
         timestamps: false
     }
@@ -63,7 +63,7 @@ export const _orms_out: {orms_out: IOrmsOut} = { orms_out: undefined };
 export const getOrmMwConfig = (models: Map<string, any>, logger: Logger,
                                cb: (err: Error,
                                     with_app?: IRoutesMergerConfig['with_app'],
-                                    orms_out?: IOrmsOut) => void): IormMwConfig => ({
+                                    orms_out?: IOrmsOut) => void): IOrmMwConfig => ({
     models, logger,
     orms_in: {
         redis: {

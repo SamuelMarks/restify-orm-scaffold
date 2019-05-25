@@ -1,7 +1,7 @@
 import { series, waterfall } from 'async';
 import { createLogger } from 'bunyan';
 import { get_models_routes, IModelRoute, populateModelRoutes, raise } from 'nodejs-utils';
-import { IormMwConfig, IOrmsOut, ormMw } from 'orm-mw';
+import { IOrmMwConfig, IOrmsOut, ormMw } from 'orm-mw';
 import { Server } from 'restify';
 import { IRoutesMergerConfig, routesMerger, TApp } from 'routes-merger';
 
@@ -22,7 +22,7 @@ export const all_models_and_routes: Map<string, any> = populateModelRoutes(__dir
 export const all_models_and_routes_as_mr: IModelRoute = get_models_routes(all_models_and_routes);
 
 export const setupOrmApp = (models_and_routes: Map<string, any>,
-                            mergeOrmMw: Partial<IormMwConfig>,
+                            mergeOrmMw: Partial<IOrmMwConfig>,
                             mergeRoutesConfig: Partial<IRoutesMergerConfig>,
                             callback: (err: Error, app?: TApp, orms_out?: IOrmsOut) => void) => waterfall([
     cb => ormMw(Object.assign({}, getOrmMwConfig(models_and_routes, logger, cb), mergeOrmMw)),
