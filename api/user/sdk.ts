@@ -15,9 +15,43 @@ export const schema: JsonSchema = require('./../../test/api/user/schema');
 export type UserBodyReq = Request & IOrmReq & {body?: User};
 export type UserBodyUserReq = UserBodyReq & {user_id: string};
 
+export interface IUserConfig {
+    public_registration: boolean;
+    initial_accounts: User[];
+}
+
+export class UserConfig implements IUserConfig {
+    public static default(): UserConfig {
+        return new UserConfig(true, []);
+    }
+
+    public static get instance(): UserConfig {
+        if (UserConfig._user_config == null) UserConfig._user_config = UserConfig.default();
+        return UserConfig._user_config;
+    }
+
+    public static set instance(config: IUserConfig) {
+        UserConfig._user_config = new UserConfig(config.public_registration, config.initial_accounts);
+    }
+
+    private static _user_config: UserConfig;
+
+    constructor(public public_registration: boolean,
+                public initial_accounts: User[]) {
+        if (!public_registration && !initial_accounts.length)
+            throw TypeError('No way for accounts to exist!');
+    }
+}
+
 export const post = (req: UserBodyReq,
+                     config: UserConfig,
                      callback: TCallback<Error, User>) =>
     waterfall([
+            cb => cb(config.public_registration ? void 0 : new GenericError({
+                statusCode: 401,
+                name: 'Registration',
+                message: 'public registration disabled; contact the administrator for an account'
+            })),
             cb => {
                 const user = new User();
                 Object.keys(req.body).map(k => user[k] = req.body[k]);
@@ -47,7 +81,7 @@ export const post = (req: UserBodyReq,
             else if (user == null)
                 return callback(new NotFoundError('User|AccessToken'));
             else if (user.email == null)
-                return callback(new NotFoundError('User!'));
+                return callback(new NotFoundError('User'));
             else if (user.access_token == null)
                 return callback(new NotFoundError('AccessToken'));
             return callback(void 0, user);

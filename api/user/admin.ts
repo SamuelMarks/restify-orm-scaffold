@@ -5,12 +5,12 @@ import { has_body, mk_valid_body_mw } from 'restify-validators';
 import { has_auth } from '../auth/middleware';
 import { User } from './models';
 import * as user_sdk from './sdk';
-import { UserBodyReq, UserBodyUserReq } from './sdk';
+import { UserBodyReq, UserBodyUserReq, UserConfig } from './sdk';
 
 export const create = (app: restify.Server, namespace: string = '') =>
     app.post(`${namespace}/:email`, has_body, mk_valid_body_mw(user_sdk.schema),
         (req: UserBodyReq, res: restify.Response, next: restify.Next) =>
-            user_sdk.post(req, (err, user: User) => {
+            user_sdk.post(req, UserConfig.instance, (err, user: User) => {
                 if (err != null) return next(err);
                 res.setHeader('X-Access-Token', user.access_token);
                 res.json(201, user);

@@ -1,7 +1,7 @@
 import { series, waterfall } from 'async';
 import { createLogger } from 'bunyan';
 import { get_models_routes, IModelRoute, populateModelRoutes, raise } from 'nodejs-utils';
-import { IOrmMwConfig, IOrmsOut, ormMw } from 'orm-mw';
+import { IOrmMwConfig, IOrmReq, IOrmsOut, ormMw } from 'orm-mw';
 import { Server } from 'restify';
 import { IRoutesMergerConfig, routesMerger, TApp } from 'routes-merger';
 
@@ -10,6 +10,7 @@ import { AuthTestSDK } from './test/api/auth/auth_test_sdk';
 import { User } from './api/user/models';
 import * as config from './config';
 import { getOrmMwConfig, getPrivateIPAddress } from './config';
+import { post as register_user, UserBodyReq, UserConfig } from './api/user/sdk';
 
 /* tslint:disable:no-var-requires */
 export const package_ = Object.freeze(require('./package'));
@@ -59,7 +60,19 @@ export const setupOrmApp = (models_and_routes: Map<string, any>,
                         callb => authSdk.unregister_all([default_admin], (err: Error & {status: number}) =>
                             callb(err != null && err.status !== 404 ? err : void 0,
                                 'removed default user; next: adding')),
-                        callb => authSdk.register_login(default_admin, callb),
+                        callb => register_user({
+                            getOrm: () => config._orms_out.orms_out,
+                            orms_out: config._orms_out.orms_out,
+                            body: default_admin
+                        } as IOrmReq & {body?: User} as UserBodyReq, UserConfig.default(), callb),
+                        callb => {
+                            UserConfig.instance = {
+                                public_registration:
+                                    process.env.PUBLIC_REGISTRATION == null ? true : !!process.env.PUBLIC_REGISTRATION,
+                                initial_accounts: [default_admin]
+                            };
+                            return callb(void 0);
+                        },
                         callb =>
                             typeof logger.info(`${app.name} listening from ${app.url}`) === 'undefined' && callb(void 0)
                     ], (e: Error) => e == null ? next(void 0, app, orms_out) : raise(e)
