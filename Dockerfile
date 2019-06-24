@@ -1,4 +1,4 @@
-FROM node:10.15.3-alpine
+FROM node:lts-alpine
 
 ENV RDBMS_URI ''
 ENV REDIS_HOST 'localhost'
@@ -23,11 +23,14 @@ RUN apk --no-cache --virtual build-dependencies add \
     build-base \
     openssl \
     netcat-openbsd \
-    && npm i -g npm \
-    && mkdir -p /root/.node-gyp/10.15.3 /usr/local/lib/node_modules/bunyan/node_modules/dtrace-provider \
+    && npm i -g npm
+
+RUN ls -al \
+    && mkdir -p /rest-api/node_modules/.staging \
+#   && mkdir -p /root/.node-gyp/10.6.0 /usr/local/lib/node_modules/bunyan/node_modules/dtrace-provider \
     && npm i -g \
     typings \
-    typescript@'3.3.3333' \
+    typescript \
     tslint \
     bunyan \
     mocha \
@@ -47,6 +50,6 @@ ENTRYPOINT ["/usr/local/bin/node", "main.js"]
 #
 #COPY --from=0 /rest-api /rest-api
 #
-#ADD https://nodejs.org/dist/v10.15.3/node-v10.15.3-linux-x64.tar.xz /
+#ADD https://nodejs.org/dist/v10.6.0/node-v10.6.0-linux-x64.tar.xz /
 #
-#RUN ["/node-v10.15.3-linux-x64/bin/node", "main.js"]
+#RUN ["/node-v10.6.0-linux-x64/bin/node", "main.js"]
