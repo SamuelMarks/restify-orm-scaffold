@@ -1,14 +1,20 @@
-import * as Logger from 'bunyan';
-import { uri_to_config } from 'nodejs-utils';
-import { IOrmMwConfig, IOrmsOut, RequestHandler } from 'orm-mw';
-import { Server } from 'restify';
-import { IRoutesMergerConfig } from 'routes-merger';
-import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { networkInterfaces } from 'os';
+import * as Logger from 'bunyan';
+import { Server } from 'restify';
+import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
+
+import { IOrmMwConfig, IOrmsOut, RequestHandler } from '@offscale/orm-mw/interfaces';
+import { uri_to_config } from '@offscale/nodejs-utils';
+import { IRoutesMergerConfig } from '@offscale/routes-merger/interfaces';
 
 /* TODO: Put this all in tiered environment-variable powered .json file */
 
-export const db_uri: string = process.env['RDBMS_URI'] || process.env['DATABASE_URL'] || process.env['POSTGRES_URL'];
+export const db_uri: string = process.env['RDBMS_URI']
+    || process.env['DATABASE_URL']
+    || process.env['POSTGRES_URL']
+    || '';
+
+if (db_uri.length === 0) throw ReferenceError('db_uri undefined');
 
 if (db_uri == null || !db_uri.length)
     throw ReferenceError('Database URI not set. See README.md for setup tutorial.');
@@ -58,10 +64,10 @@ export const waterline_config /*: ConfigOptions*/ = Object.freeze({
 } /* as any as ConfigOptions */);
 
 // ONLY USE `_orms_out` FOR TESTS!
-export const _orms_out: {orms_out: IOrmsOut} = { orms_out: undefined };
+export const _orms_out: {orms_out: IOrmsOut} = { orms_out: undefined as any };
 
 export const getOrmMwConfig = (models: Map<string, any>, logger: Logger,
-                               cb: (err: Error,
+                               cb: (err: Error | undefined,
                                     with_app?: IRoutesMergerConfig['with_app'],
                                     orms_out?: IOrmsOut) => void): IOrmMwConfig => ({
     models, logger,
@@ -80,29 +86,29 @@ export const getOrmMwConfig = (models: Map<string, any>, logger: Logger,
         },
         typeorm: {
             skip: false,
-            config: typeorm_config
+            config: typeorm_config as any
         },
         waterline: {
             skip: true /*,
             config: waterline_config*/
         }
     },
-    callback: (e: Error, mw: RequestHandler, orms_out: IOrmsOut) => {
+    callback: (e?: Error | undefined, mw?: RequestHandler, orms_out?: IOrmsOut) => {
         if (e != null) {
             if (cb != null) return cb(e);
             throw e;
         }
-        _orms_out.orms_out = orms_out;
+        _orms_out.orms_out = orms_out!;
         return cb(void 0, (_app: Server) => {
             _app.use(mw);
             // import { Next, Server } from 'restify';
-            // import { WaterlineError } from 'custom-restify-errors';
+            // import { WaterlineError } from '@offscale/custom-restify-errors';
             // import { WLError } from 'waterline';
             /*_app.on('WLError', (req, res, err: WLError, next: Next) =>
                 next(new WaterlineError(err))
             );*/
             return _app;
-        }, orms_out);
+        }, orms_out!);
     }
 });
 

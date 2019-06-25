@@ -1,7 +1,7 @@
 import { forEachOfLimit } from 'async';
-import { NotFoundError } from 'custom-restify-errors';
+import { NotFoundError } from '@offscale/custom-restify-errors';
 import { Response } from 'supertest';
-import { AccessTokenType } from 'nodejs-utils';
+import { AccessTokenType } from '@offscale/nodejs-utils/interfaces';
 
 import { User } from '../api/user/models';
 import { AuthTestSDK } from './api/auth/auth_test_sdk';

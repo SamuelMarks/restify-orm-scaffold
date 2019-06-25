@@ -1,7 +1,8 @@
 import { series, waterfall } from 'async';
-import { fmtError, GenericError, NotFoundError } from 'custom-restify-errors';
-import { AccessTokenType, isShallowSubset, numCb, TCallback } from 'nodejs-utils';
-import { IOrmReq } from 'orm-mw';
+import { fmtError, GenericError, NotFoundError } from '@offscale/custom-restify-errors';
+import { isShallowSubset } from '@offscale/nodejs-utils';
+import { AccessTokenType, numCb, TCallback } from '@offscale/nodejs-utils/interfaces';
+import { IOrmReq } from '@offscale/orm-mw/interfaces';
 import { RestError } from 'restify-errors';
 import { JsonSchema } from 'tv4';
 import { Request } from 'restify';
@@ -55,14 +56,14 @@ export const post = (req: UserBodyReq,
             cb => {
                 const user = new User();
                 Object.keys(req.body).map(k => user[k] = req.body[k]);
-                return req.getOrm().typeorm.connection.manager
+                return req.getOrm().typeorm!.connection.manager
                     .getRepository(User)
                     .save(user)
                     .then(() => cb(void 0, user))
                     .catch(cb);
             },
             /*(user: User, cb) => console.info('post::waterfall::before User.findOne, user=', user, ';') ||
-                req.getOrm().typeorm.connection.manager
+                req.getOrm().typeorm!.connection.manager
                     .getRepository(User)
                     .findOne(user)
                     .then((_user: User) => cb(void 0, _user))
@@ -70,12 +71,12 @@ export const post = (req: UserBodyReq,
                     console.info('post::waterfall::before AccessToken.get, user=', user, ';')*/
             (user: User, cb) =>
                 AccessToken
-                    .get(req.getOrm().redis.connection)
+                    .get(req.getOrm().redis!.connection)
                     .add(user.email, User.rolesAsStr(user.roles), 'access',
                         (err: Error, access_token: AccessTokenType) =>
                             err != null ? cb(err) : cb(void 0, Object.assign(user, { access_token }))
                     )
-        ], (error: Error, user: User) => {
+        ], (error: Error | null | undefined, user: User | undefined) => {
             if (error != null)
                 return callback(fmtError(error));
             else if (user == null)
@@ -90,10 +91,10 @@ export const post = (req: UserBodyReq,
 
 export const get = (req: UserBodyUserReq,
                     callback: TCallback<Error | RestError, User>) =>
-    req.getOrm().typeorm.connection
+    req.getOrm().typeorm!.connection
         .getRepository(User)
         .findOne({ email: req.user_id })
-        .then((user: User) =>
+        .then((user: User | undefined) =>
             user == null ? callback(new NotFoundError('User'))
                 : callback(void 0, user)
         )
@@ -101,7 +102,7 @@ export const get = (req: UserBodyUserReq,
 
 export const getAll = (req: IOrmReq,
                        callback: TCallback<Error | RestError, {users: User[]}>) =>
-    req.getOrm().typeorm.connection
+    req.getOrm().typeorm!.connection
         .getRepository(User)
         .find({
             order: {
@@ -126,14 +127,14 @@ export const update = (req: UserBodyUserReq,
 
     series([
             cb =>
-                req.getOrm().typeorm.connection.manager
+                req.getOrm().typeorm!.connection.manager
                     .update(User, { email: req.user_id }, req.body)
                     .then(_ => cb(void 0))
                     .catch(cb),
             cb =>
-                req.getOrm().typeorm.connection.getRepository(User)
+                req.getOrm().typeorm!.connection.getRepository(User)
                     .findOne({ email: req.user_id })
-                    .then((user: User) => cb(void 0, user))
+                    .then((user: User | undefined) => cb(void 0, user))
                     .catch(cb)
         ], (error, update_user) =>
             error == null ? callback(void 0, update_user as any)
@@ -146,10 +147,10 @@ export const destroy = (req: IOrmReq & {body?: User, user_id: string},
     series([
             cb =>
                 AccessToken
-                    .get(req.getOrm().redis.connection)
+                    .get(req.getOrm().redis!.connection)
                     .logout({ user_id: req.user_id }, cb),
             cb =>
-                req.getOrm().typeorm.connection
+                req.getOrm().typeorm!.connection
                     .getRepository(User)
                     .remove({ email: req.user_id } as any)
                     .then(() => cb(void 0))

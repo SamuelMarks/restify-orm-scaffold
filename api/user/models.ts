@@ -14,9 +14,9 @@ export const hash_password = (password: string, callback): void => {
 export class User {
     public static _omit: string[] = ['password'];
     @PrimaryColumn({ type: 'varchar' })
-    public email: string;
+    public email!: string;
     @Column('varchar', { nullable: true, select: false })
-    public password: string;
+    public password!: string;
     @Column('varchar', { nullable: true })
     public title?: string;
     @CreateDateColumn()
@@ -24,7 +24,7 @@ export class User {
     @UpdateDateColumn()
     public updatedAt?: Date;
     @Column('simple-array', { nullable: false })
-    public roles: string[];
+    public roles!: string[];
     // Might get attached for tests or in middleware; NOT present in db
     public access_token?: string;
 

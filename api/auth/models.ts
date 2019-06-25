@@ -1,12 +1,12 @@
-import { AuthError, GenericError } from 'custom-restify-errors';
+import { AuthError, GenericError } from '@offscale/custom-restify-errors';
 import { Redis } from 'ioredis';
-import { AccessTokenType, strCbV } from 'nodejs-utils';
+import { AccessTokenType, strCbV } from '@offscale/nodejs-utils/interfaces';
 import { RestError } from 'restify-errors';
 import { v4 as uuid_v4 } from 'uuid';
 
 type LogoutArg = {user_id: string; access_token?: never} | {user_id?: never; access_token: AccessTokenType};
 
-let accessToken: AccessToken;
+let accessToken: AccessToken | undefined;
 
 export class AccessToken {
     constructor(private redis: Redis) {}
@@ -23,7 +23,7 @@ export class AccessToken {
     }
 
     public findOne(access_token: AccessTokenType, callback: strCbV) {
-        return this.redis.get(access_token, (err: Error, user_id: string) => {
+        return this.redis.get(access_token, (err: Error, user_id: string | null) => {
             if (err != null) return callback(err);
             else if (user_id == null) return callback(new AuthError('Nothing associated with that access token'));
             return callback(void 0, user_id);
@@ -47,7 +47,7 @@ export class AccessToken {
                         statusCode: 400,
                         name: 'LogoutErrors',
                         message: JSON.stringify(errors)
-                    }) : null)
+                    }) : void 0)
                 );
             });
         else if (arg.access_token)

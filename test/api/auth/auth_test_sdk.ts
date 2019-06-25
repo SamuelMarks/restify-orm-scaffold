@@ -2,10 +2,12 @@ import { mapSeries, series, waterfall } from 'async';
 import * as chai from 'chai';
 import { expect } from 'chai';
 import * as chaiJsonSchema from 'chai-json-schema';
-import { getError, IncomingMessageError, sanitiseSchema, superEndCb, TCallback } from 'nodejs-utils';
 import { Server } from 'restify';
 import * as supertest from 'supertest';
 import { Response } from 'supertest';
+
+import { getError, sanitiseSchema, superEndCb } from '@offscale/nodejs-utils';
+import { IncomingMessageError, TCallback } from '@offscale/nodejs-utils/interfaces';
 
 import * as auth_routes from '../../../api/auth/routes';
 import { User } from '../../../api/user/models';
@@ -18,6 +20,7 @@ import { UserTestSDK } from '../user/user_test_sdk';
 const user_schema = sanitiseSchema(require('./../user/schema.json'), User._omit);
 const auth_schema = require('./schema.json');
 
+// @ts-ignore
 chai.use(chaiJsonSchema);
 
 export class AuthTestSDK {
@@ -70,7 +73,7 @@ export class AuthTestSDK {
         mapSeries(users as any, (user: User, callb) =>
             waterfall([
                     call_back => this.login(user, (err, res) =>
-                        err == null ? call_back(void 0, res.header['x-access-token']) : call_back(err)
+                        err == null ? call_back(void 0, res!.header['x-access-token']) : call_back(err)
                     ),
                     (access_token, call_back) => this.user_sdk.unregister({ access_token }, (err, res) =>
                         call_back(err, access_token)
@@ -91,8 +94,8 @@ export class AuthTestSDK {
             callb => this.user_sdk.register(user, callb),
             callb => this.login(user, callb)
         ], (err: Error, results: Response[]) => {
-            if (err != null) return callback(err);
-            else return callback(err, results[1].get('x-access-token'));
+            if (err != null) return callback!(err);
+            else return callback!(err, results[1].get('x-access-token'));
         });
     }
 

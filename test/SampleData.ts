@@ -1,9 +1,11 @@
 import { series } from 'async';
 import { ClientRequest, IncomingMessage, request as http_request, RequestOptions } from 'http';
-import { AccessTokenType, IncomingMessageError, TCallback, trivial_merge } from 'nodejs-utils';
 import { HttpError } from 'restify-errors';
 import * as url from 'url';
 import { AsyncResultCallback, Connection, Query } from 'waterline';
+
+import { trivial_merge } from '@offscale/nodejs-utils';
+import { AccessTokenType, IncomingMessageError, TCallback } from '@offscale/nodejs-utils/interfaces';
 
 import { _orms_out } from '../config';
 
@@ -27,11 +29,11 @@ export interface IncomingMessageF extends IncomingMessage {
 const httpF = (method: 'POST' | 'PUT' | 'PATCH' | 'HEAD' | 'GET' | 'DELETE') => {
     return (options: RequestOptions,
             func_name: string,
-            body_or_cb: string | Callback | Cb | AsyncResultCallback<{}>,
+            body_or_cb: string | Callback | Cb | AsyncResultCallback<{}> | undefined,
             callback?: Callback | Cb | AsyncResultCallback<{}>): ClientRequest => {
         if (callback == null) {
             callback = body_or_cb as Callback | Cb | AsyncResultCallback<{}>;
-            body_or_cb = null;
+            body_or_cb = void 0;
         }
 
         options['method'] = method;
@@ -48,7 +50,7 @@ const httpF = (method: 'POST' | 'PUT' | 'PATCH' | 'HEAD' | 'GET' | 'DELETE') => 
             res.func_name = func_name;
             if (res == null) return (callback as Cb)(res);
             /* tslint:disable:no-bitwise */
-            else if ((res.statusCode / 100 | 0) > 3) return (callback as Cb)(res);
+            else if ((res.statusCode! / 100 | 0) > 3) return (callback as Cb)(res);
             return (callback as Cb)(void 0, res);
         });
         // body_or_cb ? req.end(<string>body_or_cb, cb) : req.end();
@@ -70,13 +72,13 @@ const httpDELETE = httpF('DELETE');
 const zip = (a0: any[], a1: any[]) => a0.map((x, i) => [x, a1[i]]);
 
 export class SampleData implements ISampleData {
-    public token: string;
+    public token!: string;
     private uri: url.Url;
 
     constructor(uri: string, connection: Connection[], collections: Query[]) {
         this.uri = url.parse(uri);
-        _orms_out.orms_out.waterline.connection = connection;
-        _orms_out.orms_out.waterline.collections = collections;
+        _orms_out.orms_out.waterline!.connection = connection;
+        _orms_out.orms_out.waterline!.collections = collections;
     }
 
     public login(user: string, callback: TCallback<HttpError, string>) {
@@ -130,16 +132,17 @@ export class SampleData implements ISampleData {
             }
         );
 
-        this.token ? unregisterUser(user, callback) : this.login(user, (err, access_token: AccessTokenType) =>
-            err ? callback() : unregisterUser(user, callback)
-        );
+        this.token ? unregisterUser(user, callback)
+            : this.login(user, (err?: HttpError, access_token?: AccessTokenType) =>
+                err ? callback() : unregisterUser(user, callback)
+            );
     }
 
     private mergeOptions(options, body?) {
         return trivial_merge({
             host: this.uri.host === `[::]:${this.uri.port}` ? 'localhost' :
-                `${this.uri.host.substr(this.uri.host.lastIndexOf(this.uri.port) + this.uri.port.length)}`,
-            port: parseInt(this.uri.port, 10),
+                `${this.uri.host!.substr(this.uri.host!.lastIndexOf(this.uri.port!) + this.uri.port!.length)}`,
+            port: parseInt(this.uri.port!, 10),
             headers: trivial_merge({
                 'Content-Type': 'application/json',
                 'Content-Length': body ? Buffer.byteLength(body) : 0

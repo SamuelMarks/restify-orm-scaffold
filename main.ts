@@ -1,16 +1,20 @@
 import { series, waterfall } from 'async';
 import { createLogger } from 'bunyan';
-import { get_models_routes, IModelRoute, populateModelRoutes, raise } from 'nodejs-utils';
-import { IOrmMwConfig, IOrmReq, IOrmsOut, ormMw } from 'orm-mw';
 import { Server } from 'restify';
-import { IRoutesMergerConfig, routesMerger, TApp } from 'routes-merger';
 
-import { AccessToken } from './api/auth/models';
+import { get_models_routes, populateModelRoutes, raise } from '@offscale/nodejs-utils';
+import { IModelRoute } from '@offscale/nodejs-utils/interfaces';
+import { ormMw } from '@offscale/orm-mw';
+import { IOrmMwConfig, IOrmReq, IOrmsOut } from '@offscale/orm-mw/interfaces';
+import { routesMerger } from '@offscale/routes-merger';
+import { IRoutesMergerConfig, TApp } from '@offscale/routes-merger/interfaces';
+
 import { AuthTestSDK } from './test/api/auth/auth_test_sdk';
+import { AccessToken } from './api/auth/models';
 import { User } from './api/user/models';
+import { post as register_user, UserBodyReq, UserConfig } from './api/user/sdk';
 import * as config from './config';
 import { getOrmMwConfig, getPrivateIPAddress } from './config';
-import { post as register_user, UserBodyReq, UserConfig } from './api/user/sdk';
 
 /* tslint:disable:no-var-requires */
 export const package_ = Object.freeze(require('./package'));
@@ -51,8 +55,8 @@ export const setupOrmApp = (models_and_routes: Map<string, any>,
                     throw ReferenceError(`${envs.join(', ')} must all be defined in your environment`);
 
                 const default_admin: User = {
-                    email: process.env.DEFAULT_ADMIN_EMAIL,
-                    password: process.env.DEFAULT_ADMIN_PASSWORD,
+                    email: process.env.DEFAULT_ADMIN_EMAIL!,
+                    password: process.env.DEFAULT_ADMIN_PASSWORD!,
                     roles: ['registered', 'login', 'admin']
                 };
 
@@ -84,8 +88,9 @@ export const setupOrmApp = (models_and_routes: Map<string, any>,
 
 if (require.main === module)
     setupOrmApp(all_models_and_routes, { logger }, { logger, skip_start_app: false },
-        (err: Error, app: TApp, orms_out: IOrmsOut) => {
+        (err: Error, app: TApp, orms_out?: IOrmsOut) => {
             if (err != null) throw err;
+            else if (orms_out == null) throw new ReferenceError('orms_out');
             config._orms_out.orms_out = orms_out;
         }
     );

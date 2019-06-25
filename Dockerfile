@@ -15,8 +15,6 @@ ADD https://raw.githubusercontent.com/wilsonsilva/wait-for/8b86892/wait-for /bin
 
 #    chmod +x /bin/wait_for_it.sh && \
 
-ADD . .
-
 RUN apk --no-cache --virtual build-dependencies add \
     git \
     python \
@@ -24,6 +22,8 @@ RUN apk --no-cache --virtual build-dependencies add \
     openssl \
     netcat-openbsd \
     && npm i -g npm
+
+ADD . .
 
 RUN ls -al \
     && mkdir -p /rest-api/node_modules/.staging \

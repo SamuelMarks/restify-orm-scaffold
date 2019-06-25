@@ -1,32 +1,20 @@
 {
   "compilerOptions": {
     "target": "es6",
-    "lib": [
-      "es2017",
-      "dom"
-    ],
     "module": "commonjs",
-    "moduleResolution": "node",
-    "isolatedModules": false,
-    "jsx": "react",
+    "strict": true,
+    "esModuleInterop": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "declaration": false,
+    "declaration": true,
     "noImplicitAny": false,
     "noImplicitUseStrict": false,
     "removeComments": true,
     "noLib": false,
     "preserveConstEnums": true,
-    "suppressImplicitAnyIndexErrors": true
-  },
-  "exclude": [
-    "node_modules",
-    "typings/browser",
-    "typings/browser.d.ts"
-  ],
-  "compileOnSave": true,
-  "buildOnSave": false,
-  "atom": {
-    "rewriteTsconfig": false
+    "suppressImplicitAnyIndexErrors": true,
+    "typeRoots": [
+      "./node_modules/@types"
+    ]
   }
 }

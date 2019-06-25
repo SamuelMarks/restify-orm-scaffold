@@ -1,9 +1,12 @@
 import * as chai from 'chai';
 import { expect } from 'chai';
 import * as chaiJsonSchema from 'chai-json-schema';
-import { AccessTokenType, getError, sanitiseSchema, superEndCb, SuperTestResp } from 'nodejs-utils';
 import * as supertest from 'supertest';
 import { Response } from 'supertest';
+
+import { getError, sanitiseSchema, superEndCb } from '@offscale/nodejs-utils';
+import { AccessTokenType, SuperTestResp } from '@offscale/nodejs-utils/interfaces';
+
 import { User } from '../../../api/user/models';
 import * as user_routes from '../../../api/user/routes';
 import * as user_admin_routes from '../../../api/user/admin';
@@ -11,6 +14,7 @@ import * as user_admin_routes from '../../../api/user/admin';
 /* tslint:disable:no-var-requires */
 const user_schema = sanitiseSchema(require('./../user/schema.json'), User._omit);
 
+// @ts-ignore
 chai.use(chaiJsonSchema);
 
 export class UserTestSDK {
@@ -69,7 +73,8 @@ export class UserTestSDK {
             });
     }
 
-    public update(access_token: AccessTokenType, user_id: string, user: Partial<User>, callback: SuperTestResp) {
+    public update(access_token: AccessTokenType, user_id: string|undefined,
+                  user: Partial<User>, callback: SuperTestResp) {
         if (user == null) return callback(new TypeError('user argument to update must be defined'));
 
         expect(user_routes.update).to.be.an.instanceOf(Function);

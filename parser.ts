@@ -64,22 +64,23 @@ function generateDocumentation(fileNames: string[], options: ts.CompilerOptions)
 
     /** Serialize a class symbol infomration */
     function serializeClass(node: ts.ClassDeclaration) {
-        const symbol = checker.getSymbolAtLocation(node.name);
+        const symbol = checker.getSymbolAtLocation(node.name!);
 
-        const details = serializeSymbol(symbol);
+        const details = serializeSymbol(symbol!);
         if (!details.decorators) return details;
         // Get the construct signatures
-        details.decorators = node.decorators.map(serializeDecorator);
-        const constructorType = checker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration);
+        details.decorators = node.decorators!.map(serializeDecorator);
+        const constructorType = checker.getTypeOfSymbolAtLocation(symbol!, symbol!.valueDeclaration);
         details.constructors = constructorType.getConstructSignatures().map(serializeSignature);
 
         return details;
     }
 
     function serializeDecorator(decorator: ts.Decorator) {
+        // @ts-ignore
         const symbol = checker.getSymbolAtLocation(decorator.expression.getFirstToken());
-        const decoratorType = checker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration);
-        const details = serializeSymbol(symbol);
+        const decoratorType = checker.getTypeOfSymbolAtLocation(symbol!, symbol!.valueDeclaration);
+        const details = serializeSymbol(symbol!);
         details.constructors = decoratorType.getCallSignatures().map(serializeSignature);
         return details;
     }

@@ -1,5 +1,5 @@
 import * as argon2 from 'argon2';
-import { IUser } from './models.waterline.d';
+import { IUser } from './models.waterline.interfaces.d';
 import { argon2_options } from './utils';
 
 export const hash_password = (record: {password: string, email?: string}, callback): void => {
@@ -40,6 +40,7 @@ export const User = {
             defaultsTo: 'registered;'
         },
         toJSON: function toJSON() {
+            // @ts-ignore
             const user: IUser = this.toObject();
             User._omit.map(k => delete user[k]);
             for (const key in user)

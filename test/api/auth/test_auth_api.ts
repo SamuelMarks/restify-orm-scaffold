@@ -1,9 +1,12 @@
 import { waterfall } from 'async';
 import { createLogger } from 'bunyan';
-import { IModelRoute, model_route_to_map } from 'nodejs-utils';
-import { IOrmsOut, tearDownConnections } from 'orm-mw';
 import { basename } from 'path';
 import { Server } from 'restify';
+
+import { model_route_to_map } from '@offscale/nodejs-utils';
+import { IModelRoute } from '@offscale/nodejs-utils/interfaces';
+import { tearDownConnections } from '@offscale/orm-mw';
+import { IOrmsOut } from '@offscale/orm-mw/interfaces';
 
 import { AccessToken } from '../../../api/auth/models';
 import { User } from '../../../api/user/models';
@@ -57,7 +60,8 @@ describe('Auth::routes', () => {
 
         it('DELETE should logout user', done =>
             sdk.unregister_all([mocks[3]],
-                (error: Error) => done(typeof error['text'] === 'string' && error['text'] === JSON.stringify({
+                (error?: Error) => done(error == null ? error
+                    : typeof error['text'] === 'string' && error['text'] === JSON.stringify({
                         code: 'NotFoundError',
                         message: 'User not found'
                     }) ? null : error

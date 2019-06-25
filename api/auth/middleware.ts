@@ -1,6 +1,7 @@
-import { AuthError, GenericError } from 'custom-restify-errors';
-import { IOrmReq } from 'orm-mw';
 import * as restify from 'restify';
+
+import { AuthError, GenericError } from '@offscale/custom-restify-errors';
+import { IOrmReq } from '@offscale/orm-mw/interfaces';
 
 import { AccessToken } from './models';
 
@@ -26,8 +27,8 @@ export const has_auth = (scope = 'access') =>
 
         if (access_token.indexOf('admin') > -1 && body_id)
             AccessToken
-                .get(req.getOrm().redis.connection)
-                .findOne(access_token, (err: Error, user_id: string) => {
+                .get(req.getOrm().redis!.connection)
+                .findOne(access_token, (err: Error | undefined, user_id: string | undefined) => {
                     if (err != null) return next(err);
                     else if (user_id == null) return next(new GenericError({
                         name: 'NotFound',
@@ -38,8 +39,8 @@ export const has_auth = (scope = 'access') =>
                     return next();
                 });
         else AccessToken
-            .get(req.getOrm().redis.connection)
-            .findOne(access_token, (err: Error, user_id: string) => {
+            .get(req.getOrm().redis!.connection)
+            .findOne(access_token, (err: Error | undefined, user_id: string | undefined) => {
                 if (err != null) return next(err);
                 else if (user_id == null) return next(new GenericError({
                     name: 'NotFound',

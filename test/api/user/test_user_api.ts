@@ -1,8 +1,10 @@
 import { map, series, waterfall } from 'async';
 import { createLogger } from 'bunyan';
 import { expect } from 'chai';
-import { AccessTokenType, IModelRoute, model_route_to_map } from 'nodejs-utils';
-import { IOrmsOut, tearDownConnections } from 'orm-mw';
+import { model_route_to_map } from '@offscale/nodejs-utils';
+import { AccessTokenType, IModelRoute } from '@offscale/nodejs-utils/interfaces';
+import { tearDownConnections } from '@offscale/orm-mw';
+import { IOrmsOut } from '@offscale/orm-mw/interfaces';
 import { basename } from 'path';
 import { Server } from 'restify';
 
@@ -56,10 +58,6 @@ describe('User::routes', () => {
 
     after('tearDownConnections', done => tearDownConnections(_orms_out.orms_out, done));
     after('closeApp', done => sdk.app.close(done));
-    after('destroy objects', done => {
-        Object.keys(this).forEach(k => delete this[k]);
-        return done();
-    });
 
     describe('/api/user', () => {
         beforeEach(done => auth_sdk.unregister_all(mocks, () => done()));
@@ -79,6 +77,7 @@ describe('User::routes', () => {
                         const expected_err = 'E_UNIQUE';
                         try {
                             expect(err['text']).to.contain(expected_err);
+                            // @ts-ignore
                             err = null;
                         } catch (e) {
                             err = e as IAssertionError;
@@ -94,7 +93,7 @@ describe('User::routes', () => {
             waterfall([
                     cb => sdk.register(mocks[2], err => cb(err)),
                     cb => auth_sdk.login(mocks[2], (err, res) =>
-                        err ? cb(err) : cb(void 0, res.body['access_token'])
+                        err ? cb(err) : cb(void 0, res!.body['access_token'])
                     ),
                     (access_token: AccessTokenType, cb) =>
                         sdk.read(access_token, mocks[2], cb)
@@ -107,7 +106,7 @@ describe('User::routes', () => {
             waterfall([
                     cb => sdk.register(mocks[3], err => cb(err)),
                     cb => auth_sdk.login(mocks[3], (err, res) =>
-                        err ? cb(err) : cb(void 0, res.body['access_token'])
+                        err ? cb(err) : cb(void 0, res!.body['access_token'])
                     ),
                     (access_token: AccessTokenType, cb) =>
                         sdk.update(access_token, void 0, { title: 'Sir' },
@@ -120,8 +119,9 @@ describe('User::routes', () => {
         );
 
         it('GET /users should get all users', done =>
-            map(mocks.slice(4, 10), auth_sdk.register_login.bind(auth_sdk), (err, res: AccessTokenType[]) =>
-                err ? done(err) : sdk.get_all(res[4], done)
+            map(mocks.slice(4, 10), auth_sdk.register_login.bind(auth_sdk),
+                (err, res: AccessTokenType[]) =>
+                    err ? done(err) : sdk.get_all(res[4], done)
             )
         );
 
@@ -129,7 +129,7 @@ describe('User::routes', () => {
             waterfall([
                     cb => sdk.register(mocks[5], err => cb(err)),
                     cb => auth_sdk.login(mocks[5], (err, res) =>
-                        err ? cb(err) : cb(void 0, res.body['access_token'])
+                        err ? cb(err) : cb(void 0, res!.body['access_token'])
                     ),
                     (access_token: AccessTokenType, cb) =>
                         sdk.unregister({ access_token }, err =>
@@ -138,7 +138,7 @@ describe('User::routes', () => {
                     ,
                     (access_token: AccessTokenType, cb) =>
                         AccessToken
-                            .get(_orms_out.orms_out.redis.connection)
+                            .get(_orms_out.orms_out.redis!.connection)
                             .findOne(access_token, e =>
                                 cb(e != null && e.message === 'Nothing associated with that access token' ? null : e)
                             ),
