@@ -16,7 +16,8 @@ const user_schema: JsonSchema = require('./../../test/api/user/schema');
 
 export const login = (app: restify.Server, namespace: string = ''): void => {
     app.post(namespace, has_body, mk_valid_body_mw(user_schema),
-        (req: restify.Request & IOrmReq, res: restify.Response, next: restify.Next) => {
+        (request: restify.Request, res: restify.Response, next: restify.Next) => {
+            const req = request as unknown as IOrmReq & restify.Request;
             waterfall([
                 cb => req.getOrm().typeorm!.connection
                     .getRepository(User)
@@ -54,7 +55,8 @@ export const login = (app: restify.Server, namespace: string = ''): void => {
 
 export const logout = (app: restify.Server, namespace: string = ''): void => {
     app.del(namespace, has_auth(),
-        (req: restify.Request & IOrmReq, res: restify.Response, next: restify.Next) => {
+        (request: restify.Request, res: restify.Response, next: restify.Next) => {
+            const req = request as unknown as IOrmReq & restify.Request;
             AccessToken
                 .get(req.getOrm().redis!.connection)
                 .logout({ access_token: req.headers['x-access-token'] as string }, error => {

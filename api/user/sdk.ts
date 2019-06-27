@@ -3,7 +3,7 @@ import { fmtError, GenericError, NotFoundError } from '@offscale/custom-restify-
 import { isShallowSubset } from '@offscale/nodejs-utils';
 import { AccessTokenType, numCb, TCallback } from '@offscale/nodejs-utils/interfaces';
 import { IOrmReq } from '@offscale/orm-mw/interfaces';
-import { RestError } from 'restify-errors';
+import { RestError, default as restify_errors } from 'restify-errors';
 import { JsonSchema } from 'tv4';
 import { Request } from 'restify';
 
@@ -76,9 +76,9 @@ export const post = (req: UserBodyReq,
                         (err: Error, access_token: AccessTokenType) =>
                             err != null ? cb(err) : cb(void 0, Object.assign(user, { access_token }))
                     )
-        ], (error: Error | null | undefined, user: User | undefined) => {
+        ], (error: Error | null | undefined | restify_errors.RestError, user: User | undefined) => {
             if (error != null)
-                return callback(fmtError(error));
+                return callback(fmtError(error) as restify_errors.RestError);
             else if (user == null)
                 return callback(new NotFoundError('User|AccessToken'));
             else if (user.email == null)
@@ -138,7 +138,7 @@ export const update = (req: UserBodyUserReq,
                     .catch(cb)
         ], (error, update_user) =>
             error == null ? callback(void 0, update_user as any)
-                : callback(fmtError(error))
+                : callback(fmtError(error) as restify_errors.RestError)
     );
 };
 
@@ -157,5 +157,5 @@ export const destroy = (req: IOrmReq & {body?: User, user_id: string},
                     .catch(cb)
         ], error =>
             error == null ? callback(void 0, 204)
-                : callback(fmtError(error))
+                : callback(fmtError(error) as restify_errors.RestError)
     );

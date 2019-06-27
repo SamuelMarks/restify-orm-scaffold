@@ -6,7 +6,8 @@ import { IOrmReq } from '@offscale/orm-mw/interfaces';
 import { AccessToken } from './models';
 
 export const has_auth = (scope = 'access') =>
-    (req: restify.Request & IOrmReq & {user_id: string}, res: restify.Response, next: restify.Next) => {
+    (request: restify.Request, res: restify.Response, next: restify.Next) => {
+        const req = request as unknown as restify.Request & IOrmReq & {user_id: string};
         if (req.headers['x-access-token'] == null)
             if (req.params.access_token != null)
                 req.headers['x-access-token'] = req.params.access_token;
