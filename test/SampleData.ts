@@ -1,4 +1,3 @@
-import { series } from 'async';
 import { ClientRequest, IncomingMessage, request as http_request, RequestOptions } from 'http';
 import { HttpError } from 'restify-errors';
 import * as url from 'url';
@@ -20,7 +19,7 @@ export interface ISampleData {
 }
 
 type Callback = (res: IncomingMessageF) => void;
-type Cb = (err: IncomingMessageF, res?: IncomingMessageF) => void;
+type Cb = (err?: IncomingMessageF, res?: IncomingMessageF) => void;
 
 export interface IncomingMessageF extends IncomingMessage {
     func_name: string;
@@ -46,11 +45,12 @@ const httpF = (method: 'POST' | 'PUT' | 'PATCH' | 'HEAD' | 'GET' | 'DELETE') => 
             else if (options.headers['Content-Length'] == null)
                 options.headers['Content-Length'] = Buffer.byteLength(body_or_cb as string);
 
-        const req = http_request(options, (res: IncomingMessageF) => {
-            res.func_name = func_name;
+        const req = http_request(options, (result) => {
+            const res = result as IncomingMessageF;
             if (res == null) return (callback as Cb)(res);
+            res.func_name = func_name;
             /* tslint:disable:no-bitwise */
-            else if ((res.statusCode! / 100 | 0) > 3) return (callback as Cb)(res);
+            if ((res.statusCode! / 100 | 0) > 3) return (callback as Cb)(res);
             return (callback as Cb)(void 0, res);
         });
         // body_or_cb ? req.end(<string>body_or_cb, cb) : req.end();
@@ -103,7 +103,7 @@ export class SampleData implements ISampleData {
         });
     }
 
-    public register(user: string, callback: TCallback<Error | IncomingMessageError, IncomingMessageF>) {
+    public register(user: string, callback: (err: Error, response: any) => void) {
         httpPOST(
             this.mergeOptions({ path: '/api/user' }),
             'registerLogin', user, callback
@@ -111,13 +111,17 @@ export class SampleData implements ISampleData {
     }
 
     public registerLogin(user: string, callback: TCallback<Error | IncomingMessageError | IncomingMessageF, string>) {
-        series([
-            callb => this.register(user, callb),
-            callb => this.login(user, callb as any),
-        ], (err: Error, res: IncomingMessageF[]) => {
-            if (err != null) return callback(err);
-            else if (res[1].headers != null) this.token = res[1].headers['x-access-token'] as string;
-            return callback(err, this.token);
+        const setToken = (res): true => {
+            if (res[1].headers != null) this.token = res[1].headers['x-access-token'] as string;
+            return true;
+        };
+
+        this.register(user, (err, res) => {
+            if (err == null) return setToken && callback(void 0, this.token);
+            return this.login(user, (e, r) => {
+                if (e != null) return callback(e);
+                return setToken && callback(void 0, this.token);
+            });
         });
     }
 

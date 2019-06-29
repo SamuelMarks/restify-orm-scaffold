@@ -1,4 +1,4 @@
-import { map, waterfall } from 'async';
+import { asyncify, map, waterfall } from 'async';
 import { createLogger } from 'bunyan';
 import { expect } from 'chai';
 import { model_route_to_map } from '@offscale/nodejs-utils';
@@ -114,7 +114,7 @@ describe('User::routes', () => {
         });
 
         it('GET /users should get all users', done =>
-            map(mocks.slice(4, 10), auth_sdk.register_login.bind(auth_sdk),
+            map(mocks.slice(4, 10), asyncify(auth_sdk.register_login.bind(auth_sdk)),
                 (err: Error | IncomingMessageError | null | undefined,
                  res: undefined | Array<AccessTokenType | undefined>) =>
                     err != null ? done(err) : sdk.get_all((res as string[])[4]).then(() => done()).catch(done)

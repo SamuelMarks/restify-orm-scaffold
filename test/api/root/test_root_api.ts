@@ -1,23 +1,22 @@
 import { createLogger } from 'bunyan';
 import { expect } from 'chai';
 import { basename } from 'path';
-import { Server } from 'restify';
-import * as supertest from 'supertest';
-import { Response } from 'supertest';
+import supertest, { Response } from 'supertest';
 
 import { setupOrmApp } from '../../../main';
+import { TApp } from '@offscale/routes-merger/interfaces';
 
 const tapp_name = `test::${basename(__dirname)}`;
 const logger = createLogger({ name: tapp_name });
 
 describe('Root::routes', () => {
-    let app: Server;
+    let app: TApp;
 
     before(done => setupOrmApp(
         new Map(), { orms_in: undefined, logger }, { skip_start_app: true, app_name: tapp_name, logger },
-        (err: Error, _app: Server) => {
+        (err: Error, _app?: TApp) => {
             if (err != null) return done(err);
-            app = _app;
+            app = _app as TApp;
             return done(void 0);
         })
     );

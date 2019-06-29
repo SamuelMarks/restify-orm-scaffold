@@ -22,8 +22,12 @@ export interface IUserConfig {
 }
 
 export class UserConfig implements IUserConfig {
-    public static default(): UserConfig {
-        return new UserConfig(true, []);
+    private static _user_config: UserConfig;
+
+    constructor(public public_registration: boolean,
+                public initial_accounts: User[]) {
+        if (!public_registration && !initial_accounts.length)
+            throw TypeError('No way for accounts to exist!');
     }
 
     public static get instance(): UserConfig {
@@ -35,12 +39,8 @@ export class UserConfig implements IUserConfig {
         UserConfig._user_config = new UserConfig(config.public_registration, config.initial_accounts);
     }
 
-    private static _user_config: UserConfig;
-
-    constructor(public public_registration: boolean,
-                public initial_accounts: User[]) {
-        if (!public_registration && !initial_accounts.length)
-            throw TypeError('No way for accounts to exist!');
+    public static default(): UserConfig {
+        return new UserConfig(true, []);
     }
 }
 

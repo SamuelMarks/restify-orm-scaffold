@@ -1,11 +1,12 @@
 import { networkInterfaces } from 'os';
 import * as Logger from 'bunyan';
-import { Server } from 'restify';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 
 import { IOrmMwConfig, IOrmsOut, RequestHandler } from '@offscale/orm-mw/interfaces';
 import { uri_to_config } from '@offscale/nodejs-utils';
-import { IRoutesMergerConfig } from '@offscale/routes-merger/interfaces';
+import { IRoutesMergerConfig, TApp } from '@offscale/routes-merger/interfaces';
+import * as restify from 'restify';
+import { RequestHandler as RestifyRequestHandler } from 'restify';
 
 /* TODO: Put this all in tiered environment-variable powered .json file */
 
@@ -99,8 +100,9 @@ export const getOrmMwConfig = (models: Map<string, any>, logger: Logger,
             throw e;
         }
         _orms_out.orms_out = orms_out!;
-        return cb(void 0, (_app: Server) => {
-            _app.use(mw);
+        return cb(void 0, (_app: TApp) => {
+            if (_app.hasOwnProperty('use'))
+                (_app as restify.Server).use(mw as RestifyRequestHandler);
             // import { Next, Server } from 'restify';
             // import { WaterlineError } from '@offscale/custom-restify-errors';
             // import { WLError } from 'waterline';

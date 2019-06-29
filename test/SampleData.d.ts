@@ -18,7 +18,7 @@ export declare class SampleData implements ISampleData {
     constructor(uri: string, connection: Connection[], collections: Query[]);
     login(user: string, callback: TCallback<HttpError, string>): void;
     logout(access_token: AccessTokenType, callback: TCallback<HttpError, string>): void;
-    register(user: string, callback: TCallback<Error | IncomingMessageError, IncomingMessageF>): void;
+    register(user: string, callback: (err: Error, response: any) => void): void;
     registerLogin(user: string, callback: TCallback<Error | IncomingMessageError | IncomingMessageF, string>): void;
     unregister(user: string, callback: any): void;
     private mergeOptions;

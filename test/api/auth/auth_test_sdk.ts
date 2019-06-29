@@ -1,9 +1,7 @@
 import * as chai from 'chai';
 import { expect } from 'chai';
-import * as chaiJsonSchema from 'chai-json-schema';
 import { Server } from 'restify';
-import * as supertest from 'supertest';
-import { Response } from 'supertest';
+import supertest, { Response } from 'supertest';
 
 import { getError, sanitiseSchema, supertestGetError } from '@offscale/nodejs-utils';
 import { AccessTokenType } from '@offscale/nodejs-utils/interfaces';
@@ -12,6 +10,8 @@ import * as auth_routes from '../../../api/auth/routes';
 import { User } from '../../../api/user/models';
 import { user_mocks } from '../user/user_mocks';
 import { UserTestSDK } from '../user/user_test_sdk';
+// tslint:disable-next-line:no-var-requires
+const chaiJsonSchema = require('chai-json-schema');
 // import { saltSeeker } from '../../../api/user/utils';
 // import { saltSeekerCb } from '../../../main';
 

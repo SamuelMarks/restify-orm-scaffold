@@ -1,8 +1,7 @@
-import * as chai from 'chai';
+// tslint:disable-next-line:no-var-requires
+const chai = require('chai');
 import { expect } from 'chai';
-import * as chaiJsonSchema from 'chai-json-schema';
-import * as supertest from 'supertest';
-import { Response } from 'supertest';
+import supertest, { Response } from 'supertest';
 import { Server } from 'restify';
 
 import { getError, sanitiseSchema, supertestGetError } from '@offscale/nodejs-utils';
@@ -11,6 +10,8 @@ import { AccessTokenType } from '@offscale/nodejs-utils/interfaces';
 import { User } from '../../../api/user/models';
 import * as user_routes from '../../../api/user/routes';
 import * as user_admin_routes from '../../../api/user/admin';
+// tslint:disable-next-line:no-var-requires
+const chaiJsonSchema = require('chai-json-schema');
 
 /* tslint:disable:no-var-requires */
 const user_schema = sanitiseSchema(require('./../user/schema.json'), User._omit);

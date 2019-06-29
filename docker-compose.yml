@@ -24,4 +24,4 @@ services:
             DEFAULT_ADMIN_PASSWORD: bar
         command: [#"/bin/wait_for_it.sh", "postgres:5432", "--",
             # "/bin/wait_for_it.sh", "redis:6379", "--",
-                  "npm", "start"]
+            "npm", "start"]

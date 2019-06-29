@@ -16,11 +16,11 @@ paths:
         get:
             summary: Retrieve user data
             parameters:
-                - name: X-Access-Token
-                  in: header
-                  description: Valid Access Token from which user can be found at
-                  required: true
-                  type: string
+                -   name: X-Access-Token
+                    in: header
+                    description: Valid Access Token from which user can be found at
+                    required: true
+                    type: string
                     #$ref: '#/definitions/AccessToken'
             responses:
                 200:
@@ -34,11 +34,11 @@ paths:
         post:
             summary: Create user
             parameters:
-                - name: user
-                  in: body
-                  required: true
-                  schema:
-                      $ref: '#/definitions/User'
+                -   name: user
+                    in: body
+                    required: true
+                    schema:
+                        $ref: '#/definitions/User'
             responses:
                 201:
                     description: Created user
@@ -51,11 +51,11 @@ paths:
         put:
             summary: Update user
             parameters:
-                - name: user
-                  in: body
-                  required: true
-                  schema:
-                      $ref: '#/definitions/User'
+                -   name: user
+                    in: body
+                    required: true
+                    schema:
+                        $ref: '#/definitions/User'
             responses:
                 200:
                     description: Updated user
@@ -68,11 +68,11 @@ paths:
         delete:
             summary: Delete user
             parameters:
-                - name: X-Access-Token
-                  in: header
-                  description: Valid Access Token from which user can be found at
-                  required: true
-                  type: string
+                -   name: X-Access-Token
+                    in: header
+                    description: Valid Access Token from which user can be found at
+                    required: true
+                    type: string
             responses:
                 204:
                     description: User associated with that access token
@@ -84,11 +84,11 @@ paths:
         post:
             summary: Login user
             parameters:
-                - name: user
-                  in: body
-                  required: true
-                  schema:
-                      $ref: '#/definitions/User'
+                -   name: user
+                    in: body
+                    required: true
+                    schema:
+                        $ref: '#/definitions/User'
             responses:
                 201:
                     description: Created user
@@ -101,11 +101,11 @@ paths:
         delete:
             summary: Logout user
             parameters:
-                - name: X-Access-Token
-                  in: header
-                  description: Valid Access Token from which user can be found at
-                  required: true
-                  type: string
+                -   name: X-Access-Token
+                    in: header
+                    description: Valid Access Token from which user can be found at
+                    required: true
+                    type: string
             responses:
                 204:
                     description: User associated with that access token
