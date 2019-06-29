@@ -11,12 +11,13 @@ export const create = (app: restify.Server, namespace: string = '') =>
     app.post(`${namespace}/:email`, has_body, mk_valid_body_mw(user_sdk.schema),
         (request: restify.Request, res: restify.Response, next: restify.Next) => {
             const req = request as unknown as UserBodyReq;
-            user_sdk.post(req, UserConfig.instance, (err, user?: User) => {
-                if (err != null) return next(err);
-                res.setHeader('X-Access-Token', user!.access_token!);
-                res.json(201, user);
-                return next();
-            });
+            user_sdk.post(req, UserConfig.instance)
+                .then((user: User) => {
+                    res.setHeader('X-Access-Token', user!.access_token!);
+                    res.json(201, user);
+                    return next();
+                })
+                .catch(next);
         }
     );
 
@@ -24,11 +25,13 @@ export const read = (app: restify.Server, namespace: string = '') =>
     app.get(`${namespace}/:email`, has_auth('admin'),
         (request: restify.Request, res: restify.Response, next: restify.Next) => {
             const req = request as unknown as UserBodyUserReq;
-            user_sdk.get(req, (err, user?: User) => {
-                if (err != null) return next(err);
-                res.json(user);
-                return next();
-            });
+            user_sdk.get(req)
+                .then((user: User) => {
+                    res.setHeader('X-Access-Token', user!.access_token!);
+                    res.json(201, user);
+                    return next();
+                })
+                .catch(next);
         }
     );
 
@@ -36,11 +39,12 @@ export const readAll = (app: restify.Server, namespace: string = '') =>
     app.get(`${namespace}s`, has_auth('admin'),
         (request: restify.Request, res: restify.Response, next: restify.Next) => {
             const req = request as unknown as restify.Request & IOrmReq;
-            user_sdk.getAll(req, (err, users?: {users: User[]}) => {
-                if (err != null) return next(err);
-                res.json(users);
-                return next();
-            });
+            user_sdk.getAll(req)
+                .then((users?: {users: User[]}) => {
+                    res.json(users);
+                    return next();
+                })
+                .catch(next);
         }
     );
 
@@ -49,19 +53,22 @@ export const update = (app: restify.Server, namespace: string = '') =>
         mk_valid_body_mw(schema, false),
         mk_valid_body_mw_ignore(schema, ['Missing required property']),*/
         (request: restify.Request, res: restify.Response, next: restify.Next) =>
-            user_sdk.update(request as unknown as UserBodyUserReq, (err, user?: User) => {
-                if (err != null) return next(err);
-                res.json(user);
-                return next();
-            })
+            user_sdk.update(request as unknown as UserBodyUserReq)
+                .then((user: User) => {
+                    res.setHeader('X-Access-Token', user!.access_token!);
+                    res.json(201, user);
+                    return next();
+                })
+                .catch(next)
     );
 
 export const del = (app: restify.Server, namespace: string = '') =>
     app.del(`${namespace}/:email`, has_auth('admin'),
         (request: restify.Request, res: restify.Response, next: restify.Next) =>
-            user_sdk.destroy(request as unknown as UserBodyUserReq, (err, status_code?: number) => {
-                if (err != null) return next(err);
-                res.send(status_code);
-                return next();
-            })
+            user_sdk.destroy(request as unknown as UserBodyUserReq)
+                .then((status_code?: number) => {
+                    res.send(status_code);
+                    return next();
+                })
+                .catch(next)
     );

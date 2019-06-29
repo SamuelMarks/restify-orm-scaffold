@@ -1,9 +1,9 @@
 import { series, waterfall } from 'async';
 import { fmtError, GenericError, NotFoundError } from '@offscale/custom-restify-errors';
 import { isShallowSubset } from '@offscale/nodejs-utils';
-import { AccessTokenType, numCb, TCallback } from '@offscale/nodejs-utils/interfaces';
+import { AccessTokenType } from '@offscale/nodejs-utils/interfaces';
 import { IOrmReq } from '@offscale/orm-mw/interfaces';
-import { RestError, default as restify_errors } from 'restify-errors';
+import { default as restify_errors } from 'restify-errors';
 import { JsonSchema } from 'tv4';
 import { Request } from 'restify';
 
@@ -45,8 +45,7 @@ export class UserConfig implements IUserConfig {
 }
 
 export const post = (req: UserBodyReq,
-                     config: UserConfig,
-                     callback: TCallback<Error, User>) =>
+                     config: UserConfig): Promise<User> => new Promise<User>((resolve, reject) =>
     waterfall([
             cb => cb(config.public_registration ? void 0 : new GenericError({
                 statusCode: 401,
@@ -78,47 +77,48 @@ export const post = (req: UserBodyReq,
                     )
         ], (error: Error | null | undefined | restify_errors.RestError, user: User | undefined) => {
             if (error != null)
-                return callback(fmtError(error) as restify_errors.RestError);
+                return reject(fmtError(error) as restify_errors.RestError);
             else if (user == null)
-                return callback(new NotFoundError('User|AccessToken'));
+                return reject(new NotFoundError('User|AccessToken'));
             else if (user.email == null)
-                return callback(new NotFoundError('User'));
+                return reject(new NotFoundError('User'));
             else if (user.access_token == null)
-                return callback(new NotFoundError('AccessToken'));
-            return callback(void 0, user);
+                return reject(new NotFoundError('AccessToken'));
+            return resolve(user);
         }
-    );
+    )
+);
 
-export const get = (req: UserBodyUserReq,
-                    callback: TCallback<Error | RestError, User>) =>
+export const get = (req: UserBodyUserReq): Promise<User> => new Promise<User>((resolve, reject) =>
     req.getOrm().typeorm!.connection
         .getRepository(User)
         .findOne({ email: req.user_id })
         .then((user: User | undefined) =>
-            user == null ? callback(new NotFoundError('User'))
-                : callback(void 0, user)
+            user == null ? reject(new NotFoundError('User'))
+                : resolve(user)
         )
-        .catch(callback);
+        .catch(reject)
+);
 
-export const getAll = (req: IOrmReq,
-                       callback: TCallback<Error | RestError, {users: User[]}>) =>
-    req.getOrm().typeorm!.connection
-        .getRepository(User)
-        .find({
-            order: {
-                email: 'ASC'
-            }
-        })
-        .then((users: User[]) =>
-            (users == null || !users.length) ? callback(new NotFoundError('Users'))
-                : callback(void 0, { users }))
-        .catch(callback);
+export const getAll = (req: IOrmReq): Promise<{users: User[]}> =>
+    new Promise<{users: User[]}>((resolve, reject) =>
+        req.getOrm().typeorm!.connection
+            .getRepository(User)
+            .find({
+                order: {
+                    email: 'ASC'
+                }
+            })
+            .then((users: User[]) =>
+                (users == null || !users.length) ? reject(new NotFoundError('Users'))
+                    : resolve({ users }))
+            .catch(reject)
+    );
 
-export const update = (req: UserBodyUserReq,
-                       callback: TCallback<Error, User>) => {
+export const update = (req: UserBodyUserReq): Promise<User> => new Promise<User>((resolve, reject) => {
     if (!isShallowSubset(req.body, schema.properties)) {
         const error = 'ValidationError';
-        return callback(new GenericError({
+        return reject(new GenericError({
             name: error,
             message: 'Invalid keys detected in body',
             statusCode: 400
@@ -137,25 +137,27 @@ export const update = (req: UserBodyUserReq,
                     .then((user: User | undefined) => cb(void 0, user))
                     .catch(cb)
         ], (error, update_user) =>
-            error == null ? callback(void 0, update_user as any)
-                : callback(fmtError(error) as restify_errors.RestError)
+            error == null ?
+                (update_user == null ? reject(new NotFoundError('User')) : resolve(update_user as any))
+                : reject(fmtError(error) as restify_errors.RestError)
     );
-};
+});
 
-export const destroy = (req: IOrmReq & {body?: User, user_id: string},
-                        callback: numCb) =>
-    series([
-            cb =>
-                AccessToken
-                    .get(req.getOrm().redis!.connection)
-                    .logout({ user_id: req.user_id }, cb),
-            cb =>
-                req.getOrm().typeorm!.connection
-                    .getRepository(User)
-                    .remove({ email: req.user_id } as any)
-                    .then(() => cb(void 0))
-                    .catch(cb)
-        ], error =>
-            error == null ? callback(void 0, 204)
-                : callback(fmtError(error) as restify_errors.RestError)
-    );
+export const destroy = (req: IOrmReq & {body?: User, user_id: string}): Promise<number> =>
+    new Promise<number>((resolve, reject) => {
+        series([
+                cb =>
+                    AccessToken
+                        .get(req.getOrm().redis!.connection)
+                        .logout({ user_id: req.user_id }, cb),
+                cb =>
+                    req.getOrm().typeorm!.connection
+                        .getRepository(User)
+                        .remove({ email: req.user_id } as any)
+                        .then(() => cb(void 0))
+                        .catch(cb)
+            ], error =>
+                error == null ? resolve(204)
+                    : reject(fmtError(error) as restify_errors.RestError)
+        );
+    });

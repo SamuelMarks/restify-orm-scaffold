@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@offscale/custom-restify-errors": "^0.0.4",
-    "@offscale/nodejs-utils": "^0.0.6",
+    "@offscale/nodejs-utils": "^0.0.7",
     "@offscale/orm-mw": "^0.0.3",
     "@offscale/restify-validators": "^0.0.3",
     "@offscale/routes-merger": "^0.0.3",

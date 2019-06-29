@@ -1,5 +1,5 @@
 import { series, waterfall } from 'async';
-import { createLogger } from 'bunyan';
+import Logger, { createLogger } from 'bunyan';
 import { Server } from 'restify';
 
 import { get_models_routes, populateModelRoutes, raise } from '@offscale/nodejs-utils';
@@ -18,7 +18,7 @@ import { getOrmMwConfig, getPrivateIPAddress } from './config';
 
 /* tslint:disable:no-var-requires */
 export const package_ = Object.freeze(require('./package'));
-export const logger = createLogger({ name: 'main' });
+export const logger: Logger = createLogger({ name: 'main' });
 
 /* tslint:disable:no-unused-expression */
 process.env['NO_DEBUG'] || logger.info(Object.keys(process.env).sort().map(k => ({ [k]: process.env[k] })));
@@ -45,7 +45,7 @@ export const setupOrmApp = (models_and_routes: Map<string, any>,
             version_routes_kwargs: { private_ip: getPrivateIPAddress() },
             with_app,
             logger,
-            onServerStart: (uri: string, app: Server, next) => {
+            onServerStart: async (uri: string, app: Server, next) => {
                 AccessToken.reset();
 
                 const authSdk = new AuthTestSDK(app);
@@ -61,14 +61,16 @@ export const setupOrmApp = (models_and_routes: Map<string, any>,
                 };
 
                 series([
-                        callb => authSdk.unregister_all([default_admin], (err: Error & {status: number}) =>
-                            callb(err != null && err.status !== 404 ? err : void 0,
-                                'removed default user; next: adding')),
+                        callb => authSdk.unregister_all([default_admin])
+                            .then(() => callb())
+                            .catch((err: Error & {status: number}) =>
+                                callb(err != null && err.status !== 404 ? err : void 0,
+                                    'removed default user; next: adding')),
                         callb => register_user({
                             getOrm: () => config._orms_out.orms_out,
                             orms_out: config._orms_out.orms_out,
                             body: default_admin
-                        } as IOrmReq & {body?: User} as UserBodyReq, UserConfig.default(), callb),
+                        } as IOrmReq & {body?: User} as UserBodyReq, UserConfig.default()),
                         callb => {
                             UserConfig.instance = {
                                 public_registration:
@@ -87,7 +89,7 @@ export const setupOrmApp = (models_and_routes: Map<string, any>,
 ], callback);
 
 if (require.main === module)
-    setupOrmApp(all_models_and_routes, { logger }, { logger, skip_start_app: false },
+    setupOrmApp(all_models_and_routes, { logger: logger }, { logger: logger, skip_start_app: false },
         (err: Error, app: TApp, orms_out?: IOrmsOut) => {
             if (err != null) throw err;
             else if (orms_out == null) throw new ReferenceError('orms_out');

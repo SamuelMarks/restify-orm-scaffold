@@ -13,7 +13,7 @@ import { User } from '../../../api/user/models';
 import { _orms_out } from '../../../config';
 import { all_models_and_routes_as_mr, setupOrmApp } from '../../../main';
 import { user_mocks } from '../user/user_mocks';
-import { AuthTestSDK } from './../auth/auth_test_sdk';
+import { AuthTestSDK } from './auth_test_sdk';
 
 const models_and_routes: IModelRoute = {
     user: all_models_and_routes_as_mr['user'],
@@ -53,20 +53,29 @@ describe('Auth::routes', () => {
     after('closeApp', done => sdk.app.close(done));
 
     describe('/api/auth', () => {
-        beforeEach(done => sdk.unregister_all(mocks, () => done()));
-        afterEach(done => sdk.unregister_all(mocks, () => done()));
+        beforeEach(done =>
+            sdk.unregister_all(mocks)
+                .then(() => done(void 0))
+                .catch(() => done(void 0)));
+        afterEach(done =>
+            sdk.unregister_all(mocks)
+                .then(() => done(void 0))
+                .catch(() => done(void 0)));
 
-        it('POST should login user', done => sdk.register_login(mocks[1], done));
+        it('POST should login user', done =>
+            sdk.register_login(mocks[1])
+                .then(() => done(void 0))
+                .catch(done)
+        );
 
         it('DELETE should logout user', done =>
-            sdk.unregister_all([mocks[3]],
-                (error?: Error) => done(error == null ? error
-                    : typeof error['text'] === 'string' && error['text'] === JSON.stringify({
+            sdk.unregister_all([mocks[3]])
+                .then(() => done(void 0))
+                .catch(error =>
+                    done(typeof error['text'] === 'string' && error['text'] === JSON.stringify({
                         code: 'NotFoundError',
                         message: 'User not found'
-                    }) ? null : error
-                )
-            )
+                    }) ? void 0 : error))
         );
     });
 });

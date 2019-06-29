@@ -66,56 +66,55 @@ describe('User::admin::routes', () => {
      */
 
     describe('ADMIN /api/user/:email', () => {
-        before(done => map(mocks, (user, cb) => sdk.register(user, (err, res) => {
-                if (err != null) return cb(err);
-                user.access_token = res!.header['x-access-token'];
-                return cb(void 0);
-            }),
+        before(done => map(mocks, (user, cb) =>
+                sdk.register(user)
+                    .then(res => {
+                        user.access_token = res!.header['x-access-token'];
+                        return cb(void 0);
+                    })
+                    .catch(cb),
             done)
         );
-        after(done => auth_sdk.unregister_all(mocks, () => done()));
+        after(done => auth_sdk.unregister_all(mocks).then(() => done()).catch(() => done()));
 
         it('GET should retrieve other user', done => {
-            sdk.read(mocks[0].access_token!, mocks[2], done);
+            sdk.read(mocks[0].access_token!, mocks[2]).then(() => done()).catch(done);
         });
 
         it('PUT should update other user', done =>
-            waterfall([
-                    cb => sdk.update(mocks[1].access_token!, void 0, { title: 'Sir' },
-                        (e, r) => cb(e, r, mocks[1].access_token)),
-                    (user: User, access_token: AccessTokenType, cb) =>
-                        sdk.read(access_token, user, cb)
-                ],
-                done
-            )
+            sdk.update(mocks[1].access_token!, void 0, { title: 'Sir' })
+                .then(response =>
+                    sdk.read(mocks[1].access_token!, response.body)
+                        .then(() => done())
+                        .catch(done))
+                .catch(done)
         );
 
         it('GET /api/users should get all users', done => {
-            sdk.get_all(mocks[0].access_token!, done);
+            sdk.get_all(mocks[0].access_token!).then(() => done()).catch(done);
         });
 
         it('DELETE should unregister other user', done =>
             waterfall([
-                    cb => sdk.register(mocks[5], err => cb(err)),
-                    cb => auth_sdk.login(mocks[5], (err, res) =>
-                        err ? cb(err) : cb(void 0, res!.body['access_token'])
-                    ),
+                    cb => sdk.register(mocks[5]).then(cb).catch(cb),
+                    cb => auth_sdk.login(mocks[5])
+                        .then(res => cb(void 0, res!.body['access_token']))
+                        .catch(cb),
                     (access_token: AccessTokenType, cb) =>
-                        sdk.unregister({ access_token }, err =>
-                            cb(err, access_token)
-                        )
-                    ,
+                        sdk.unregister({ access_token }).then(cb(void 0, access_token)).catch(cb),
                     (access_token: AccessTokenType, cb) =>
                         AccessToken
                             .get(_orms_out.orms_out.redis!.connection)
                             .findOne(access_token, e =>
                                 cb(e != null && e.message === 'Nothing associated with that access token' ? null : e)
                             ),
-                    cb => auth_sdk.login(mocks[5], e => cb(
-                        e != null && typeof e['text'] !== 'undefined' && e['text'] !== JSON.stringify({
-                            code: 'NotFoundError', message: 'User not found'
-                        }) ? e : null)
-                    )
+                    cb => auth_sdk.login(mocks[5])
+                        .then(() => cb())
+                        .catch(e => cb(
+                            e != null && typeof e['text'] !== 'undefined' && e['text'] !== JSON.stringify({
+                                code: 'NotFoundError', message: 'User not found'
+                            }) ? e : null)
+                        )
                 ],
                 done
             )
