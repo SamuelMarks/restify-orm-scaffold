@@ -3,53 +3,52 @@ FROM node:lts-alpine
 ENV RDBMS_URI ''
 ENV REDIS_HOST 'localhost'
 ENV REDIS_PORT 6379
+ENV NPM_CONFIG_PREFIX '/home/node/.npm-global'
+ENV PATH "${NPM_CONFIG_PREFIX}/bin:${PATH}"
 
 WORKDIR /rest-api
 
-#RUN addgroup -g 1500 -S nodejs \
-#    && adduser -u 1500 -S nodejs -G nodejs \
-#    && chown -R nodejs:nodejs /usr/local/lib/node_modules /usr/local/bin /rest-api
-#USER nodejs
-
 ADD https://raw.githubusercontent.com/wilsonsilva/wait-for/8b86892/wait-for /bin/wait_for_it.sh
-
-#    chmod +x /bin/wait_for_it.sh && \
 
 RUN apk --no-cache --virtual build-dependencies add \
     git \
     python \
     build-base \
     openssl \
-    netcat-openbsd \
-    && npm i -g npm
+    netcat-openbsd
+
+USER node
+USER root
+RUN deluser --remove-home node \
+    && addgroup -S node -g 998 \
+    && adduser -S -G node -u 998 node \
+    && chown -R node:node /home/node
 
 ADD . .
 
-RUN ls -al \
-    && mkdir -p /rest-api/node_modules/.staging \
-#   && mkdir -p /root/.node-gyp/10.6.0 /usr/local/lib/node_modules/bunyan/node_modules/dtrace-provider \
+RUN npm i -g npm \
     && npm i -g \
-    typings \
-    typescript \
-    tslint \
     bunyan \
     mocha \
-    && npm i -g --unsafe-perms --allow-root node-gyp \
+    node-gyp \
+    tslint \
+    typings \
+    typescript \
     && typings install \
-    && npm install --unsafe-perms --allow-root \
+    && npm install \
     && tsc \
-    && apk del build-dependencies
+    && ls node_modules/async
+# && apk del build-dependencies
 
 ENTRYPOINT ["/usr/local/bin/node", "main.js"]
-
 # CMD npm run-script build_start
 
-#FROM scratch
+# FROM scratch
 #
-#WORKDIR /rest-api
+# WORKDIR /rest-api
 #
-#COPY --from=0 /rest-api /rest-api
+# COPY --from=0 /rest-api /rest-api
 #
-#ADD https://nodejs.org/dist/v10.6.0/node-v10.6.0-linux-x64.tar.xz /
+# ADD https://nodejs.org/dist/v10.16.0/node-v10.16.0-linux-x64.tar.xz /
 #
-#RUN ["/node-v10.6.0-linux-x64/bin/node", "main.js"]
+# RUN ["/node-v10.6.0-linux-x64/bin/node", "main.js"]
