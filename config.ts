@@ -128,3 +128,5 @@ export const getPrivateIPAddress = (): string => {
 
     return '0.0.0.0';
 };
+
+export const ignore = (promise: Promise<unknown>): typeof promise => promise.catch(_e => void 0);

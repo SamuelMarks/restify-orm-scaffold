@@ -1,6 +1,5 @@
 // tslint:disable-next-line:no-var-requires
-const chai = require('chai');
-import { expect } from 'chai';
+import chai = require('chai');
 import supertest, { Response } from 'supertest';
 import { Server } from 'restify';
 
@@ -10,14 +9,14 @@ import { AccessTokenType } from '@offscale/nodejs-utils/interfaces';
 import { User } from '../../../api/user/models';
 import * as user_routes from '../../../api/user/routes';
 import * as user_admin_routes from '../../../api/user/admin';
-// tslint:disable-next-line:no-var-requires
-const chaiJsonSchema = require('chai-json-schema');
 
 /* tslint:disable:no-var-requires */
 const user_schema = sanitiseSchema(require('./../user/schema.json'), User._omit);
 
-// @ts-ignore
-chai.use(chaiJsonSchema);
+/* tslint:disable-next-line:no-var-requires */
+chai.use(require('chai-json-schema-ajv').create({ verbose: true }));
+
+const expect: Chai.ExpectStatic = chai.expect;
 
 export class UserTestSDK {
     constructor(public app: Server) {

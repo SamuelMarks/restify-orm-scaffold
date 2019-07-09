@@ -85,17 +85,20 @@ export class AuthTestSDK {
     }
 
     public register_login(user?: User, num?: number): Promise<AccessTokenType> {
-        return new Promise(((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             if (num == null) num = 0;
             user = user || user_mocks.successes[num as number];
-
-            const success = response => response[1].get('x-access-token');
+            if (user == null) return reject(new ReferenceError('User parameter is null'));
 
             this.user_sdk
-                .register(user!)
-                .then(success)
-                .catch(() => this.login(user!).then(success).catch(reject));
-        }));
+                .register(user)
+                .then(res => resolve(res.header.get('x-access-token')))
+                .catch(() =>
+                    this.login(user!)
+                        .then(r => resolve(r.header['x-access-token']))
+                        .catch(reject)
+                );
+        });
     }
 
     public logout_unregister(user: User, num?: number) {

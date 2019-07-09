@@ -1,5 +1,6 @@
 import { map, waterfall } from 'async';
 import { createLogger } from 'bunyan';
+import * as path from 'path';
 import { basename } from 'path';
 import { Server } from 'restify';
 
@@ -25,6 +26,7 @@ process.env['NO_SAMPLE_DATA'] = 'true';
 
 const mocks: User[] = user_mocks.successes.slice(20, 30);
 const tapp_name = `test::${basename(__dirname)}`;
+const connection_name = `${tapp_name}::${path.basename(__filename).replace(/\./g, '-')}`;
 const logger = createLogger({ name: tapp_name });
 
 describe('User::admin::routes', () => {
@@ -36,8 +38,7 @@ describe('User::admin::routes', () => {
         waterfall([
                 cb => tearDownConnections(_orms_out.orms_out, e => cb(e)),
                 cb => typeof AccessToken.reset() === 'undefined' && cb(void 0),
-                cb => setupOrmApp(
-                    model_route_to_map(models_and_routes), { logger },
+                cb => setupOrmApp(model_route_to_map(models_and_routes), { logger, connection_name },
                     { skip_start_app: true, app_name: tapp_name, logger },
                     cb
                 ),

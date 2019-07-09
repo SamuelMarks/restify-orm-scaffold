@@ -26,76 +26,82 @@ process.env['NO_DEBUG'] || logger.info(Object.keys(process.env).sort().map(k => 
 export const all_models_and_routes: Map<string, any> = populateModelRoutes(__dirname);
 export const all_models_and_routes_as_mr: IModelRoute = get_models_routes(all_models_and_routes);
 
+export const setOrmReq = (app: Server, orms_out: IOrmsOut) => {
+    app.use((request: restify.Request, res: restify.Response, done: restify.Next) => {
+        (request as restify.Request & IOrmReq).getOrm = () => orms_out;
+        (request as restify.Request & IOrmReq).orms_out = orms_out;
+        return done();
+    });
+};
+
 export const setupOrmApp = (models_and_routes: Map<string, any>,
                             mergeOrmMw: Partial<IOrmMwConfig>,
                             mergeRoutesConfig: Partial<IRoutesMergerConfig>,
                             callback: (err: Error, app?: TApp, orms_out?: IOrmsOut) => void) =>
     waterfall([
-        cb => ormMw(Object.assign({}, getOrmMwConfig(models_and_routes, logger, cb), mergeOrmMw)),
-        (with_app: IRoutesMergerConfig['with_app'], orms_out: IOrmsOut, cb) =>
-            routesMerger(Object.assign({}, {
-                routes: models_and_routes,
-                server_type: 'restify',
-                package_: { version: package_.version },
-                app_name: package_.name,
-                root: '/api',
-                skip_app_version_routes: false,
-                skip_start_app: false,
-                skip_app_logging: false,
-                listen_port: process.env.PORT || 3000,
-                version_routes_kwargs: { private_ip: getPrivateIPAddress() },
-                with_app,
-                logger,
-                onServerStart: (uri: string, app: Server, next) => {
-                    AccessToken.reset();
+            cb => ormMw(Object.assign({}, getOrmMwConfig(models_and_routes, logger, cb), mergeOrmMw)),
+            (with_app: IRoutesMergerConfig['with_app'], orms_out: IOrmsOut, cb) =>
+                routesMerger(Object.assign({}, {
+                    routes: models_and_routes,
+                    server_type: 'restify',
+                    package_: { version: package_.version },
+                    app_name: package_.name,
+                    root: '/api',
+                    skip_app_version_routes: false,
+                    skip_start_app: false,
+                    skip_app_logging: false,
+                    listen_port: process.env.PORT || 3000,
+                    version_routes_kwargs: { private_ip: getPrivateIPAddress() },
+                    with_app,
+                    logger,
+                    onServerStart: (uri: string, app: Server, next) => {
+                        AccessToken.reset();
 
-                    app.use((request: restify.Request, res: restify.Response, done: restify.Next) => {
-                        (request as restify.Request & IOrmReq).getOrm = () => orms_out;
-                        (request as restify.Request & IOrmReq).orms_out = orms_out;
-                        return done();
-                    });
+                        setOrmReq(app, orms_out);
 
-                    const authSdk = new AuthTestSDK(app);
+                        const authSdk = new AuthTestSDK(app);
 
-                    const envs = ['DEFAULT_ADMIN_EMAIL', 'DEFAULT_ADMIN_PASSWORD'];
-                    if (!envs.every(process.env.hasOwnProperty.bind(process.env)))
-                        throw ReferenceError(`${envs.join(', ')} must all be defined in your environment`);
+                        const envs = ['DEFAULT_ADMIN_EMAIL', 'DEFAULT_ADMIN_PASSWORD'];
+                        if (!envs.every(process.env.hasOwnProperty.bind(process.env)))
+                            throw ReferenceError(`${envs.join(', ')} must all be defined in your environment`);
 
-                    const default_admin: User = {
-                        email: process.env.DEFAULT_ADMIN_EMAIL!,
-                        password: process.env.DEFAULT_ADMIN_PASSWORD!,
-                        roles: ['registered', 'login', 'admin']
-                    };
+                        const default_admin: User = {
+                            email: process.env.DEFAULT_ADMIN_EMAIL!,
+                            password: process.env.DEFAULT_ADMIN_PASSWORD!,
+                            roles: ['registered', 'login', 'admin']
+                        };
 
-                    series({
-                            unregister: callb => authSdk.unregister_all([default_admin])
-                                .then(() => callb())
-                                .catch((err: Error & {status: number}) =>
-                                    callb(err != null && err.status !== 404 ? err : void 0,
-                                        'removed default user; next: adding')),
-                            prepare_user: callb => register_user({
-                                getOrm: () => config._orms_out.orms_out,
-                                orms_out: config._orms_out.orms_out,
-                                body: default_admin
-                            } as IOrmReq & {body?: User} as UserBodyReq, UserConfig.default()),
-                            register_user: callb => {
-                                UserConfig.instance = {
-                                    public_registration:
-                                        process.env.PUBLIC_REGISTRATION == null ?
-                                            true : !!process.env.PUBLIC_REGISTRATION,
-                                    initial_accounts: [default_admin]
-                                };
-                                return callb(void 0);
-                            },
-                            serve: callb =>
-                                typeof logger.info(`${app.name} listening from ${app.url}`) === 'undefined' &&
-                                callb(void 0)
-                        }, (e?: Error) => e == null ? next(void 0, app, orms_out) : raise(e)
-                    );
-                },
-                callback: (err: Error, app: TApp) => cb(err, app, orms_out)
-            }, mergeRoutesConfig))
-    ], (err, app) => callback(err as Error, app as TApp));
+                        series({
+                                unregister: callb => authSdk.unregister_all([default_admin])
+                                    .then(() => callb())
+                                    .catch((err: Error & {status: number}) =>
+                                        callb(err != null && err.status !== 404 ? err : void 0,
+                                            'removed default user; next: adding')),
+                                prepare_user: callb => register_user({
+                                    getOrm: () => config._orms_out.orms_out,
+                                    orms_out: config._orms_out.orms_out,
+                                    body: default_admin
+                                } as IOrmReq & {body?: User} as UserBodyReq, UserConfig.default()),
+                                register_user: callb => {
+                                    UserConfig.instance = {
+                                        public_registration:
+                                            process.env.PUBLIC_REGISTRATION == null ?
+                                                true : !!process.env.PUBLIC_REGISTRATION,
+                                        initial_accounts: [default_admin]
+                                    };
+                                    return callb(void 0);
+                                },
+                                serve: callb =>
+                                    typeof logger.info(`${app.name} listening from ${app.url}`) === 'undefined'
+                                    && callb(void 0)
+                            }, (e?: Error) => e == null ? next(void 0, app, orms_out) : raise(e)
+                        );
+                    },
+                    callback: (err: Error, app: TApp) => cb(err, app, orms_out)
+                }, mergeRoutesConfig))
+        ],
+        // @ts-ignore
+        (err, app, orms_out) => callback(err as Error, app as TApp, orms_out));
 
 if (require.main === module)
     setupOrmApp(all_models_and_routes, { logger }, { logger, skip_start_app: false },

@@ -12,6 +12,7 @@ export const user_mocks: {successes: User[], failures: Array<{}>} = {
     successes: Array(100)
         .fill(void 0)
         .map((_, idx) => ({
+            title: faker.name.title(),
             email: faker.internet.email(),
             password: faker.internet.password(),
             /* tslint:disable:no-bitwise */

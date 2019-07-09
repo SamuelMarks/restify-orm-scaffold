@@ -22,6 +22,10 @@ export interface IUserConfig {
 }
 
 export class UserConfig implements IUserConfig {
+    public static default(): UserConfig {
+        return new UserConfig(true, []);
+    }
+
     private static _user_config: UserConfig;
 
     constructor(public public_registration: boolean,
@@ -37,10 +41,6 @@ export class UserConfig implements IUserConfig {
 
     public static set instance(config: IUserConfig) {
         UserConfig._user_config = new UserConfig(config.public_registration, config.initial_accounts);
-    }
-
-    public static default(): UserConfig {
-        return new UserConfig(true, []);
     }
 }
 
