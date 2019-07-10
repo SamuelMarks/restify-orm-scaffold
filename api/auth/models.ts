@@ -1,6 +1,6 @@
 import { AuthError, GenericError } from '@offscale/custom-restify-errors';
 import { Redis } from 'ioredis';
-import { AccessTokenType, strCbV } from '@offscale/nodejs-utils/interfaces';
+import { AccessTokenType } from '@offscale/nodejs-utils/interfaces';
 import { RestError } from 'restify-errors';
 import { v4 as uuid_v4 } from 'uuid';
 
@@ -9,8 +9,6 @@ type LogoutArg = {user_id: string; access_token?: never} | {user_id?: never; acc
 let accessToken: AccessToken | undefined;
 
 export class AccessToken {
-    constructor(private redis: Redis) {}
-
     public static reset() {
         accessToken = undefined;
         delete global['accessToken'];
@@ -22,12 +20,16 @@ export class AccessToken {
         return accessToken;
     }
 
-    public findOne(access_token: AccessTokenType, callback: strCbV) {
-        return this.redis.get(access_token, (err: Error, user_id: string | null) => {
-            if (err != null) return callback(err);
-            else if (user_id == null) return callback(new AuthError('Nothing associated with that access token'));
-            return callback(void 0, user_id);
-        });
+    constructor(private redis: Redis) {}
+
+    public findOne(access_token: AccessTokenType): Promise<string> {
+        return new Promise<string>((resolve, reject) =>
+            this.redis.get(access_token, (err: Error, user_id: string | null) => {
+                if (err != null) return reject(err);
+                else if (user_id == null) return reject(new AuthError('Nothing associated with that access token'));
+                return resolve(user_id);
+            })
+        );
     }
 
     public deleteOne(access_token: AccessTokenType): Promise<number> {

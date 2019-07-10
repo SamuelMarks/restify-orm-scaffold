@@ -14,7 +14,7 @@ import { IOrmsOut } from '@offscale/orm-mw/interfaces';
 import { AccessToken } from '../../../api/auth/models';
 import { User } from '../../../api/user/models';
 import { _orms_out } from '../../../config';
-import { all_models_and_routes_as_mr, setOrmReq, setupOrmApp } from '../../../main';
+import { all_models_and_routes_as_mr, setupOrmApp } from '../../../main';
 import { AuthTestSDK } from '../auth/auth_test_sdk';
 import { user_mocks } from './user_mocks';
 import { UserTestSDK } from './user_test_sdk';
@@ -48,7 +48,6 @@ describe('User::routes', () => {
                     cb
                 ),
                 (_app: Server, orms_out: IOrmsOut, cb) => {
-                    setOrmReq(_app, orms_out);
                     app = _app;
                     _orms_out.orms_out = orms_out;
 
@@ -62,12 +61,10 @@ describe('User::routes', () => {
         );
     });
 
-    after('tearDownConnections', done => tearDownConnections(_orms_out.orms_out, done));
-    after('closeApp', done =>
-        sdk.app.close(() => {
-            sdk = undefined as any;
-            return done(void 0);
-        })
+    after('tearDownConnections & closeApp', done =>
+        tearDownConnections(_orms_out.orms_out, e =>
+            e == null ? sdk.app.close(() => done(void 0)) : done(e)
+        )
     );
 
     describe('/api/user', () => {
@@ -86,8 +83,12 @@ describe('User::routes', () => {
             }
         });
 
-        it('POST should create user', done => {
-            sdk.register(mocks[0]).then(() => done()).catch(done);
+        it('POST should create user', async () => {
+            try {
+                await sdk.register(mocks[0]);
+            } catch {
+                //
+            }
         });
 
         it('POST should fail to register user twice', async () => {
@@ -101,7 +102,7 @@ describe('User::routes', () => {
                 has_error = true;
                 expect(err['text']).to.contain(expected_err);
             }
-            if (!has_error) throw Error(`Expected ${expected_err} error; got nothing`);
+            if (!has_error) throw Error(`Expected ${expected_err} error`);
         });
 
         it('GET should retrieve user', async () => {
@@ -135,21 +136,22 @@ describe('User::routes', () => {
             const res = await auth_sdk.login(user_mock);
             const access_token: AccessTokenType = res.body['access_token'];
             await sdk.unregister({ access_token });
-            AccessToken
-                .get(_orms_out.orms_out.redis!.connection)
-                .findOne(access_token, err => {
-                    if (err != null)
-                        if (err.message !== 'Nothing associated with that access token')
-                            throw err;
+            try {
+                await AccessToken
+                    .get(_orms_out.orms_out.redis!.connection)
+                    .findOne(access_token);
+            } catch (err) {
+                if (err.message !== 'Nothing associated with that access token')
+                    throw err;
+            }
 
-                    auth_sdk.login(user_mock)
-                        .then(() => void 0)
-                        .catch(e => {
-                            if (e != null && typeof e['text'] !== 'undefined' && e['text'] !== JSON.stringify({
-                                code: 'NotFoundError', message: 'User not found'
-                            }))
-                                throw e;
-                        });
+            auth_sdk.login(user_mock)
+                .then(() => void 0)
+                .catch(e => {
+                    if (e != null && typeof e['text'] !== 'undefined' && e['text'] !== JSON.stringify({
+                        code: 'NotFoundError', message: 'User not found'
+                    }))
+                        throw e;
                 });
         });
     });

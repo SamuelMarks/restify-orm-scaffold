@@ -26,14 +26,6 @@ process.env['NO_DEBUG'] || logger.info(Object.keys(process.env).sort().map(k => 
 export const all_models_and_routes: Map<string, any> = populateModelRoutes(__dirname);
 export const all_models_and_routes_as_mr: IModelRoute = get_models_routes(all_models_and_routes);
 
-export const setOrmReq = (app: Server, orms_out: IOrmsOut) => {
-    app.use((request: restify.Request, res: restify.Response, done: restify.Next) => {
-        (request as restify.Request & IOrmReq).getOrm = () => orms_out;
-        (request as restify.Request & IOrmReq).orms_out = orms_out;
-        return done();
-    });
-};
-
 export const setupOrmApp = (models_and_routes: Map<string, any>,
                             mergeOrmMw: Partial<IOrmMwConfig>,
                             mergeRoutesConfig: Partial<IRoutesMergerConfig>,
@@ -57,8 +49,6 @@ export const setupOrmApp = (models_and_routes: Map<string, any>,
                     onServerStart: (uri: string, app: Server, next) => {
                         AccessToken.reset();
 
-                        setOrmReq(app, orms_out);
-
                         const authSdk = new AuthTestSDK(app);
 
                         const envs = ['DEFAULT_ADMIN_EMAIL', 'DEFAULT_ADMIN_PASSWORD'];
@@ -81,7 +71,9 @@ export const setupOrmApp = (models_and_routes: Map<string, any>,
                                     getOrm: () => config._orms_out.orms_out,
                                     orms_out: config._orms_out.orms_out,
                                     body: default_admin
-                                } as IOrmReq & {body?: User} as UserBodyReq, UserConfig.default()),
+                                } as IOrmReq & {body?: User} as UserBodyReq, UserConfig.default())
+                                    .then(() => callb())
+                                    .catch(callb),
                                 register_user: callb => {
                                     UserConfig.instance = {
                                         public_registration:

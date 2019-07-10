@@ -15,8 +15,6 @@ export const db_uri: string = process.env['RDBMS_URI']
     || process.env['POSTGRES_URL']
     || '';
 
-if (db_uri.length === 0) throw ReferenceError('db_uri undefined');
-
 if (db_uri == null || !db_uri.length)
     throw ReferenceError('Database URI not set. See README.md for setup tutorial.');
 
@@ -101,7 +99,7 @@ export const getOrmMwConfig = (models: Map<string, any>, logger: Logger,
         }
         _orms_out.orms_out = orms_out!;
         return cb(void 0, (_app: TApp) => {
-            if (_app.hasOwnProperty('use'))
+            if (_app['use'])
                 (_app as restify.Server).use(mw as RestifyRequestHandler);
             // import { Next, Server } from 'restify';
             // import { WaterlineError } from '@offscale/custom-restify-errors';
@@ -128,5 +126,3 @@ export const getPrivateIPAddress = (): string => {
 
     return '0.0.0.0';
 };
-
-export const ignore = (promise: Promise<unknown>): typeof promise => promise.catch(_e => void 0);

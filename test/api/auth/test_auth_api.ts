@@ -56,29 +56,34 @@ describe('Auth::routes', () => {
     after('closeApp', done => sdk.app.close(done));
 
     describe('/api/auth', () => {
-        beforeEach(done =>
-            sdk.unregister_all(mocks)
-                .then(() => done(void 0))
-                .catch(() => done(void 0)));
-        afterEach(done =>
-            sdk.unregister_all(mocks)
-                .then(() => done(void 0))
-                .catch(() => done(void 0)));
+        beforeEach('unregister_all', async () => {
+            try {
+                await sdk.unregister_all(mocks);
+            } catch {
+                //
+            }
+        });
+        afterEach('unregister_all', async () => {
+            try {
+                await sdk.unregister_all(mocks);
+            } catch {
+                //
+            }
+        });
 
-        it('POST should login user', done =>
-            sdk.register_login(mocks[1])
-                .then(() => done(void 0))
-                .catch(done)
-        );
+        it('POST should login user', async () => await sdk.register_login(mocks[1]));
 
-        it('DELETE should logout user', done =>
-            sdk.unregister_all([mocks[3]])
-                .then(() => done(void 0))
-                .catch(error =>
-                    done(typeof error['text'] === 'string' && error['text'] === JSON.stringify({
-                        code: 'NotFoundError',
-                        message: 'User not found'
-                    }) ? void 0 : error))
-        );
+        it('DELETE should logout user', async () => {
+            try {
+                await sdk.unregister_all([mocks[3]]);
+            } catch (error) {
+                if (typeof error['text'] === 'string' && error['text'] === JSON.stringify({
+                    code: 'NotFoundError',
+                    message: 'User not found'
+                }))
+                    return;
+                throw error;
+            }
+        });
     });
 });

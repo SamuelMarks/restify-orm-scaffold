@@ -70,17 +70,21 @@ export class AuthTestSDK {
             .end(callback);
     }*/
 
-    public unregister_all(users: User[]): Promise<Response> {
-        return new Promise<Response>(((resolve, reject) => {
+    public unregister_all(users: User[]): Promise<Response[]> {
+        return new Promise<Response[]>(((resolve, reject) => {
+            const errors: number[] = [];
+            const successes: Response[] = [];
             for (const user of users)
                 this.login(user)
                     .then(res =>
                         this.user_sdk
                             .unregister({ access_token: res!.header['x-access-token'] })
-                            .then(resolve)
-                            .catch(reject)
+                            .then(successes.push.bind(successes))
+                            .catch(errors.push.bind(errors))
                     )
-                    .catch(reject);
+                    .catch(errors.push.bind(errors));
+            if (errors.length) return reject(errors);
+            return resolve(successes);
         }));
     }
 

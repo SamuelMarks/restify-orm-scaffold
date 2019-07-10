@@ -29,26 +29,29 @@ export const has_auth = (scope = 'access') =>
         if (access_token.indexOf('admin') > -1 && body_id)
             AccessToken
                 .get(req.getOrm().redis!.connection)
-                .findOne(access_token, (err: Error | undefined, user_id: string | undefined) => {
-                    if (err != null) return next(err);
-                    else if (user_id == null) return next(new GenericError({
+                .findOne(access_token)
+                .then(user_id => {
+                    if (user_id == null) return next(new GenericError({
                         name: 'NotFound',
                         message: 'Invalid access token used',
                         statusCode: 403
                     }));
                     req.user_id = body_id;
                     return next();
-                });
-        else AccessToken
-            .get(req.getOrm().redis!.connection)
-            .findOne(access_token, (err: Error | undefined, user_id: string | undefined) => {
-                if (err != null) return next(err);
-                else if (user_id == null) return next(new GenericError({
-                    name: 'NotFound',
-                    message: 'Invalid access token used',
-                    statusCode: 403
-                }));
-                req.user_id = user_id;
-                return next();
-            });
+                })
+                .catch(next);
+        else
+            AccessToken
+                .get(req.getOrm().redis!.connection)
+                .findOne(access_token)
+                .then(user_id => {
+                    if (user_id == null) return next(new GenericError({
+                        name: 'NotFound',
+                        message: 'Invalid access token used',
+                        statusCode: 403
+                    }));
+                    req.user_id = user_id;
+                    return next();
+                })
+                .catch(next);
     };

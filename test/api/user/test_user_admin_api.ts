@@ -76,49 +76,48 @@ describe('User::admin::routes', () => {
                     .catch(cb),
             done)
         );
-        after(done => auth_sdk.unregister_all(mocks).then(() => done()).catch(() => done()));
-
-        it('GET should retrieve other user', done => {
-            sdk.read(mocks[0].access_token!, mocks[2]).then(() => done()).catch(done);
+        after('unregister_all', async () => {
+            try {
+                await auth_sdk.unregister_all(mocks);
+            } catch {
+                //
+            }
         });
 
-        it('PUT should update other user', done =>
-            sdk.update(mocks[1].access_token!, void 0, { title: 'Sir' })
-                .then(response =>
-                    sdk.read(mocks[1].access_token!, response.body)
-                        .then(() => done())
-                        .catch(done))
-                .catch(done)
+        it('GET should retrieve other user', async () =>
+            await sdk.read(mocks[0].access_token!, mocks[2])
         );
 
-        it('GET /api/users should get all users', done => {
-            sdk.get_all(mocks[0].access_token!).then(() => done()).catch(done);
+        it('PUT should update other user', async () => {
+            const response = await sdk.update(mocks[1].access_token!, void 0, { title: 'Sir' });
+            await sdk.read(mocks[1].access_token!, response.body);
         });
 
-        it('DELETE should unregister other user', done =>
-            waterfall([
-                    cb => sdk.register(mocks[5]).then(cb).catch(cb),
-                    cb => auth_sdk.login(mocks[5])
-                        .then(res => cb(void 0, res!.body['access_token']))
-                        .catch(cb),
-                    (access_token: AccessTokenType, cb) =>
-                        sdk.unregister({ access_token }).then(cb(void 0, access_token)).catch(cb),
-                    (access_token: AccessTokenType, cb) =>
-                        AccessToken
-                            .get(_orms_out.orms_out.redis!.connection)
-                            .findOne(access_token, e =>
-                                cb(e != null && e.message === 'Nothing associated with that access token' ? null : e)
-                            ),
-                    cb => auth_sdk.login(mocks[5])
-                        .then(() => cb())
-                        .catch(e => cb(
-                            e != null && typeof e['text'] !== 'undefined' && e['text'] !== JSON.stringify({
-                                code: 'NotFoundError', message: 'User not found'
-                            }) ? e : null)
-                        )
-                ],
-                done
-            )
+        it('GET /api/users should get all users', async () =>
+            await sdk.get_all(mocks[0].access_token!)
         );
+
+        it('DELETE should unregister other user', async () => {
+            await sdk.register(mocks[5]);
+            const res = await auth_sdk.login(mocks[5]);
+            const access_token: AccessTokenType = res!.body['access_token'];
+            await sdk.unregister({ access_token });
+            try {
+                await AccessToken
+                    .get(_orms_out.orms_out.redis!.connection)
+                    .findOne(access_token);
+            } catch (err) {
+                if (err != null && err.message !== 'Nothing associated with that access token')
+                    throw err;
+            }
+            try {
+                await auth_sdk.login(mocks[5]);
+            } catch (e) {
+                if (e != null && typeof e['text'] !== 'undefined' && e['text'] !== JSON.stringify({
+                    code: 'NotFoundError', message: 'User not found'
+                })) return;
+                throw e;
+            }
+        });
     });
 });
