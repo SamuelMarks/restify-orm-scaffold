@@ -1,6 +1,6 @@
-import { IOrmReq } from '@offscale/orm-mw/interfaces';
 import { JsonSchema } from 'tv4';
 import { Request } from 'restify';
+import { IOrmReq } from '@offscale/orm-mw/interfaces';
 import { User } from './models';
 export declare const schema: JsonSchema;
 export declare type UserBodyReq = Request & IOrmReq & {
@@ -26,7 +26,7 @@ export declare const get: (req: UserBodyUserReq) => Promise<User>;
 export declare const getAll: (req: IOrmReq) => Promise<{
     users: User[];
 }>;
-export declare const update: (req: UserBodyUserReq) => Promise<User>;
+export declare const update: (req: UserBodyUserReq) => Promise<User | User[]>;
 export declare const destroy: (req: IOrmReq & {
     body?: User | undefined;
     user_id: string;

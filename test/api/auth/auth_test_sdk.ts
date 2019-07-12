@@ -48,9 +48,8 @@ export class AuthTestSDK {
                         expect(res.body).to.have.property('access_token');
                         expect(res.body).to.be.jsonSchema(auth_schema);
                     } catch (e) {
-                        err = e as Chai.AssertionError;
+                        return reject(e as Chai.AssertionError);
                     }
-                    if (err != null) return reject(err);
                     return resolve(res);
                 });
         }));
@@ -112,7 +111,7 @@ export class AuthTestSDK {
             if (user == null)
                 return reject(new TypeError('user undefined in `logout_unregister`'));
 
-            return this.unregister_all([user]);
+            return this.unregister_all([user]).then(resolve).catch(reject);
         }));
     }
 }

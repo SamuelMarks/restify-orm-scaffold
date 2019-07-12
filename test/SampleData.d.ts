@@ -6,10 +6,10 @@ import { AccessTokenType, IncomingMessageError, TCallback } from '@offscale/node
 export interface ISampleData {
     token: string;
     login(user: string, callback: TCallback<HttpError, string>): any;
-    registerLogin(user: string, callback: TCallback<Error | IncomingMessageError | IncomingMessageF, string>): any;
+    registerLogin(user: string, callback: TCallback<Error | IncomingMessageError | IIncomingMessageF, string>): any;
     unregister(user: string, callback: TCallback<HttpError, string>): any;
 }
-export interface IncomingMessageF extends IncomingMessage {
+export interface IIncomingMessageF extends IncomingMessage {
     func_name: string;
 }
 export declare class SampleData implements ISampleData {
@@ -19,7 +19,7 @@ export declare class SampleData implements ISampleData {
     login(user: string, callback: TCallback<HttpError, string>): void;
     logout(access_token: AccessTokenType, callback: TCallback<HttpError, string>): void;
     register(user: string, callback: (err: Error, response: any) => void): void;
-    registerLogin(user: string, callback: TCallback<Error | IncomingMessageError | IncomingMessageF, string>): void;
+    registerLogin(user: string, callback: TCallback<Error | IncomingMessageError | IIncomingMessageF, string>): void;
     unregister(user: string, callback: any): void;
     private mergeOptions;
 }

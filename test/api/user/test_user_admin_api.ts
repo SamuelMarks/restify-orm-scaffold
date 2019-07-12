@@ -107,13 +107,13 @@ describe('User::admin::routes', () => {
                     .get(_orms_out.orms_out.redis!.connection)
                     .findOne(access_token);
             } catch (err) {
-                if (err != null && err.message !== 'Nothing associated with that access token')
+                if (err.message !== 'Nothing associated with that access token')
                     throw err;
             }
             try {
                 await auth_sdk.login(mocks[5]);
             } catch (e) {
-                if (e != null && typeof e['text'] !== 'undefined' && e['text'] !== JSON.stringify({
+                if (typeof e['text'] !== 'undefined' && e['text'] !== JSON.stringify({
                     code: 'NotFoundError', message: 'User not found'
                 })) return;
                 throw e;

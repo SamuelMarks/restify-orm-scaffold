@@ -148,7 +148,7 @@ describe('User::routes', () => {
             auth_sdk.login(user_mock)
                 .then(() => void 0)
                 .catch(e => {
-                    if (e != null && typeof e['text'] !== 'undefined' && e['text'] !== JSON.stringify({
+                    if (typeof e['text'] !== 'undefined' && e['text'] !== JSON.stringify({
                         code: 'NotFoundError', message: 'User not found'
                     }))
                         throw e;

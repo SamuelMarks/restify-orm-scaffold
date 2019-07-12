@@ -1,6 +1,6 @@
 import { Redis } from 'ioredis';
-import { AccessTokenType } from '@offscale/nodejs-utils/interfaces';
 import { RestError } from 'restify-errors';
+import { AccessTokenType } from '@offscale/nodejs-utils/interfaces';
 declare type LogoutArg = {
     user_id: string;
     access_token?: never;
@@ -10,9 +10,9 @@ declare type LogoutArg = {
 };
 export declare class AccessToken {
     private redis;
-    constructor(redis: Redis);
     static reset(): void;
     static get(cursor: Redis): AccessToken;
+    constructor(redis: Redis);
     findOne(access_token: AccessTokenType): Promise<string>;
     deleteOne(access_token: AccessTokenType): Promise<number>;
     logout(arg: LogoutArg, callback: (err?: Error | RestError) => void): void;

@@ -3,8 +3,9 @@ import { expect } from 'chai';
 import { basename } from 'path';
 import supertest, { Response } from 'supertest';
 
-import { setupOrmApp } from '../../../main';
 import { TApp } from '@offscale/routes-merger/interfaces';
+
+import { setupOrmApp } from '../../../main';
 
 const tapp_name = `test::${basename(__dirname)}`;
 const logger = createLogger({ name: tapp_name });

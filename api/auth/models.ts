@@ -1,8 +1,9 @@
-import { AuthError, GenericError } from '@offscale/custom-restify-errors';
 import { Redis } from 'ioredis';
-import { AccessTokenType } from '@offscale/nodejs-utils/interfaces';
 import { RestError } from 'restify-errors';
 import { v4 as uuid_v4 } from 'uuid';
+
+import { AccessTokenType } from '@offscale/nodejs-utils/interfaces';
+import { AuthError, GenericError } from '@offscale/custom-restify-errors';
 
 type LogoutArg = {user_id: string; access_token?: never} | {user_id?: never; access_token: AccessTokenType};
 

@@ -3,11 +3,12 @@ import { IRoutesMergerConfig } from '@offscale/routes-merger/interfaces';
 
 import { waterfall } from 'async';
 import { createLogger } from 'bunyan';
+import * as path from 'path';
+import { basename } from 'path';
+
 import { sanitiseSchema } from '@offscale/nodejs-utils';
 import { ormMw, tearDownConnections } from '@offscale/orm-mw';
 import { IOrmsOut } from '@offscale/orm-mw/interfaces';
-import * as path from 'path';
-import { basename } from 'path';
 
 import { AccessToken } from '../../../api/auth/models';
 import { User } from '../../../api/user/models';
@@ -35,7 +36,7 @@ const models_and_routes = new Map([
 
 process.env['NO_SAMPLE_DATA'] = 'true';
 
-const mocks: User[] = user_mocks.successes.slice(10, 20);
+const mocks: User[] = user_mocks.successes.slice(30, 40);
 const user_mock = mocks[3];
 
 const tapp_name = `test::${basename(__dirname)}`;

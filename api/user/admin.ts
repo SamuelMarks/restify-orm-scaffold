@@ -1,5 +1,6 @@
-import { IOrmReq } from '@offscale/orm-mw/interfaces';
 import * as restify from 'restify';
+
+import { IOrmReq } from '@offscale/orm-mw/interfaces';
 import { has_body, mk_valid_body_mw } from '@offscale/restify-validators';
 
 import { has_auth } from '../auth/middleware';
@@ -54,7 +55,8 @@ export const update = (app: restify.Server, namespace: string = '') =>
         mk_valid_body_mw_ignore(schema, ['Missing required property']),*/
         (request: restify.Request, res: restify.Response, next: restify.Next) =>
             user_sdk.update(request as unknown as UserBodyUserReq)
-                .then((user: User) => {
+                .then((users: User | User[]) => {
+                    const user: User = Array.isArray(users) ? users[0] : users;
                     res.setHeader('X-Access-Token', user!.access_token!);
                     res.json(201, user);
                     return next();

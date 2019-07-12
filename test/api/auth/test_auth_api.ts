@@ -53,7 +53,7 @@ describe('Auth::routes', () => {
     );
 
     after('tearDownConnections', done => tearDownConnections(_orms_out.orms_out, done));
-    after('closeApp', done => sdk.app.close(done));
+    after('closeApp', done => sdk.app.close(() => done(void 0)));
 
     describe('/api/auth', () => {
         beforeEach('unregister_all', async () => {

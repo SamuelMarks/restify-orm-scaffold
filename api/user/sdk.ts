@@ -1,14 +1,16 @@
 import { series, waterfall } from 'async';
-import { fmtError, GenericError, NotFoundError } from '@offscale/custom-restify-errors';
-import { isShallowSubset } from '@offscale/nodejs-utils';
-import { AccessTokenType } from '@offscale/nodejs-utils/interfaces';
-import { IOrmReq } from '@offscale/orm-mw/interfaces';
 import { default as restify_errors } from 'restify-errors';
 import { JsonSchema } from 'tv4';
 import { Request } from 'restify';
 
+import { fmtError, GenericError, NotFoundError } from '@offscale/custom-restify-errors';
+import { isShallowSubset } from '@offscale/nodejs-utils';
+import { AccessTokenType } from '@offscale/nodejs-utils/interfaces';
+import { IOrmReq } from '@offscale/orm-mw/interfaces';
+
 import { AccessToken } from '../auth/models';
 import { User } from './models';
+import { removeNulls, unwrapIfOneElement } from '../../utils';
 
 /* tslint:disable:no-var-requires */
 export const schema: JsonSchema = require('./../../test/api/user/schema');
@@ -115,7 +117,7 @@ export const getAll = (req: IOrmReq): Promise<{users: User[]}> =>
             .catch(reject)
     );
 
-export const update = (req: UserBodyUserReq): Promise<User> => new Promise<User>((resolve, reject) => {
+export const update = (req: UserBodyUserReq): Promise<User | User[]> => new Promise((resolve, reject) => {
     if (!isShallowSubset(req.body, schema.properties)) {
         const error = 'ValidationError';
         return reject(new GenericError({
@@ -138,7 +140,9 @@ export const update = (req: UserBodyUserReq): Promise<User> => new Promise<User>
                     .catch(cb)
         ], (error, update_user) =>
             error == null ?
-                (update_user == null ? reject(new NotFoundError('User')) : resolve(update_user as any))
+                (update_user == null ?
+                    reject(new NotFoundError('User'))
+                    : resolve(unwrapIfOneElement(removeNulls(update_user)) as User | User[]))
                 : reject(fmtError(error) as restify_errors.RestError)
     );
 });

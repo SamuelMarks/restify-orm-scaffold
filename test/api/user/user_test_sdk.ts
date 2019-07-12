@@ -33,18 +33,16 @@ export class UserTestSDK {
                 .send(user)
                 .expect('Content-Type', /json/)
                 .end((err, res: Response) => {
-                    if (err != null) throw supertestGetError(err, res);
-                    else if (res.error) return getError(res.error);
+                    if (err != null) return reject(supertestGetError(err, res));
+                    else if (res.error) return reject(getError(res.error));
 
                     try {
                         expect(res.status).to.be.equal(201);
                         expect(res.body).to.be.an('object');
                         expect(res.body).to.be.jsonSchema(user_schema);
                     } catch (e) {
-                        err = e as Chai.AssertionError;
+                        return reject(e as Chai.AssertionError);
                     }
-
-                    if (err != null) return reject(err);
                     return resolve(res);
                 });
         }));
@@ -73,9 +71,8 @@ export class UserTestSDK {
                         );
                         expect(res.body).to.be.jsonSchema(user_schema);
                     } catch (e) {
-                        err = e as Chai.AssertionError;
+                        return reject(e as Chai.AssertionError);
                     }
-                    if (err != null) return reject(err);
                     return resolve(res);
                 });
         }));
@@ -99,14 +96,13 @@ export class UserTestSDK {
                     else if (res.error) return reject(getError(res.error));
 
                     try {
-                        expect(res.status).to.be.equal(201);
+                        expect(res.status).to.be.equal(200);
                         expect(res.body).to.be.an('object');
                         expect(res.body).to.be.jsonSchema(user_schema);
                         Object.keys(user).forEach(k => expect(user[k]).to.be.eql(res.body[k]));
                     } catch (e) {
-                        err = e as Chai.AssertionError;
+                        return reject(e as Chai.AssertionError);
                     }
-                    if (err != null) return reject(err);
                     return resolve(res);
                 });
         }));
@@ -130,9 +126,8 @@ export class UserTestSDK {
                         expect(res.body.users).to.be.an('array');
                         res.body.users.map(user => expect(user).to.be.jsonSchema(user_schema));
                     } catch (e) {
-                        err = e as Chai.AssertionError;
+                        return reject(e as Chai.AssertionError);
                     }
-                    if (err != null) return reject(err);
                     return resolve(res);
                 });
         }));

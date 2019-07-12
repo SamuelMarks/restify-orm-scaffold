@@ -1,12 +1,13 @@
 import * as argon2 from 'argon2';
 import { waterfall } from 'async';
+import * as restify from 'restify';
+import { JsonSchema } from 'tv4';
+
 import { AuthError, fmtError, NotFoundError } from '@offscale/custom-restify-errors';
 import { IOrmReq } from '@offscale/orm-mw/interfaces';
-import * as restify from 'restify';
 import { has_body, mk_valid_body_mw } from '@offscale/restify-validators';
-import { JsonSchema } from 'tv4';
-import { User } from '../user/models';
 
+import { User } from '../user/models';
 import { has_auth } from './middleware';
 import { AccessToken } from './models';
 // import { hash_password, verify_password } from '../user/models';

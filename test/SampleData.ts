@@ -13,15 +13,15 @@ export interface ISampleData {
 
     login(user: string, callback: TCallback<HttpError, string>);
 
-    registerLogin(user: string, callback: TCallback<Error | IncomingMessageError | IncomingMessageF, string>);
+    registerLogin(user: string, callback: TCallback<Error | IncomingMessageError | IIncomingMessageF, string>);
 
     unregister(user: string, callback: TCallback<HttpError, string>);
 }
 
-type Callback = (res: IncomingMessageF) => void;
-type Cb = (err?: IncomingMessageF, res?: IncomingMessageF) => void;
+type Callback = (res: IIncomingMessageF) => void;
+type Cb = (err?: IIncomingMessageF, res?: IIncomingMessageF) => void;
 
-export interface IncomingMessageF extends IncomingMessage {
+export interface IIncomingMessageF extends IncomingMessage {
     func_name: string;
 }
 
@@ -46,7 +46,7 @@ const httpF = (method: 'POST' | 'PUT' | 'PATCH' | 'HEAD' | 'GET' | 'DELETE') => 
                 options.headers['Content-Length'] = Buffer.byteLength(body_or_cb as string);
 
         const req = http_request(options, (result) => {
-            const res = result as IncomingMessageF;
+            const res = result as IIncomingMessageF;
             if (res == null) return (callback as Cb)(res);
             res.func_name = func_name;
             /* tslint:disable:no-bitwise */
@@ -110,7 +110,7 @@ export class SampleData implements ISampleData {
         );
     }
 
-    public registerLogin(user: string, callback: TCallback<Error | IncomingMessageError | IncomingMessageF, string>) {
+    public registerLogin(user: string, callback: TCallback<Error | IncomingMessageError | IIncomingMessageF, string>) {
         const setToken = (res): true => {
             if (res[1].headers != null) this.token = res[1].headers['x-access-token'] as string;
             return true;
@@ -118,7 +118,7 @@ export class SampleData implements ISampleData {
 
         this.register(user, (err, res) => {
             if (err == null) return setToken && callback(void 0, this.token);
-            return this.login(user, (e, r) => {
+            return this.login(user, (e, _r) => {
                 if (e != null) return callback(e);
                 return setToken && callback(void 0, this.token);
             });
@@ -137,7 +137,7 @@ export class SampleData implements ISampleData {
         );
 
         this.token ? unregisterUser(user, callback)
-            : this.login(user, (err?: HttpError, access_token?: AccessTokenType) =>
+            : this.login(user, (err?: HttpError, _access_token?: AccessTokenType) =>
                 err ? callback() : unregisterUser(user, callback)
             );
     }

@@ -1,4 +1,5 @@
 import * as argon2 from 'argon2';
+
 import { IUser } from './models.waterline.interfaces.d';
 import { argon2_options } from './utils';
 

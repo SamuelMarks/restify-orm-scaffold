@@ -1,12 +1,13 @@
 import { networkInterfaces } from 'os';
+
 import * as Logger from 'bunyan';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
+import * as restify from 'restify';
+import { RequestHandler as RestifyRequestHandler } from 'restify';
 
 import { IOrmMwConfig, IOrmsOut, RequestHandler } from '@offscale/orm-mw/interfaces';
 import { uri_to_config } from '@offscale/nodejs-utils';
 import { IRoutesMergerConfig, TApp } from '@offscale/routes-merger/interfaces';
-import * as restify from 'restify';
-import { RequestHandler as RestifyRequestHandler } from 'restify';
 
 /* TODO: Put this all in tiered environment-variable powered .json file */
 
@@ -26,9 +27,9 @@ export const typeorm_config: PostgresConnectionOptions = Object.freeze(
             type: 'postgres',
             autoSchemaSync: true,
             synchronize: true,
-            logging: { logQueries: true }
+            logging: false
         }
-    ) as any as PostgresConnectionOptions
+    ) as PostgresConnectionOptions
 );
 
 // import * as sequelize from 'sequelize';
