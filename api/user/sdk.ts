@@ -4,13 +4,12 @@ import { JsonSchema } from 'tv4';
 import { Request } from 'restify';
 
 import { fmtError, GenericError, NotFoundError } from '@offscale/custom-restify-errors';
-import { isShallowSubset } from '@offscale/nodejs-utils';
+import { isShallowSubset, removeNulls, unwrapIfOneElement } from '@offscale/nodejs-utils';
 import { AccessTokenType } from '@offscale/nodejs-utils/interfaces';
 import { IOrmReq } from '@offscale/orm-mw/interfaces';
 
 import { AccessToken } from '../auth/models';
 import { User } from './models';
-import { removeNulls, unwrapIfOneElement } from '../../utils';
 
 /* tslint:disable:no-var-requires */
 export const schema: JsonSchema = require('./../../test/api/user/schema');

@@ -8,7 +8,6 @@ import { Server } from 'restify';
 
 import { model_route_to_map } from '@offscale/nodejs-utils';
 import { AccessTokenType, IModelRoute, IncomingMessageError } from '@offscale/nodejs-utils/interfaces';
-import { tearDownConnections } from '@offscale/orm-mw';
 import { IOrmsOut } from '@offscale/orm-mw/interfaces';
 
 import { AccessToken } from '../../../api/auth/models';
@@ -16,6 +15,7 @@ import { User } from '../../../api/user/models';
 import { _orms_out } from '../../../config';
 import { all_models_and_routes_as_mr, setupOrmApp } from '../../../main';
 import { AuthTestSDK } from '../auth/auth_test_sdk';
+import { tearDownConnections, unregister_all } from '../../shared_tests';
 import { user_mocks } from './user_mocks';
 import { UserTestSDK } from './user_test_sdk';
 
@@ -40,7 +40,7 @@ describe('User::routes', () => {
 
     before('app & db', done => {
         waterfall([
-                cb => tearDownConnections(_orms_out.orms_out, e => cb(e)),
+                tearDownConnections,
                 cb => typeof AccessToken.reset() === 'undefined' && cb(void 0),
                 cb => setupOrmApp(model_route_to_map(models_and_routes),
                     { logger, connection_name },
@@ -68,20 +68,8 @@ describe('User::routes', () => {
     );
 
     describe('/api/user', () => {
-        beforeEach('unregistered_all', async () => {
-            try {
-                await auth_sdk.unregister_all(mocks);
-            } catch {
-                //
-            }
-        });
-        afterEach('unregister_all', async () => {
-            try {
-                await auth_sdk.unregister_all(mocks);
-            } catch {
-                //
-            }
-        });
+        beforeEach(async () => await unregister_all(auth_sdk, mocks));
+        afterEach(async () => await unregister_all(auth_sdk, mocks));
 
         it('POST should create user', async () => {
             try {
@@ -140,9 +128,9 @@ describe('User::routes', () => {
                 await AccessToken
                     .get(_orms_out.orms_out.redis!.connection)
                     .findOne(access_token);
-            } catch (err) {
-                if (err.message !== 'Nothing associated with that access token')
-                    throw err;
+            } catch (e) {
+                if (e.message !== 'Nothing associated with that access token')
+                    throw e;
             }
 
             auth_sdk.login(user_mock)

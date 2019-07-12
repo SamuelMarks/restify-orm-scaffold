@@ -12,11 +12,11 @@
     "build": "rm -rf node_modules; typings i; npm i --unsafe-perms; tsc",
     "build_start": "rm -rf node_modules; [ -f typings.json ] && typings i; npm i && tsc && node main.js | bunyan",
     "start": "node main.js | bunyan",
-    "test": "mocha test --recursive"
+    "test": "mocha test --recursive --require ts-node/register"
   },
   "dependencies": {
     "@offscale/custom-restify-errors": "^0.0.4",
-    "@offscale/nodejs-utils": "^0.0.7",
+    "@offscale/nodejs-utils": "^0.0.8",
     "@offscale/orm-mw": "^0.0.7",
     "@offscale/restify-validators": "^0.0.3",
     "@offscale/routes-merger": "^0.0.3",

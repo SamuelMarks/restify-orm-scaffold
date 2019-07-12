@@ -6,7 +6,6 @@ import { Server } from 'restify';
 
 import { model_route_to_map } from '@offscale/nodejs-utils';
 import { IModelRoute } from '@offscale/nodejs-utils/interfaces';
-import { tearDownConnections } from '@offscale/orm-mw';
 import { IOrmsOut } from '@offscale/orm-mw/interfaces';
 
 import { AccessToken } from '../../../api/auth/models';
@@ -15,6 +14,7 @@ import { _orms_out } from '../../../config';
 import { all_models_and_routes_as_mr, setupOrmApp } from '../../../main';
 import { user_mocks } from '../user/user_mocks';
 import { AuthTestSDK } from './auth_test_sdk';
+import { closeApp, tearDownConnections, unregister_all } from '../../shared_tests';
 
 const models_and_routes: IModelRoute = {
     user: all_models_and_routes_as_mr['user'],
@@ -35,7 +35,7 @@ describe('Auth::routes', () => {
 
     before(done =>
         waterfall([
-                cb => tearDownConnections(_orms_out.orms_out, e => cb(e)),
+            tearDownConnections,
                 cb => typeof AccessToken.reset() === 'undefined' && cb(void 0),
             cb => setupOrmApp(model_route_to_map(models_and_routes), { connection_name, logger },
                     { skip_start_app: true, app_name: tapp_name, logger },
@@ -52,37 +52,25 @@ describe('Auth::routes', () => {
         )
     );
 
-    after('tearDownConnections', done => tearDownConnections(_orms_out.orms_out, done));
-    after('closeApp', done => sdk.app.close(() => done(void 0)));
+    after(tearDownConnections);
+    after(done => closeApp(sdk!.app)(done));
 
     describe('/api/auth', () => {
-        beforeEach('unregister_all', async () => {
-            try {
-                await sdk.unregister_all(mocks);
-            } catch {
-                //
-            }
-        });
-        afterEach('unregister_all', async () => {
-            try {
-                await sdk.unregister_all(mocks);
-            } catch {
-                //
-            }
-        });
+        beforeEach(async () => await unregister_all(sdk, mocks));
+        afterEach(async () => await unregister_all(sdk, mocks));
 
         it('POST should login user', async () => await sdk.register_login(mocks[1]));
 
         it('DELETE should logout user', async () => {
             try {
                 await sdk.unregister_all([mocks[3]]);
-            } catch (error) {
-                if (typeof error['text'] === 'string' && error['text'] === JSON.stringify({
+            } catch (e) {
+                if (typeof e['text'] === 'string' && e['text'] === JSON.stringify({
                     code: 'NotFoundError',
                     message: 'User not found'
                 }))
                     return;
-                throw error;
+                throw e;
             }
         });
     });

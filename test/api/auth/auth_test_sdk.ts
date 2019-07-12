@@ -30,14 +30,14 @@ export class AuthTestSDK {
     }
 
     public login(user: User): Promise<Response> {
-        return new Promise<Response>(((resolve, reject) => {
-            if (user == null) return reject(new TypeError('user argument to login must be defined'));
+        return new Promise<Response>((resolve, reject) => {
+            if (user == null) return reject(new TypeError('`user` argument to `login` must be defined'));
 
             expect(auth_routes.login).to.be.an.instanceOf(Function);
             supertest(this.app)
                 .post('/api/auth')
-                .set('Connection', 'keep-alive')
                 .send(user)
+                .set('Accept', 'application/json')
                 .expect('Content-Type', /json/)
                 .expect(201)
                 .end((err, res: Response) => {
@@ -46,13 +46,15 @@ export class AuthTestSDK {
                     try {
                         expect(res.body).to.be.an('object');
                         expect(res.body).to.have.property('access_token');
+                        expect(res.body.access_token).to.have.lengthOf.at.least(1);
+                        expect(res.header['x-access-token']).to.eql(res.body.access_token);
                         expect(res.body).to.be.jsonSchema(auth_schema);
                     } catch (e) {
                         return reject(e as Chai.AssertionError);
                     }
                     return resolve(res);
                 });
-        }));
+        });
     }
 
     /*public logout(access_token: AccessTokenType, callback: HttpStrResp) {
@@ -63,14 +65,14 @@ export class AuthTestSDK {
         expect(auth_routes.logout).to.be.an.instanceOf(Function);
         supertest(this.app)
             .delete('/api/auth')
-            .set('Connection', 'keep-alive')
+            .set('Accept', 'application/json')
             .set('X-Access-Token', access_token)
             .expect(204)
             .end(callback);
     }*/
 
     public unregister_all(users: User[]): Promise<Response[]> {
-        return new Promise<Response[]>(((resolve, reject) => {
+        return new Promise<Response[]>((resolve, reject) => {
             const errors: number[] = [];
             const successes: Response[] = [];
             for (const user of users)
@@ -84,14 +86,14 @@ export class AuthTestSDK {
                     .catch(errors.push.bind(errors));
             if (errors.length) return reject(errors);
             return resolve(successes);
-        }));
+        });
     }
 
     public register_login(user?: User, num?: number): Promise<AccessTokenType> {
-        return new Promise((resolve, reject) => {
+        return new Promise<AccessTokenType>((resolve, reject) => {
             if (num == null) num = 0;
             user = user || user_mocks.successes[num as number];
-            if (user == null) return reject(new ReferenceError('User parameter is null'));
+            if (user == null) return reject(new TypeError('`user` argument to `register_login` must be defined'));
 
             this.user_sdk
                 .register(user)
@@ -105,13 +107,12 @@ export class AuthTestSDK {
     }
 
     public logout_unregister(user: User, num?: number) {
-        return new Promise(((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             if (num == null) num = 0;
             user = user || user_mocks.successes[num as number];
-            if (user == null)
-                return reject(new TypeError('user undefined in `logout_unregister`'));
+            if (user == null) return reject(new TypeError('`user` argument to `logout_unregister` must be defined'));
 
             return this.unregister_all([user]).then(resolve).catch(reject);
-        }));
+        });
     }
 }

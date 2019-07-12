@@ -6,16 +6,18 @@ import { createLogger } from 'bunyan';
 import * as path from 'path';
 import { basename } from 'path';
 
-import { sanitiseSchema } from '@offscale/nodejs-utils';
-import { ormMw, tearDownConnections } from '@offscale/orm-mw';
+import { model_route_to_map, sanitiseSchema } from '@offscale/nodejs-utils';
+import { ormMw } from '@offscale/orm-mw';
 import { IOrmsOut } from '@offscale/orm-mw/interfaces';
+import { IModelRoute } from '@offscale/nodejs-utils/interfaces';
 
 import { AccessToken } from '../../../api/auth/models';
 import { User } from '../../../api/user/models';
 import { _orms_out, getOrmMwConfig } from '../../../config';
 import { all_models_and_routes_as_mr } from '../../../main';
 import { user_mocks } from './user_mocks';
-import { post, UserBodyReq, UserConfig } from '../../../api/user/sdk';
+import { destroy, post, UserBodyReq, UserConfig } from '../../../api/user/sdk';
+import { tearDownConnections } from '../../shared_tests';
 
 // tslint:disable-next-line:no-var-requires
 const chai = require('chai');
@@ -28,27 +30,37 @@ const user_schema = sanitiseSchema(require('./../user/schema.json'), User._omit)
 
 // @ts-ignore
 chai.use(chaiJsonSchema);
+const expect = chai.expect;
 
-const models_and_routes = new Map([
-    ['user', all_models_and_routes_as_mr['user']],
-    ['auth', all_models_and_routes_as_mr['auth']]
-]);
+const models_and_routes: IModelRoute = {
+    user: all_models_and_routes_as_mr['user'],
+    auth: all_models_and_routes_as_mr['auth']
+};
 
 process.env['NO_SAMPLE_DATA'] = 'true';
 
 const mocks: User[] = user_mocks.successes.slice(30, 40);
-const user_mock = mocks[3];
 
 const tapp_name = `test::${basename(__dirname)}`;
 const connection_name = `${tapp_name}::${path.basename(__filename).replace(/\./g, '-')}`;
 const logger = createLogger({ name: tapp_name });
 
+const unregister_user = async (user: User) => {
+    const server_res = await destroy({
+        body: user,
+        user_id: user.email,
+        getOrm: () => _orms_out.orms_out,
+        orms_out: _orms_out.orms_out
+    });
+    expect(server_res).to.equal(204);
+};
+
 describe('User::sdk', () => {
     before(done =>
         waterfall([
-                cb => tearDownConnections(_orms_out.orms_out, e => cb(e)),
+                tearDownConnections,
                 cb => typeof AccessToken.reset() === 'undefined' && cb(void 0),
-                cb => ormMw(Object.assign({}, getOrmMwConfig(models_and_routes, logger, cb),
+                cb => ormMw(Object.assign({}, getOrmMwConfig(model_route_to_map(models_and_routes), logger, cb),
                     { connection_name, logger })),
                 (with_app: IRoutesMergerConfig['with_app'], orms_out: IOrmsOut, cb) => {
                     _orms_out.orms_out = orms_out;
@@ -59,27 +71,19 @@ describe('User::sdk', () => {
         )
     );
 
-    after(done => tearDownConnections(_orms_out.orms_out, done));
+    after(tearDownConnections);
 
     describe('/api/user', () => {
-        // beforeEach(done => auth_sdk.unregister_all(mocks).then(() => done()).catch(() => done()));
-        // afterEach(done => auth_sdk.unregister_all(mocks).then(() => done()).catch(() => done()));
+        const user: User = mocks[3];
 
-        it('POST should create user', done =>
-            post({ body: user_mock, getOrm: () => _orms_out.orms_out } as unknown as UserBodyReq,
-                UserConfig.instance)
-                .then(user => {
-                    let e: Chai.AssertionError | undefined = void 0;
-                    try {
-                        // @ts-ignore
-                        expect(user).to.be.jsonSchema(user_schema);
-                    } catch (err) {
-                        e = err;
-                    } finally {
-                        done(e);
-                    }
-                })
-                .catch(done)
+        beforeEach(async () => await unregister_user(user));
+        afterEach(async () => await unregister_user(user));
+
+        it('POST should create user', async () => {
+                const user_res = await post({ body: user, getOrm: () => _orms_out.orms_out } as unknown as UserBodyReq,
+                    UserConfig.instance);
+                expect(user_res).to.be.jsonSchema(user_schema);
+            }
         );
 
         /*
