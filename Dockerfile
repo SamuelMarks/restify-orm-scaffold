@@ -41,16 +41,13 @@ RUN npm i -g npm \
 
 # CMD npm run-script build_start
 
-FROM alpine:latest as app
+FROM node:lts-alpine as app
 
 ENV RDBMS_URI ''
 ENV REDIS_HOST 'localhost'
 ENV REDIS_PORT 6379
 ENV NPM_CONFIG_PREFIX '/home/node/.npm-global'
 ENV PATH "${NPM_CONFIG_PREFIX}/bin:${PATH}"
-
-RUN addgroup -S node -g 998 \
-    && adduser -S -G node -u 998 node
 
 USER node
 
@@ -60,24 +57,8 @@ WORKDIR /home/node/rest-api
 
 USER root
 
-# Install C++ dependencies
-COPY --from=builder /lib/ld-musl-x86_64.so.1 /lib/ld-musl-x86_64.so.1
-COPY --from=builder /usr/lib/libstdc++.so.6 /usr/lib/libstdc++.so.6
-COPY --from=builder /usr/lib/libgcc_s.so.1 /usr/lib/libgcc_s.so.1
-COPY --from=builder /lib/ld-musl-x86_64.so.1 /lib/ld-musl-x86_64.so.1
-
-# Install same version of Node.js that's in builder
-COPY --from=builder /usr/local/lib/node_modules /usr/local/lib/node_modules
-COPY --from=builder /usr/local/include/node /usr/local/include/node
-COPY --from=builder /usr/local/bin/node /usr/local/bin/node
-# NOTE: If you want `yarn`, `COPY` over `/opt/yarn-*` also, and add `yarn` & `yarnpkg` symlinks.
-
 # Install global Node.js dependencies
 COPY --from=builder /home/node/.npm-global /home/node/.npm-global
-
-# Setup core binaries (symlinks)
-RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
-    && ln -s /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 
 USER node
 # Copy over the app
