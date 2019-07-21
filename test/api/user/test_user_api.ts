@@ -15,7 +15,7 @@ import { User } from '../../../api/user/models';
 import { _orms_out } from '../../../config';
 import { all_models_and_routes_as_mr, setupOrmApp } from '../../../main';
 import { AuthTestSDK } from '../auth/auth_test_sdk';
-import { tearDownConnections, unregister_all } from '../../shared_tests';
+import { exceptionToError, tearDownConnections, unregister_all } from '../../shared_tests';
 import { user_mocks } from './user_mocks';
 import { UserTestSDK } from './user_test_sdk';
 
@@ -26,7 +26,7 @@ const models_and_routes: IModelRoute = {
 
 process.env['NO_SAMPLE_DATA'] = 'true';
 
-const mocks: User[] = user_mocks.successes.slice(10, 20);
+const mocks: User[] = user_mocks.successes.slice(12, 24);
 
 const tapp_name = `test::${basename(__dirname)}`;
 const connection_name = `${tapp_name}::${path.basename(__filename).replace(/\./g, '-')}`;
@@ -84,8 +84,7 @@ describe('User::routes', () => {
             try {
                 await auth_sdk.login(user_mock);
             } catch (e) {
-                const error_obj: {code: string, error: string, error_message: string} = JSON.parse(e.text);
-                expect(error_obj.code).to.eql('NotFoundError');
+                expect(exceptionToError(e).code).to.eql('NotFoundError');
                 await sdk.register(user_mock);
             }
 
@@ -95,7 +94,9 @@ describe('User::routes', () => {
                 await sdk.register(user_mock);
             } catch (err) {
                 has_error = true;
-                expect(err['text']).to.contain(expected_err);
+                const error_obj = exceptionToError(err);
+                expect(error_obj).to.have.property('error');
+                expect(error_obj.error).to.eql(expected_err);
             }
             if (!has_error) throw Error(`Expected ${expected_err} error`);
         });
@@ -115,19 +116,12 @@ describe('User::routes', () => {
             const user_mock = mocks[3];
             let resp = await sdk.register(user_mock);
             const access_token = resp.header['x-access-token'];
-
-            try {
-                resp = await sdk.update(access_token, void 0, { title: 'Sir' });
-                await sdk.read(access_token, resp.body);
-            } catch (e) {
-                console.error('User::routes::PUT should update user::e:', e, ';');
-                throw e;
-            }
-
+            resp = await sdk.update(access_token, void 0, { title: 'Sir' });
+            await sdk.read(access_token, resp.body);
         });
 
         it('GET /users should get all users', done =>
-            map(mocks.slice(4, 10), asyncify(auth_sdk.register_login.bind(auth_sdk)),
+            map(mocks.slice(4, 9), asyncify(auth_sdk.register_login.bind(auth_sdk)),
                 (err: Error | IncomingMessageError | null | undefined,
                  res: undefined | Array<AccessTokenType | undefined>) =>
                     err != null ? done(err)
@@ -138,11 +132,11 @@ describe('User::routes', () => {
         );
 
         it('DELETE should unregister user', async () => {
-            const user_mock = mocks[11];
+            const user_mock = mocks[10];
             try {
                 await sdk.register(user_mock);
             } catch (e) {
-                if (!e.text || e.text.indexOf('E_UNIQUE') === -1)
+                if (exceptionToError(e).error !== 'E_UNIQUE')
                     throw e;
             }
             const res = await auth_sdk.login(user_mock);
@@ -153,15 +147,14 @@ describe('User::routes', () => {
                     .get(_orms_out.orms_out.redis!.connection)
                     .findOne(access_token);
             } catch (e) {
-                if (e.jse_info.error_message !== 'Nothing associated with that access token')
+                if (exceptionToError(e).error_message !== 'Nothing associated with that access token')
                     throw e;
             }
 
             try {
                 await auth_sdk.login(user_mock);
             } catch (e) {
-                const error_obj: {code: string, error: string, error_message: string} = JSON.parse(e.text);
-                if (error_obj.error_message !== 'User not found')
+                if (exceptionToError(e).error_message !== 'User not found')
                     throw e;
             }
         });

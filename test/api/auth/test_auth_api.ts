@@ -13,8 +13,8 @@ import { User } from '../../../api/user/models';
 import { _orms_out } from '../../../config';
 import { all_models_and_routes_as_mr, setupOrmApp } from '../../../main';
 import { user_mocks } from '../user/user_mocks';
+import { closeApp, exceptionToError, tearDownConnections, unregister_all } from '../../shared_tests';
 import { AuthTestSDK } from './auth_test_sdk';
-import { closeApp, tearDownConnections, unregister_all } from '../../shared_tests';
 
 const models_and_routes: IModelRoute = {
     user: all_models_and_routes_as_mr['user'],
@@ -23,7 +23,7 @@ const models_and_routes: IModelRoute = {
 
 process.env['NO_SAMPLE_DATA'] = 'true';
 
-const mocks: User[] = user_mocks.successes.slice(0, 10);
+const mocks: User[] = user_mocks.successes.slice(0, 12);
 
 const tapp_name = `test::${basename(__dirname)}`;
 const connection_name = `${tapp_name}::${path.basename(__filename).replace(/\./g, '-')}`;
@@ -65,12 +65,8 @@ describe('Auth::routes', () => {
             try {
                 await sdk.unregister_all([mocks[3]]);
             } catch (e) {
-                if (typeof e['text'] === 'string' && e['text'] === JSON.stringify({
-                    code: 'NotFoundError',
-                    message: 'User not found'
-                }))
-                    return;
-                throw e;
+                if (exceptionToError(e).error_message !== 'User not found')
+                    throw e;
             }
         });
     });

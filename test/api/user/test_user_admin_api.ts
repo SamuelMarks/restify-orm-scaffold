@@ -8,14 +8,14 @@ import { model_route_to_map } from '@offscale/nodejs-utils';
 import { AccessTokenType, IModelRoute } from '@offscale/nodejs-utils/interfaces';
 import { IOrmsOut } from '@offscale/orm-mw/interfaces';
 
-import { AccessToken } from '../../../api/auth/models';
-import { User } from '../../../api/user/models';
 import { _orms_out } from '../../../config';
+import { User } from '../../../api/user/models';
+import { AccessToken } from '../../../api/auth/models';
 import { all_models_and_routes_as_mr, setupOrmApp } from '../../../main';
+import { closeApp, exceptionToError, tearDownConnections, unregister_all } from '../../shared_tests';
 import { AuthTestSDK } from '../auth/auth_test_sdk';
 import { user_mocks } from './user_mocks';
 import { UserTestSDK } from './user_test_sdk';
-import { closeApp, tearDownConnections, unregister_all } from '../../shared_tests';
 
 const models_and_routes: IModelRoute = {
     user: all_models_and_routes_as_mr['user'],
@@ -24,7 +24,7 @@ const models_and_routes: IModelRoute = {
 
 process.env['NO_SAMPLE_DATA'] = 'true';
 
-const mocks: User[] = user_mocks.successes.slice(20, 30);
+const mocks: User[] = user_mocks.successes.slice(24, 36);
 const tapp_name = `test::${basename(__dirname)}`;
 const connection_name = `${tapp_name}::${path.basename(__filename).replace(/\./g, '-')}`;
 const logger = createLogger({ name: tapp_name });
@@ -101,7 +101,7 @@ describe('User::admin::routes', () => {
             try {
                 await sdk.register(user);
             } catch (e) {
-                if (!e.text || e.text.indexOf('E_UNIQUE') === -1)
+                if (exceptionToError(e).code !== 'E_UNIQUE')
                     throw e;
             }
             const res = await auth_sdk.login(user);
@@ -113,17 +113,15 @@ describe('User::admin::routes', () => {
                     .get(_orms_out.orms_out.redis!.connection)
                     .findOne(access_token);
             } catch (e) {
-                if (e.jse_info.error_message !== 'Nothing associated with that access token')
+                if (exceptionToError(e).error_message !== 'Nothing associated with that access token')
                     throw e;
             }
 
             try {
                 await auth_sdk.login(user);
             } catch (e) {
-                if (typeof e['text'] !== 'undefined' && e['text'] !== JSON.stringify({
-                    code: 'NotFoundError', message: 'User not found'
-                })) return;
-                throw e;
+                if (exceptionToError(e).error_message !== 'User not found')
+                    throw e;
             }
         });
     });

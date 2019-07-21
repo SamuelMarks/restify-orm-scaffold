@@ -8,3 +8,9 @@ export declare const create_and_auth_users: (user_mocks_subset: User[], auth_sdk
 export declare function unregister_all(auth_sdk: AuthTestSDK, mocks: User[]): Promise<void>;
 export declare const tearDownConnections: (orms_out_or_done: Done | IOrmsOut, done?: Done | undefined) => any;
 export declare const closeApp: (app: Server) => (done: Done) => any;
+export interface IError {
+    code: string;
+    error: string;
+    error_message: string;
+}
+export declare const exceptionToError: (error: any) => IError;

@@ -43,7 +43,7 @@ export class UserTestSDK {
                     } catch (e) {
                         return reject(e as Chai.AssertionError);
                     }
-                    console.error('UserTestSDK::register::res.body:', res.body, ';');
+
                     if (res.header['x-access-token'] == null)
                         return reject(new TypeError(
                             '`x-access-token` is `undefined` within `POST /api/user` response headers'
@@ -109,8 +109,6 @@ export class UserTestSDK {
                 .end((err, res: Response) => {
                     if (err != null) reject(supertestGetError(err, res));
                     else if (res.error) return reject(getError(res.error));
-
-                    console.error('UserTestSDK::update::res.body:', res.body, ';');
 
                     try {
                         expect(res.status).to.be.equal(200);

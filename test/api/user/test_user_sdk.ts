@@ -15,9 +15,9 @@ import { AccessToken } from '../../../api/auth/models';
 import { User } from '../../../api/user/models';
 import { _orms_out, getOrmMwConfig } from '../../../config';
 import { all_models_and_routes_as_mr } from '../../../main';
-import { user_mocks } from './user_mocks';
 import { destroy, post, UserBodyReq, UserConfig } from '../../../api/user/sdk';
 import { tearDownConnections } from '../../shared_tests';
+import { user_mocks } from './user_mocks';
 
 // tslint:disable-next-line:no-var-requires
 const chai = require('chai');
@@ -39,7 +39,7 @@ const models_and_routes: IModelRoute = {
 
 process.env['NO_SAMPLE_DATA'] = 'true';
 
-const mocks: User[] = user_mocks.successes.slice(30, 40);
+const mocks: User[] = user_mocks.successes.slice(36, 48);
 
 const tapp_name = `test::${basename(__dirname)}`;
 const connection_name = `${tapp_name}::${path.basename(__filename).replace(/\./g, '-')}`;
