@@ -43,7 +43,7 @@ export class UserTestSDK {
                     } catch (e) {
                         return reject(e as Chai.AssertionError);
                     }
-                    console.info('UserTestSDK::register::res.body:', res.body, ';');
+                    console.error('UserTestSDK::register::res.body:', res.body, ';');
                     if (res.header['x-access-token'] == null)
                         return reject(new TypeError(
                             '`x-access-token` is `undefined` within `POST /api/user` response headers'
@@ -63,10 +63,12 @@ export class UserTestSDK {
             expect(user_routes.read).to.be.an.instanceOf(Function);
             expect(user_admin_routes.read).to.be.an.instanceOf(Function);
 
+            const is_admin: boolean = access_token.indexOf('admin') > -1;
+            console.error('UserTestSDK::read::access_token:', access_token, ';');
             supertest(this.app)
-                .get(`/api/user${access_token.indexOf('admin') > -1 ? '/' + expected_user.email : ''}`)
-                .set('Accept', 'application/json')
+                .get(`/api/user${is_admin ? '/' + expected_user.email : ''}`)
                 .set('X-Access-Token', access_token)
+                .set('Accept', 'application/json')
                 .end((err, res: Response) => {
                     if (err != null) return reject(supertestGetError(err, res));
                     else if (res.error) return reject(res.error);
@@ -80,11 +82,9 @@ export class UserTestSDK {
                     } catch (e) {
                         return reject(e as Chai.AssertionError);
                     }
+
                     if (res.header['x-access-token'] == null)
-                        return reject(new TypeError(
-                            '`x-access-token` is `undefined` within' +
-                            ' `POST /api/user/{`admin`|\'email\'}` response headers'
-                        ));
+                        res.header['x-access-token'] = access_token;
                     return resolve(res);
                 });
         });
@@ -110,7 +110,7 @@ export class UserTestSDK {
                     if (err != null) reject(supertestGetError(err, res));
                     else if (res.error) return reject(getError(res.error));
 
-                    console.info('UserTestSDK::update::res.body:', res.body, ';');
+                    console.error('UserTestSDK::update::res.body:', res.body, ';');
 
                     try {
                         expect(res.status).to.be.equal(200);
@@ -133,8 +133,8 @@ export class UserTestSDK {
             expect(user_admin_routes.readAll).to.be.an.instanceOf(Function);
             supertest(this.app)
                 .get('/api/users')
-                .set('Accept', 'application/json')
                 .set('X-Access-Token', access_token)
+                .set('Accept', 'application/json')
                 .end((err, res: Response) => {
                     if (err != null) return reject(supertestGetError(err, res));
                     else if (res.error) return reject(getError(res.error));

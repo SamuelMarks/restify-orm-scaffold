@@ -1,4 +1,4 @@
-import { series, waterfall } from 'async';
+import { asyncify, series, waterfall } from 'async';
 import { default as restify_errors } from 'restify-errors';
 import { JsonSchema } from 'tv4';
 import { Request } from 'restify';
@@ -46,22 +46,29 @@ export class UserConfig implements IUserConfig {
 }
 
 export const post = (req: UserBodyReq,
-                     config: UserConfig): Promise<User> => new Promise<User>((resolve, reject) =>
+                     config: UserConfig): Promise<User> => new Promise<User>((resolve, reject) => {
+    const user = new User();
+    Object.keys(req.body).map(k => user[k] = req.body[k]);
+
     waterfall([
             cb => cb(config.public_registration ? void 0 : new GenericError({
                 statusCode: 401,
                 name: 'Registration',
                 message: 'public registration disabled; contact the administrator for an account'
             })),
-            cb => {
-                const user = new User();
-                Object.keys(req.body).map(k => user[k] = req.body[k]);
-                return req.getOrm().typeorm!.connection.manager
-                    .getRepository(User)
-                    .save(user)
-                    .then(() => cb(void 0, user))
-                    .catch(cb);
-            },
+            // Horrible hack; outside a transaction; TODO: remove
+            cb =>
+                get(Object.assign(req, { user_id: req.body.email }))
+                    .then(() => cb(new GenericError({
+                        statusCode: 401,
+                        name: 'E_UNIQUE',
+                        message: 'There is already an account using that email address.'
+                    })))
+                    .catch(() => cb(void 0)),
+            asyncify(() => req.getOrm().typeorm!.connection.manager
+                .getRepository(User)
+                .save(user)
+            ),
             /*(user: User, cb) => console.info('post::waterfall::before User.findOne, user=', user, ';') ||
                 req.getOrm().typeorm!.connection.manager
                     .getRepository(User)
@@ -69,26 +76,26 @@ export const post = (req: UserBodyReq,
                     .then((_user: User) => cb(void 0, _user))
                     .catch(cb),
                     console.info('post::waterfall::before AccessToken.get, user=', user, ';')*/
-            (user: User, cb) =>
+            (_user: User, cb) =>
                 AccessToken
                     .get(req.getOrm().redis!.connection)
-                    .add(user.email, User.rolesAsStr(user.roles), 'access',
+                    .add(_user.email, User.rolesAsStr(_user.roles), 'access',
                         (err: Error, access_token: AccessTokenType) =>
-                            err != null ? cb(err) : cb(void 0, Object.assign(user, { access_token }))
+                            err != null ? cb(err) : cb(void 0, Object.assign(_user, { access_token }))
                     )
-        ], (error: Error | null | undefined | restify_errors.RestError, user: User | undefined) => {
+        ], (error: Error | null | undefined | restify_errors.RestError, _user: User | undefined) => {
             if (error != null)
                 return reject(fmtError(error) as restify_errors.RestError);
-            else if (user == null)
+            else if (_user == null)
                 return reject(new NotFoundError('User|AccessToken'));
-            else if (user.email == null)
+            else if (_user.email == null)
                 return reject(new NotFoundError('User'));
-            else if (user.access_token == null)
+            else if (_user.access_token == null)
                 return reject(new NotFoundError('AccessToken'));
-            return resolve(user);
+            return resolve(_user);
         }
-    )
-);
+    );
+});
 
 export const get = (req: UserBodyUserReq): Promise<User> => new Promise<User>((resolve, reject) =>
     req.getOrm().typeorm!.connection

@@ -78,9 +78,14 @@ describe('User::admin::routes', () => {
         );
         after(async () => await unregister_all(auth_sdk, mocks));
 
-        it('GET should retrieve other user', async () =>
-            await sdk.read(mocks[0].access_token!, mocks[1])
-        );
+        it('GET should retrieve other user', async () => {
+            try {
+                await sdk.read(mocks[0].access_token!, mocks[1]);
+            } catch (e) {
+                console.error('User::admin::routes::GET should retrieve other user::e:', e, ';');
+                throw e;
+            }
+        });
 
         it('PUT should update other user', async () => {
             const response = await sdk.update(mocks[2].access_token!, void 0, { title: 'Sir' });
@@ -93,7 +98,12 @@ describe('User::admin::routes', () => {
 
         it('DELETE should unregister other user', async () => {
             const user = mocks[5];
-            await sdk.register(user);
+            try {
+                await sdk.register(user);
+            } catch (e) {
+                if (!e.text || e.text.indexOf('E_UNIQUE') === -1)
+                    throw e;
+            }
             const res = await auth_sdk.login(user);
             const access_token: AccessTokenType = res!.body['access_token'];
             await sdk.unregister({ access_token });
@@ -103,9 +113,10 @@ describe('User::admin::routes', () => {
                     .get(_orms_out.orms_out.redis!.connection)
                     .findOne(access_token);
             } catch (e) {
-                if (e.message !== 'Nothing associated with that access token')
+                if (e.jse_info.error_message !== 'Nothing associated with that access token')
                     throw e;
             }
+
             try {
                 await auth_sdk.login(user);
             } catch (e) {

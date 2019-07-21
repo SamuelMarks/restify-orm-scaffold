@@ -81,7 +81,14 @@ describe('User::routes', () => {
 
         it('POST should fail to register user twice', async () => {
             const user_mock = mocks[1];
-            await sdk.register(user_mock);
+            try {
+                await auth_sdk.login(user_mock);
+            } catch (e) {
+                const error_obj: {code: string, error: string, error_message: string} = JSON.parse(e.text);
+                expect(error_obj.code).to.eql('NotFoundError');
+                await sdk.register(user_mock);
+            }
+
             let has_error = false;
             const expected_err = 'E_UNIQUE';
             try {
@@ -96,15 +103,27 @@ describe('User::routes', () => {
         it('GET should retrieve user', async () => {
             const user_mock = mocks[2];
             const access_token = await auth_sdk.register_login(user_mock);
-            await sdk.read(access_token, user_mock);
+            try {
+                await sdk.read(access_token, user_mock);
+            } catch (e) {
+                console.error('User::routes::GET should retrieve user::e:', e, ';');
+                throw e;
+            }
         });
 
         it('PUT should update user', async () => {
-            const user_mock = mocks[2];
-            const access_token = await auth_sdk.register_login(user_mock);
-            await sdk.read(access_token, user_mock);
-            const response = await sdk.update(access_token, void 0, { title: 'Sir' });
-            await sdk.read(access_token, response.body);
+            const user_mock = mocks[3];
+            let resp = await sdk.register(user_mock);
+            const access_token = resp.header['x-access-token'];
+
+            try {
+                resp = await sdk.update(access_token, void 0, { title: 'Sir' });
+                await sdk.read(access_token, resp.body);
+            } catch (e) {
+                console.error('User::routes::PUT should update user::e:', e, ';');
+                throw e;
+            }
+
         });
 
         it('GET /users should get all users', done =>
@@ -119,8 +138,13 @@ describe('User::routes', () => {
         );
 
         it('DELETE should unregister user', async () => {
-            const user_mock = mocks[5];
-            await sdk.register(user_mock);
+            const user_mock = mocks[11];
+            try {
+                await sdk.register(user_mock);
+            } catch (e) {
+                if (!e.text || e.text.indexOf('E_UNIQUE') === -1)
+                    throw e;
+            }
             const res = await auth_sdk.login(user_mock);
             const access_token: AccessTokenType = res.body['access_token'];
             await sdk.unregister({ access_token });
@@ -129,18 +153,17 @@ describe('User::routes', () => {
                     .get(_orms_out.orms_out.redis!.connection)
                     .findOne(access_token);
             } catch (e) {
-                if (e.message !== 'Nothing associated with that access token')
+                if (e.jse_info.error_message !== 'Nothing associated with that access token')
                     throw e;
             }
 
-            auth_sdk.login(user_mock)
-                .then(() => void 0)
-                .catch(e => {
-                    if (typeof e['text'] !== 'undefined' && e['text'] !== JSON.stringify({
-                        code: 'NotFoundError', message: 'User not found'
-                    }))
-                        throw e;
-                });
+            try {
+                await auth_sdk.login(user_mock);
+            } catch (e) {
+                const error_obj: {code: string, error: string, error_message: string} = JSON.parse(e.text);
+                if (error_obj.error_message !== 'User not found')
+                    throw e;
+            }
         });
     });
 });

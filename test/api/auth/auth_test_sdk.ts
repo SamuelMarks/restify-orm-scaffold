@@ -95,12 +95,13 @@ export class AuthTestSDK {
             user = user || user_mocks.successes[num as number];
             if (user == null) return reject(new TypeError('`user` argument to `register_login` must be defined'));
 
-            this.user_sdk
-                .register(user)
-                .then(res => resolve(res.header.get('x-access-token')))
+            const token_handler = r => resolve(r.header['x-access-token']);
+
+            this.user_sdk.register(user!)
+                .then(token_handler)
                 .catch(() =>
                     this.login(user!)
-                        .then(r => resolve(r.header['x-access-token']))
+                        .then(token_handler)
                         .catch(reject)
                 );
         });
