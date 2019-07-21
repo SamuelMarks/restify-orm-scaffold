@@ -35,6 +35,7 @@ RUN npm i -g npm \
     typings \
     typescript \
     && typings install \
+    && rm -rf node_modules \
     && npm install \
     && tsc \
     && ls node_modules/async
