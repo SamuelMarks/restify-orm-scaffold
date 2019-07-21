@@ -20,7 +20,6 @@ Simple baseline scaffold to get you started using [TypeORM](https://github.com/t
   - Redis. Set `REDIS_URL` env var accordingly; otherwise defaults are used.
   - Set: `DEFAULT_ADMIN_EMAIL` and `DEFAULT_ADMIN_PASSWORD` env vars
 
-
 ## Docker
 
 Alternatively there is a `Dockerfile` and `docker-compose.yml`, so rather than installing dependencies (other than [Docker](https://docs.docker.com/install/#supported-platforms)), you can run:
@@ -37,13 +36,15 @@ If you'd rather use Kubernetes to Docker Compose, then:
 
 If you don't want to use Docker Compose, then assuming you have Redis and Postgresql running independently of Docker, or exposed in Docker through ports, you can then run:
 
+    export RDBMS_URI='postgres://username:password@host:port/database_name'
+    export REDIS_HOST='host'
     docker run -e RDBMS_URI="$RDBMS_URI" \
                -e REDIS_HOST="$REDIS_HOST" \
                -e DEFAULT_ADMIN_EMAIL=foo \
                -e DEFAULT_ADMIN_PASSWORD=bar \
                -p 3000:3000 \
                --name "${PWD##*/}" \
-               "${PWD##*/}"
+               "${PWD##*/}_api"  # This is the name of the Docker image, the `_api` is suffixed by Docker Compose
 
 Where `RDBMS_URI` and `REDIS_HOST` environment variables are set correctly for your system.
 

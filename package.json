@@ -9,9 +9,8 @@
   "author": "Samuel Marks @SamuelMarks",
   "main": "main.js",
   "scripts": {
-    "build": "rm -rf node_modules; typings i; npm i --unsafe-perms; tsc",
-    "build_start": "rm -rf node_modules; [ -f typings.json ] && typings i; npm i && tsc && node main.js | bunyan",
-    "start": "node main.js | bunyan",
+    "with_bunyan": "node main.js | bunyan",
+    "start": "node main.js",
     "test": "mocha test --recursive --require ts-node/register"
   },
   "dependencies": {
