@@ -13,7 +13,8 @@ RUN apk --no-cache --virtual build-dependencies add \
     python \
     build-base \
     openssl \
-    netcat-openbsd
+    netcat-openbsd \
+    && printf '%s' "${NODE_VERSION}" > /env.node
 
 USER node
 
@@ -41,13 +42,19 @@ RUN npm i -g npm \
 
 # CMD npm run-script build_start
 
-FROM node:lts-alpine as app
+FROM alpine:latest as app
 
 ENV RDBMS_URI ''
 ENV REDIS_HOST 'localhost'
 ENV REDIS_PORT 6379
 ENV NPM_CONFIG_PREFIX '/home/node/.npm-global'
 ENV PATH "${NPM_CONFIG_PREFIX}/bin:${PATH}"
+
+COPY --from=builder /env.node /env.node
+
+RUN addgroup -S node -g 998 \
+    && adduser -S -G node -u 998 node \
+    && apk --no-cache add nodejs="`cat /env.node`-r0"
 
 USER node
 
@@ -64,7 +71,7 @@ USER node
 # Copy over the app
 COPY --from=builder --chown=node:node /home/node/rest-api .
 
-ENTRYPOINT ["/usr/local/bin/node", "main.js"]
+ENTRYPOINT ["/usr/bin/node", "main.js"]
 
 # FROM scratch
 #
