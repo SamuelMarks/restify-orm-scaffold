@@ -46,30 +46,3 @@ export const closeApp = (app: Server) => (done: Done) =>
     app.close(() => done(void 0));
 
 // after('closeApp', done => (app as Server).close(() => done(void 0)));
-
-export interface IError {
-    code: string;
-    error: string;
-    error_message: string;
-}
-
-export const exceptionToError = (error: any): IError => {
-    const hasJseInfo = (e: {jse_info: IError}) => ({
-        code: e.jse_info.code,
-        error: e.jse_info.error,
-        error_message: e.jse_info.error_message
-    });
-
-    if (error.jse_info) return hasJseInfo(error);
-    else if (error.text)
-        try {
-            return hasJseInfo({ jse_info: JSON.parse(error.text) });
-        } catch (e) {
-            return {
-                code: 'UnknownError',
-                error: 'UnknownError',
-                error_message: error.text
-            };
-        }
-    else throw TypeError(`Unable to parse out IError object from input: ${error}`);
-};

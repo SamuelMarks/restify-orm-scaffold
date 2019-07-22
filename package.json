@@ -1,6 +1,6 @@
 {
   "name": "restify-orm-scaffold",
-  "version": "0.0.35",
+  "version": "0.0.36",
   "description": "Sample REST API scaffold built on Node.JS in TypeScript with restify and TypeORM (with Waterline and Sequelize support also).",
   "repository": {
     "url": "https://github.com/SamuelMarks/restify_waterline_scaffold"
@@ -15,10 +15,10 @@
   },
   "dependencies": {
     "@offscale/custom-restify-errors": "^0.0.4",
-    "@offscale/nodejs-utils": "^0.0.8",
-    "@offscale/orm-mw": "^0.0.7",
+    "@offscale/nodejs-utils": "^0.0.9",
+    "@offscale/orm-mw": "^0.0.8",
     "@offscale/restify-validators": "^0.0.3",
-    "@offscale/routes-merger": "^0.0.3",
+    "@offscale/routes-merger": "^0.0.4",
     "argon2": "0.24.0",
     "async": "^3.1.0",
     "bunyan": "^1.8.12",

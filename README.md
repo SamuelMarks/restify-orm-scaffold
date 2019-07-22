@@ -8,7 +8,7 @@ Simple baseline scaffold to get you started using [TypeORM](https://github.com/t
 
 ### Node
 
-  0. node & npm (tested with node v10.15.3 & npm v6.9.0)
+  0. node & npm (tested with node v10.16.0 & npm v6.10.1)
   1. Run: `npm install -g typings typescript bunyan`
   2. `cd` to directory you've cloned this repo into
   3. Run: `typings install`
@@ -16,7 +16,7 @@ Simple baseline scaffold to get you started using [TypeORM](https://github.com/t
 
 ### External
 
-  - Database, e.g.: Postgres. Set `RDBMS_URI` env var accordingly, e.g.: `postgres://username:password@hostname/database_name`. Modify [config.ts](https://github.com/SamuelMarks/restify-orm-scaffold/blob/master/config.ts) to use a different database.
+  - Database, e.g.: Postgres. Set `RDBMS_URI` env var accordingly, e.g.: `postgres://username:password@hostname:port/database_name`. Modify [config.ts](https://github.com/SamuelMarks/restify-orm-scaffold/blob/master/config.ts) to use a different database.
   - Redis. Set `REDIS_URL` env var accordingly; otherwise defaults are used.
   - Set: `DEFAULT_ADMIN_EMAIL` and `DEFAULT_ADMIN_PASSWORD` env vars
 
@@ -36,17 +36,18 @@ If you'd rather use Kubernetes to Docker Compose, then:
 
 If you don't want to use Docker Compose, then assuming you have Redis and Postgresql running independently of Docker, or exposed in Docker through ports, you can then run:
 
-    export RDBMS_URI='postgres://username:password@host:port/database_name'
-    export REDIS_HOST='host'
     docker run -e RDBMS_URI="$RDBMS_URI" \
                -e REDIS_HOST="$REDIS_HOST" \
                -e DEFAULT_ADMIN_EMAIL=foo \
                -e DEFAULT_ADMIN_PASSWORD=bar \
                -p 3000:3000 \
                --name "${PWD##*/}" \
-               "${PWD##*/}_api"  # This is the name of the Docker image, the `_api` is suffixed by Docker Compose
+               "${PWD##*/}_api"  # Name of the Docker image, the `_api` is suffixed by Docker Compose
 
-Where `RDBMS_URI` and `REDIS_HOST` environment variables are set correctly for your system.
+Where `RDBMS_URI` and `REDIS_HOST` environment variables are set correctly for your system, in the form:
+
+    export RDBMS_URI='postgres://username:password@hostname:port/database_name'
+    export REDIS_HOST='host'
 
 ## Compile+run app
 

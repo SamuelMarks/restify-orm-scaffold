@@ -25,11 +25,11 @@ export interface IIncomingMessageF extends IncomingMessage {
     func_name: string;
 }
 
-const httpF = (method: 'POST' | 'PUT' | 'PATCH' | 'HEAD' | 'GET' | 'DELETE') => {
-    return (options: RequestOptions,
-            func_name: string,
-            body_or_cb: string | Callback | Cb | AsyncResultCallback<{}> | undefined,
-            callback?: Callback | Cb | AsyncResultCallback<{}>): ClientRequest => {
+const httpF = (method: 'POST' | 'PUT' | 'PATCH' | 'HEAD' | 'GET' | 'DELETE') =>
+    (options: RequestOptions,
+     func_name: string,
+     body_or_cb: string | Callback | Cb | AsyncResultCallback<{}> | undefined,
+     callback?: Callback | Cb | AsyncResultCallback<{}>): ClientRequest => {
         if (callback == null) {
             callback = body_or_cb as Callback | Cb | AsyncResultCallback<{}>;
             body_or_cb = void 0;
@@ -60,7 +60,6 @@ const httpF = (method: 'POST' | 'PUT' | 'PATCH' | 'HEAD' | 'GET' | 'DELETE') => 
 
         return req;
     };
-};
 
 const httpHEAD = httpF('HEAD');
 const httpGET = httpF('GET');
@@ -142,7 +141,7 @@ export class SampleData implements ISampleData {
             );
     }
 
-    private mergeOptions(options, body?) {
+    private mergeOptions(options, body?): {host: string, port: number, headers: {}} & {} {
         return trivial_merge({
             host: this.uri.host === `[::]:${this.uri.port}` ? 'localhost' :
                 `${this.uri.host!.substr(this.uri.host!.lastIndexOf(this.uri.port!) + this.uri.port!.length)}`,

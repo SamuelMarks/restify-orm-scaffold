@@ -4,7 +4,7 @@ import * as path from 'path';
 import { basename } from 'path';
 import { Server } from 'restify';
 
-import { model_route_to_map } from '@offscale/nodejs-utils';
+import { exceptionToErrorResponse, model_route_to_map } from '@offscale/nodejs-utils';
 import { AccessTokenType, IModelRoute } from '@offscale/nodejs-utils/interfaces';
 import { IOrmsOut } from '@offscale/orm-mw/interfaces';
 
@@ -12,7 +12,7 @@ import { _orms_out } from '../../../config';
 import { User } from '../../../api/user/models';
 import { AccessToken } from '../../../api/auth/models';
 import { all_models_and_routes_as_mr, setupOrmApp } from '../../../main';
-import { closeApp, exceptionToError, tearDownConnections, unregister_all } from '../../shared_tests';
+import { closeApp, tearDownConnections, unregister_all } from '../../shared_tests';
 import { AuthTestSDK } from '../auth/auth_test_sdk';
 import { user_mocks } from './user_mocks';
 import { UserTestSDK } from './user_test_sdk';
@@ -96,7 +96,7 @@ describe('User::admin::routes', () => {
             try {
                 await sdk.register(user);
             } catch (e) {
-                if (exceptionToError(e).code !== 'E_UNIQUE')
+                if (exceptionToErrorResponse(e).code !== 'E_UNIQUE')
                     throw e;
             }
             const res = await auth_sdk.login(user);
@@ -108,14 +108,14 @@ describe('User::admin::routes', () => {
                     .get(_orms_out.orms_out.redis!.connection)
                     .findOne(access_token);
             } catch (e) {
-                if (exceptionToError(e).error_message !== 'Nothing associated with that access token')
+                if (exceptionToErrorResponse(e).error_message !== 'Nothing associated with that access token')
                     throw e;
             }
 
             try {
                 await auth_sdk.login(user);
             } catch (e) {
-                if (exceptionToError(e).error_message !== 'User not found')
+                if (exceptionToErrorResponse(e).error_message !== 'User not found')
                     throw e;
             }
         });

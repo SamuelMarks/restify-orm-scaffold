@@ -5,7 +5,7 @@ import { TApp } from '@offscale/routes-merger/interfaces';
 export declare const db_uri: string;
 export declare const typeorm_config: PostgresConnectionOptions;
 export declare const sequelize_config: {
-    dialect: import("sequelize/types").Dialect;
+    dialect: "postgres" | "mysql" | "sqlite" | "mariadb" | "mssql";
     define: {
         timestamps: boolean;
     };

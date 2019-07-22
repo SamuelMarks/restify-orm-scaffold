@@ -6,7 +6,7 @@ import { createLogger } from 'bunyan';
 import { expect } from 'chai';
 import { Server } from 'restify';
 
-import { model_route_to_map } from '@offscale/nodejs-utils';
+import { exceptionToErrorResponse, model_route_to_map } from '@offscale/nodejs-utils';
 import { AccessTokenType, IModelRoute, IncomingMessageError } from '@offscale/nodejs-utils/interfaces';
 import { IOrmsOut } from '@offscale/orm-mw/interfaces';
 
@@ -15,7 +15,7 @@ import { User } from '../../../api/user/models';
 import { _orms_out } from '../../../config';
 import { all_models_and_routes_as_mr, setupOrmApp } from '../../../main';
 import { AuthTestSDK } from '../auth/auth_test_sdk';
-import { exceptionToError, tearDownConnections, unregister_all } from '../../shared_tests';
+import { tearDownConnections, unregister_all } from '../../shared_tests';
 import { user_mocks } from './user_mocks';
 import { UserTestSDK } from './user_test_sdk';
 
@@ -68,8 +68,8 @@ describe('User::routes', () => {
     );
 
     describe('/api/user', () => {
-        beforeEach(async () => await unregister_all(auth_sdk, mocks));
-        afterEach(async () => await unregister_all(auth_sdk, mocks));
+        before(async () => await unregister_all(auth_sdk, mocks));
+        after(async () => await unregister_all(auth_sdk, mocks));
 
         it('POST should create user', async () =>
             await sdk.register(mocks[0])
@@ -80,7 +80,7 @@ describe('User::routes', () => {
             try {
                 await auth_sdk.login(user_mock);
             } catch (e) {
-                expect(exceptionToError(e).code).to.eql('NotFoundError');
+                expect(exceptionToErrorResponse(e).code).to.eql('NotFoundError');
                 await sdk.register(user_mock);
             }
 
@@ -90,7 +90,7 @@ describe('User::routes', () => {
                 await sdk.register(user_mock);
             } catch (err) {
                 has_error = true;
-                const error_obj = exceptionToError(err);
+                const error_obj = exceptionToErrorResponse(err);
                 expect(error_obj).to.have.property('error');
                 expect(error_obj.error).to.eql(expected_err);
             }
@@ -127,7 +127,7 @@ describe('User::routes', () => {
             try {
                 await sdk.register(user_mock);
             } catch (e) {
-                if (exceptionToError(e).error !== 'E_UNIQUE')
+                if (exceptionToErrorResponse(e).error !== 'E_UNIQUE')
                     throw e;
             }
             const res = await auth_sdk.login(user_mock);
@@ -138,14 +138,14 @@ describe('User::routes', () => {
                     .get(_orms_out.orms_out.redis!.connection)
                     .findOne(access_token);
             } catch (e) {
-                if (exceptionToError(e).error_message !== 'Nothing associated with that access token')
+                if (exceptionToErrorResponse(e).error_message !== 'Nothing associated with that access token')
                     throw e;
             }
 
             try {
                 await auth_sdk.login(user_mock);
             } catch (e) {
-                if (exceptionToError(e).error_message !== 'User not found')
+                if (exceptionToErrorResponse(e).error_message !== 'User not found')
                     throw e;
             }
         });

@@ -52,12 +52,12 @@ describe('Auth::routes', () => {
         )
     );
 
-    after(tearDownConnections);
-    after(done => closeApp(sdk!.app)(done));
+    after('tearDownConnections', tearDownConnections);
+    after('closeApp', done => closeApp(sdk!.app)(done));
 
     describe('/api/auth', () => {
-        beforeEach(async () => await unregister_all(sdk, mocks));
-        afterEach(async () => await unregister_all(sdk, mocks));
+        before(async () => await unregister_all(sdk, mocks));
+        after(async () => await unregister_all(sdk, mocks));
 
         it('POST should login user', async () => await sdk.register_login(mocks[1]));
 
