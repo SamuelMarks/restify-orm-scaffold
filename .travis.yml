@@ -31,9 +31,5 @@ before_script:
     - psql -c 'create database travis_ci_test;' -U postgres
 
 script:
-    - pwd
-    - ls -a
     - tsc
-    - shopt -s globstar
-    - mocha "./test/**/**/test_*.js"
     - npm test
