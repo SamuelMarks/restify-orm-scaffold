@@ -14,19 +14,21 @@ services:
 cache:
     npm: true
 
-before_script:
+before_install:
+    - npm config set spin false
     - npm install -g npm
     - npm i -g bunyan mocha node-gyp tslint typings typescript
-    - npm config set spin false
-    - psql -c 'create database travis_ci_test;' -U postgres
+
+install:
+    - typings install
+    - npm install
 
 env:
     global:
         - RDBMS_URI='postgres://postgres@localhost/travis_ci_test'
 
-install:
-    - typings install
-    - npm install
+before_script:
+    - psql -c 'create database travis_ci_test;' -U postgres
 
 script:
     - npm test
