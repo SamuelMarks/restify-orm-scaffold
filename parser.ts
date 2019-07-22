@@ -13,7 +13,7 @@ interface IDocEntry {
     returnType?: string;
 }
 
-/** Generate documention for all classes in a set of .ts files */
+/** Generate documentation for all classes in a set of .ts files */
 function generateDocumentation(fileNames: string[], options: ts.CompilerOptions): void {
     // Build a program using the set of root file names in fileNames
     const program = ts.createProgram(fileNames, options);
@@ -62,7 +62,7 @@ function generateDocumentation(fileNames: string[], options: ts.CompilerOptions)
         };
     }
 
-    /** Serialize a class symbol infomration */
+    /** Serialize a class symbol information */
     function serializeClass(node: ts.ClassDeclaration) {
         const symbol = checker.getSymbolAtLocation(node.name!);
 
