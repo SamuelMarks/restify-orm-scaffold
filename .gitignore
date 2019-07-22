@@ -2,6 +2,7 @@
 typings/
 *.js
 *.map
+.nyc_output
 
 ### Node ###
 # Logs

@@ -2,16 +2,40 @@
   "name": "restify-orm-scaffold",
   "version": "0.0.36",
   "description": "Sample REST API scaffold built on Node.JS in TypeScript with restify and TypeORM (with Waterline and Sequelize support also).",
-  "repository": {
-    "url": "https://github.com/SamuelMarks/restify_waterline_scaffold"
-  },
+  "keywords": [
+    "restify",
+    "typeorm",
+    "sequelize",
+    "waterline",
+    "typescript"
+  ],
+  "homepage": "https://github.com/SamuelMarks/restify-orm-scaffold#readme",
+  "bugs": "https://github.com/SamuelMarks/restify-orm-scaffold/issues",
   "license": "(Apache-2.0 OR MIT)",
   "author": "Samuel Marks @SamuelMarks",
   "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SamuelMarks/restify-orm-scaffold"
+  },
   "scripts": {
     "with_bunyan": "node main.js | bunyan",
     "start": "node main.js",
-    "test": "mocha test --recursive --require ts-node/register"
+    "test": "nyc mocha --require ts-node/register --require source-map-support/register --recursive",
+    "coverage": "nyc report --reporter=text-lcov | coveralls"
+  },
+  "nyc": {
+    "extension": [
+      ".ts",
+      ".tsx"
+    ],
+    "exclude": [
+      "**/*.d.ts"
+    ],
+    "reporter": [
+      "html"
+    ],
+    "all": true
   },
   "dependencies": {
     "@offscale/custom-restify-errors": "^0.0.4",
@@ -54,7 +78,10 @@
     "chai": "^4.2.0",
     "chai-json-schema": "^1.5.1",
     "chai-json-schema-ajv": "^5.0.0",
+    "coveralls": "^3.0.5",
     "mocha": "^6.2.0",
+    "nyc": "^14.1.1",
+    "source-map-support": "^0.5.12",
     "supertest": "^4.0.2",
     "ts-node": "^8.3.0",
     "typescript": "~3.5.3"

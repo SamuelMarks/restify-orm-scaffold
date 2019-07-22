@@ -17,11 +17,11 @@ cache:
 before_install:
     - npm config set spin false
     - npm install -g npm
-    - npm i -g bunyan mocha node-gyp tslint typings typescript
+    - npm install -g bunyan mocha node-gyp tslint typings typescript
 
 install:
     - typings install
-    - npm install
+    - npm ci
 
 env:
     global:
@@ -33,3 +33,6 @@ before_script:
 script:
     - tsc
     - npm test
+
+after_success:
+    npm run coverage
