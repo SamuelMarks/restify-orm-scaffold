@@ -1,8 +1,9 @@
 restify-orm-scaffold
 ====================
+[![License](https://img.shields.io/badge/license-Apache--2.0%20OR%20MIT-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Build Status](https://travis-ci.org/SamuelMarks/restify-orm-scaffold.svg?branch=master)](https://travis-ci.org/SamuelMarks/restify-orm-scaffold)
 
 Simple baseline scaffold to get you started using [TypeORM](https://github.com/typeorm/typeorm) and/or [Sequelize](https://github.com/sequelize/sequelize) and/or [Waterline](https://github.com/balderdashy/waterline) on [restify](https://github.com/restify/node-restify) with [TypeScript](https://github.com/Microsoft/TypeScript).
-
 
 ## Install prerequisites
 
