@@ -64,11 +64,10 @@ export class UserTestSDK {
             expect(user_admin_routes.read).to.be.an.instanceOf(Function);
 
             const is_admin: boolean = access_token.indexOf('admin') > -1;
-            console.error('UserTestSDK::read::access_token:', access_token, ';');
+
             supertest(this.app)
-                .get(`/api/user${is_admin ? '/' + expected_user.email : ''}`)
-                .set('X-Access-Token', access_token)
-                .set('Accept', 'application/json')
+                .get(`/api/user${is_admin ? '/' + encodeURIComponent(expected_user.email) : ''}`)
+                .set('x-access-token', access_token)
                 .end((err, res: Response) => {
                     if (err != null) return reject(supertestGetError(err, res));
                     else if (res.error) return reject(res.error);

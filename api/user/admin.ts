@@ -2,8 +2,10 @@ import * as restify from 'restify';
 
 import { IOrmReq } from '@offscale/orm-mw/interfaces';
 import { has_body, mk_valid_body_mw } from '@offscale/restify-validators';
+import { fmtError } from '@offscale/custom-restify-errors';
 
 import { has_auth } from '../auth/middleware';
+import { AccessToken } from '../auth/models';
 import { User } from './models';
 import * as user_sdk from './sdk';
 import { UserBodyReq, UserBodyUserReq, UserConfig } from './sdk';
@@ -27,11 +29,18 @@ export const read = (app: restify.Server, namespace: string = '') =>
         (request: restify.Request, res: restify.Response, next: restify.Next) => {
             const req = request as unknown as UserBodyUserReq;
             user_sdk.get(req)
-                .then((user: User) => {
-                    res.setHeader('X-Access-Token', user!.access_token!);
-                    res.json(201, user);
-                    return next();
-                })
+                .then((user: User) =>
+                    AccessToken
+                        .get(req.getOrm().redis!.connection)
+                        .add(user.email, User.rolesAsStr(user.roles), 'access', (err, at) => {
+                            user.access_token = at;
+                            User._omit.forEach(attr => delete user[attr]);
+                            if (err != null) return next(fmtError(err));
+                            res.setHeader('X-Access-Token', at);
+                            res.json(201, user);
+                            return next();
+                        })
+                )
                 .catch(next);
         }
     );

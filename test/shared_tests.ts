@@ -54,23 +54,16 @@ export interface IError {
 }
 
 export const exceptionToError = (error: any): IError => {
-    const hasJseInfo = e => ({
+    const hasJseInfo = (e: {jse_info: IError}) => ({
         code: e.jse_info.code,
         error: e.jse_info.error,
         error_message: e.jse_info.error_message
     });
 
-    if (error.jse_info)
-        return hasJseInfo(error);
-
+    if (error.jse_info) return hasJseInfo(error);
     else if (error.text)
         try {
-            const error_obj = JSON.parse(error.text);
-            return {
-                code: error_obj.code,
-                error: error_obj.error,
-                error_message: error_obj.error_message
-            };
+            return hasJseInfo({ jse_info: JSON.parse(error.text) });
         } catch (e) {
             return {
                 code: 'UnknownError',
@@ -78,8 +71,5 @@ export const exceptionToError = (error: any): IError => {
                 error_message: error.text
             };
         }
-
-    else {
-        throw TypeError('Unable to parse out IError object from input');
-    }
+    else throw TypeError(`Unable to parse out IError object from input: ${error}`);
 };

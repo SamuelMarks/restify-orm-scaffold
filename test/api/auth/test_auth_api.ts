@@ -13,7 +13,7 @@ import { User } from '../../../api/user/models';
 import { _orms_out } from '../../../config';
 import { all_models_and_routes_as_mr, setupOrmApp } from '../../../main';
 import { user_mocks } from '../user/user_mocks';
-import { closeApp, exceptionToError, tearDownConnections, unregister_all } from '../../shared_tests';
+import { closeApp, tearDownConnections, unregister_all } from '../../shared_tests';
 import { AuthTestSDK } from './auth_test_sdk';
 
 const models_and_routes: IModelRoute = {
@@ -62,12 +62,9 @@ describe('Auth::routes', () => {
         it('POST should login user', async () => await sdk.register_login(mocks[1]));
 
         it('DELETE should logout user', async () => {
-            try {
-                await sdk.unregister_all([mocks[3]]);
-            } catch (e) {
-                if (exceptionToError(e).error_message !== 'User not found')
-                    throw e;
-            }
+            const user_mock = mocks[2];
+            await sdk.register_login(user_mock);
+            await sdk.unregister_all([user_mock]);
         });
     });
 });

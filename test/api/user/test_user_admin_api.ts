@@ -67,7 +67,7 @@ describe('User::admin::routes', () => {
      */
 
     describe('ADMIN /api/user/:email', () => {
-        before(done => map(mocks, (user, cb) =>
+        before('register_all', done => map(mocks, (user, cb) =>
                 sdk.register(user)
                     .then(res => {
                         user.access_token = res!.header['x-access-token'];
@@ -78,14 +78,9 @@ describe('User::admin::routes', () => {
         );
         after(async () => await unregister_all(auth_sdk, mocks));
 
-        it('GET should retrieve other user', async () => {
-            try {
-                await sdk.read(mocks[0].access_token!, mocks[1]);
-            } catch (e) {
-                console.error('User::admin::routes::GET should retrieve other user::e:', e, ';');
-                throw e;
-            }
-        });
+        it('GET should retrieve other user', async () =>
+            await sdk.read(mocks[0].access_token!, mocks[1])
+        );
 
         it('PUT should update other user', async () => {
             const response = await sdk.update(mocks[2].access_token!, void 0, { title: 'Sir' });

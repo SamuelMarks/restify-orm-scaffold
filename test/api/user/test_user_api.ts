@@ -71,13 +71,9 @@ describe('User::routes', () => {
         beforeEach(async () => await unregister_all(auth_sdk, mocks));
         afterEach(async () => await unregister_all(auth_sdk, mocks));
 
-        it('POST should create user', async () => {
-            try {
-                await sdk.register(mocks[0]);
-            } catch {
-                //
-            }
-        });
+        it('POST should create user', async () =>
+            await sdk.register(mocks[0])
+        );
 
         it('POST should fail to register user twice', async () => {
             const user_mock = mocks[1];
@@ -104,12 +100,7 @@ describe('User::routes', () => {
         it('GET should retrieve user', async () => {
             const user_mock = mocks[2];
             const access_token = await auth_sdk.register_login(user_mock);
-            try {
-                await sdk.read(access_token, user_mock);
-            } catch (e) {
-                console.error('User::routes::GET should retrieve user::e:', e, ';');
-                throw e;
-            }
+            await sdk.read(access_token, user_mock);
         });
 
         it('PUT should update user', async () => {
