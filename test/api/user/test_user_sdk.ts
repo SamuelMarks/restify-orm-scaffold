@@ -18,6 +18,7 @@ import { all_models_and_routes_as_mr } from '../../../main';
 import { destroy, post, UserBodyReq, UserConfig } from '../../../api/user/sdk';
 import { tearDownConnections } from '../../shared_tests';
 import { user_mocks } from './user_mocks';
+import { removeNullProperties } from '../../../utils';
 
 // tslint:disable-next-line:no-var-requires
 const chai = require('chai');
@@ -80,9 +81,11 @@ describe('User::sdk', () => {
         afterEach(async () => await unregister_user(user));
 
         it('POST should create user', async () => {
-                const user_res = await post({ body: user, getOrm: () => _orms_out.orms_out } as unknown as UserBodyReq,
-                    UserConfig.instance);
-                expect(user_res).to.be.jsonSchema(user_schema);
+                const user_res = await post(
+                    { body: user, getOrm: () => _orms_out.orms_out } as unknown as UserBodyReq,
+                    UserConfig.instance
+                );
+                expect(removeNullProperties(user_res)).to.be.jsonSchema(user_schema);
             }
         );
 

@@ -1,3 +1,4 @@
+import { AccessTokenType } from '@offscale/nodejs-utils/interfaces';
 export declare const hash_password: (password: string, callback: any) => void;
 export declare class User {
     static _omit: string[];
@@ -8,7 +9,7 @@ export declare class User {
     createdAt?: Date;
     updatedAt?: Date;
     roles: string[];
-    access_token?: string;
+    access_token?: AccessTokenType;
     hashPassword?(): Promise<void>;
     setRoles?(): void;
 }

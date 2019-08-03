@@ -1,6 +1,6 @@
 {
   "name": "restify-orm-scaffold",
-  "version": "0.0.36",
+  "version": "0.0.37",
   "description": "Sample REST API scaffold built on Node.JS in TypeScript with restify and TypeORM (with Waterline and Sequelize support also).",
   "keywords": [
     "restify",
@@ -38,7 +38,7 @@
     "all": true
   },
   "dependencies": {
-    "@offscale/custom-restify-errors": "^0.0.4",
+    "@offscale/custom-restify-errors": "^0.0.5",
     "@offscale/nodejs-utils": "^0.0.9",
     "@offscale/orm-mw": "^0.0.8",
     "@offscale/restify-validators": "^0.0.3",
@@ -48,17 +48,17 @@
     "bunyan": "^1.8.12",
     "faker": "^4.1.0",
     "hiredis": "^0.5.0",
-    "ioredis": "^4.11.2",
-    "pg": "^7.11.0",
+    "ioredis": "^4.14.0",
+    "pg": "^7.12.0",
     "redis": "^2.8.0",
-    "restify": "^8.3.3",
-    "restify-errors": "^8.0.0",
+    "restify": "^8.4.0",
+    "restify-errors": "^8.0.1",
     "tv4": "^1.3.0",
     "typeorm": "^0.3.0-alpha.23",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "@types/async": "^3.0.0",
+    "@types/async": "^3.0.1",
     "@types/bunyan": "1.8.6",
     "@types/chai": "^4.1.7",
     "@types/connect": "^3.4.32",
@@ -66,7 +66,7 @@
     "@types/faker": "^4.1.5",
     "@types/ioredis": "4.0.13",
     "@types/mocha": "^5.2.7",
-    "@types/node": "^12.6.8",
+    "@types/node": "^12.6.9",
     "@types/redis": "^2.8.13",
     "@types/restify": "^7.2.12",
     "@types/restify-errors": "^4.3.3",
@@ -81,7 +81,7 @@
     "coveralls": "^3.0.5",
     "mocha": "^6.2.0",
     "nyc": "^14.1.1",
-    "source-map-support": "^0.5.12",
+    "source-map-support": "^0.5.13",
     "supertest": "^4.0.2",
     "ts-node": "^8.3.0",
     "typescript": "~3.5.3"

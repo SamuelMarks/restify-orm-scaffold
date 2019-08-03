@@ -16,10 +16,10 @@ export interface IUserConfig {
 export declare class UserConfig implements IUserConfig {
     public_registration: boolean;
     initial_accounts: User[];
-    static default(): UserConfig;
     private static _user_config;
     constructor(public_registration: boolean, initial_accounts: User[]);
     static instance: UserConfig;
+    static default(): UserConfig;
 }
 export declare const post: (req: UserBodyReq, config: UserConfig) => Promise<User>;
 export declare const get: (req: UserBodyUserReq) => Promise<User>;

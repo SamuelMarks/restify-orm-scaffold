@@ -11,6 +11,9 @@ import { IRoutesMergerConfig, TApp } from '@offscale/routes-merger/interfaces';
 
 /* TODO: Put this all in tiered environment-variable powered .json file */
 
+// Enforce UTC
+process.env.TZ = 'Etc/UTC';
+
 export const db_uri: string = process.env['RDBMS_URI']
     || process.env['DATABASE_URL']
     || process.env['POSTGRES_URL']

@@ -15,7 +15,7 @@ import { User } from '../../../api/user/models';
 import { _orms_out } from '../../../config';
 import { all_models_and_routes_as_mr, setupOrmApp } from '../../../main';
 import { AuthTestSDK } from '../auth/auth_test_sdk';
-import { tearDownConnections, unregister_all } from '../../shared_tests';
+import { closeApp, tearDownConnections, unregister_all } from '../../shared_tests';
 import { user_mocks } from './user_mocks';
 import { UserTestSDK } from './user_test_sdk';
 
@@ -55,22 +55,18 @@ describe('User::routes', () => {
                     auth_sdk = new AuthTestSDK(_app);
 
                     return cb(void 0);
-                }
+                },
+                cb => unregister_all(auth_sdk, mocks).then(() => cb(void 0)).catch(cb)
             ],
             done
         );
     });
 
-    after('tearDownConnections & closeApp', done =>
-        tearDownConnections(_orms_out.orms_out, e =>
-            e == null ? sdk.app.close(() => done(void 0)) : done(e)
-        )
-    );
+    after('unregister_all', async () => unregister_all(auth_sdk, mocks));
+    after('tearDownConnections', done => tearDownConnections(_orms_out.orms_out, done));
+    after('closeApp', done => closeApp(sdk.app)(done));
 
     describe('/api/user', () => {
-        before(async () => await unregister_all(auth_sdk, mocks));
-        after(async () => await unregister_all(auth_sdk, mocks));
-
         it('POST should create user', async () =>
             await sdk.register(mocks[0])
         );
@@ -112,7 +108,7 @@ describe('User::routes', () => {
         });
 
         it('GET /users should get all users', done =>
-            map(mocks.slice(4, 9), asyncify(auth_sdk.register_login.bind(auth_sdk)),
+            map(mocks.slice(4, 10), asyncify(auth_sdk.register_login.bind(auth_sdk)),
                 (err: Error | IncomingMessageError | null | undefined,
                  res: undefined | Array<AccessTokenType | undefined>) =>
                     err != null ? done(err)

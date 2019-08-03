@@ -13,7 +13,7 @@ export interface IIncomingMessageF extends IncomingMessage {
     func_name: string;
 }
 export declare class SampleData implements ISampleData {
-    token: string;
+    token: AccessTokenType;
     private uri;
     constructor(uri: string, connection: Connection[], collections: Query[]);
     login(user: string, callback: TCallback<HttpError, string>): void;

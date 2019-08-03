@@ -9,6 +9,7 @@ import { AccessTokenType } from '@offscale/nodejs-utils/interfaces';
 import { User } from '../../../api/user/models';
 import * as user_routes from '../../../api/user/routes';
 import * as user_admin_routes from '../../../api/user/admin';
+import { removeNullProperties } from '../../../utils';
 
 /* tslint:disable:no-var-requires */
 const user_schema = sanitiseSchema(require('./../user/schema.json'), User._omit);
@@ -39,7 +40,7 @@ export class UserTestSDK {
                     try {
                         expect(res.status).to.be.equal(201);
                         expect(res.body).to.be.an('object');
-                        expect(res.body).to.be.jsonSchema(user_schema);
+                        expect(removeNullProperties(res.body)).to.be.jsonSchema(user_schema);
                     } catch (e) {
                         return reject(e as Chai.AssertionError);
                     }
@@ -77,7 +78,7 @@ export class UserTestSDK {
                         Object.keys(expected_user).map(
                             attr => expect(expected_user[attr] === res.body[attr])
                         );
-                        expect(res.body).to.be.jsonSchema(user_schema);
+                        expect(removeNullProperties(res.body)).to.be.jsonSchema(user_schema);
                     } catch (e) {
                         return reject(e as Chai.AssertionError);
                     }
@@ -112,7 +113,7 @@ export class UserTestSDK {
                     try {
                         expect(res.status).to.be.equal(200);
                         expect(res.body).to.be.an('object');
-                        expect(res.body).to.be.jsonSchema(user_schema);
+                        expect(removeNullProperties(res.body)).to.be.jsonSchema(user_schema);
                         Object.keys(user).forEach(k => expect(user[k]).to.be.eql(res.body[k]));
                     } catch (e) {
                         return reject(e as Chai.AssertionError);
@@ -139,7 +140,9 @@ export class UserTestSDK {
                         expect(res.body).to.be.an('object');
                         expect(res.body).to.have.property('users');
                         expect(res.body.users).to.be.an('array');
-                        res.body.users.map(user => expect(user).to.be.jsonSchema(user_schema));
+                        res.body.users.map(user =>
+                            expect(removeNullProperties(user)).to.be.jsonSchema(user_schema)
+                        );
                     } catch (e) {
                         return reject(e as Chai.AssertionError);
                     }

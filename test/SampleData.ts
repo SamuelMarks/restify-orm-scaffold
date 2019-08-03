@@ -71,7 +71,7 @@ const httpDELETE = httpF('DELETE');
 const zip = (a0: any[], a1: any[]) => a0.map((x, i) => [x, a1[i]]);
 
 export class SampleData implements ISampleData {
-    public token!: string;
+    public token!: AccessTokenType;
     private uri: url.Url;
 
     constructor(uri: string, connection: Connection[], collections: Query[]) {

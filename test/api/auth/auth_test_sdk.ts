@@ -10,6 +10,7 @@ import * as auth_routes from '../../../api/auth/routes';
 import { User } from '../../../api/user/models';
 import { user_mocks } from '../user/user_mocks';
 import { UserTestSDK } from '../user/user_test_sdk';
+import { removeNullProperties } from '../../../utils';
 // tslint:disable-next-line:no-var-requires
 const chaiJsonSchema = require('chai-json-schema');
 // import { saltSeeker } from '../../../api/user/utils';
@@ -48,7 +49,7 @@ export class AuthTestSDK {
                         expect(res.body).to.have.property('access_token');
                         expect(res.body.access_token).to.have.lengthOf.at.least(1);
                         expect(res.header['x-access-token']).to.eql(res.body.access_token);
-                        expect(res.body).to.be.jsonSchema(auth_schema);
+                        expect(removeNullProperties(res.body)).to.be.jsonSchema(auth_schema);
                     } catch (e) {
                         return reject(e as Chai.AssertionError);
                     }
@@ -75,15 +76,19 @@ export class AuthTestSDK {
         return new Promise<Response[]>((resolve, reject) => {
             const errors: number[] = [];
             const successes: Response[] = [];
-            for (const user of users)
+            users.forEach((user, idx) =>
                 this.login(user)
                     .then(res =>
                         this.user_sdk
                             .unregister({ access_token: res!.header['x-access-token'] })
-                            .then(successes.push.bind(successes))
+                            .then(response => {
+                                delete users[idx].access_token;
+                                successes.push(response);
+                            })
                             .catch(errors.push.bind(errors))
                     )
-                    .catch(errors.push.bind(errors));
+                    .catch(errors.push.bind(errors))
+            );
             if (errors.length) return reject(errors);
             return resolve(successes);
         });

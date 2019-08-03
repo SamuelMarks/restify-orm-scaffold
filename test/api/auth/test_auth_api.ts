@@ -35,9 +35,9 @@ describe('Auth::routes', () => {
 
     before(done =>
         waterfall([
-            tearDownConnections,
+                tearDownConnections,
                 cb => typeof AccessToken.reset() === 'undefined' && cb(void 0),
-            cb => setupOrmApp(model_route_to_map(models_and_routes), { connection_name, logger },
+                cb => setupOrmApp(model_route_to_map(models_and_routes), { connection_name, logger },
                     { skip_start_app: true, app_name: tapp_name, logger },
                     cb
                 ),
@@ -52,6 +52,7 @@ describe('Auth::routes', () => {
         )
     );
 
+    after('deregister_all', async () => await unregister_all(sdk, mocks));
     after('tearDownConnections', tearDownConnections);
     after('closeApp', done => closeApp(sdk!.app)(done));
 

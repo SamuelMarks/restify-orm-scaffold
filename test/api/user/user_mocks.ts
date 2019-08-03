@@ -9,17 +9,21 @@ export const user_mocks: {successes: User[], failures: Array<{}>} = {
         { password: 'foo ' },
         { email: 'foo@bar.com', password: 'foo', bad_prop: true }
     ],
-    successes: Array(100)
+    successes: Array(200)
         .fill(void 0)
-        .map((_, idx) => ({
-            title: faker.name.title(),
-            email: faker.internet.email(),
-            password: faker.internet.password(),
+        .map((_, idx) => {
+            const user = new User();
+
+            user.title = faker.name.title();
+            user.email = faker.internet.email();
+            user.password = faker.internet.password();
             /* tslint:disable:no-bitwise */
-            roles: (idx & 1) === 0 ?
+            user.roles = (idx & 1) === 0 ?
                 ['registered', 'login', 'admin']
-                : ['registered', 'login']
-        }))
+                : ['registered', 'login'];
+
+            return user;
+        })
 };
 
 if (require.main === module) {

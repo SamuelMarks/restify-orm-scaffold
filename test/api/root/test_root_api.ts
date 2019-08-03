@@ -17,7 +17,8 @@ describe('Root::routes', () => {
     let app: Server;
 
     before(done => setupOrmApp(new Map(),
-        { orms_in: undefined, logger }, { skip_start_app: true, app_name: tapp_name, logger },
+        { orms_in: undefined, logger },
+        { skip_use: true, skip_start_app: true, app_name: tapp_name, logger },
         (err: Error, _app?: TApp) => {
             if (err != null) return done(err);
             app = _app as Server;
