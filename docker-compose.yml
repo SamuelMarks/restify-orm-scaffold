@@ -3,7 +3,7 @@ services:
     redis:
         image: redis:alpine
     postgres:
-        image: postgres:11-alpine
+        image: postgres:12-alpine
         environment:
             POSTGRES_USER: rest_api_user
             POSTGRES_PASSWORD: rest_api_pass

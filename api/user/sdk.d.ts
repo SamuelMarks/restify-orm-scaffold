@@ -18,7 +18,8 @@ export declare class UserConfig implements IUserConfig {
     initial_accounts: User[];
     private static _user_config;
     constructor(public_registration: boolean, initial_accounts: User[]);
-    static instance: UserConfig;
+    static get instance(): UserConfig;
+    static set instance(config: IUserConfig);
     static default(): UserConfig;
 }
 export declare const post: (req: UserBodyReq, config: UserConfig) => Promise<User>;
