@@ -2,6 +2,7 @@ import { waterfall } from 'async';
 import { createLogger } from 'bunyan';
 import * as path from 'path';
 import { basename } from 'path';
+
 import { Server } from 'restify';
 
 import { model_route_to_map } from '@offscale/nodejs-utils';
@@ -12,8 +13,8 @@ import { AccessToken } from '../../../api/auth/models';
 import { User } from '../../../api/user/models';
 import { _orms_out } from '../../../config';
 import { all_models_and_routes_as_mr, setupOrmApp } from '../../../main';
-import { user_mocks } from '../user/user_mocks';
 import { closeApp, tearDownConnections, unregister_all } from '../../shared_tests';
+import { user_mocks } from '../user/user_mocks';
 import { AuthTestSDK } from './auth_test_sdk';
 
 const models_and_routes: IModelRoute = {

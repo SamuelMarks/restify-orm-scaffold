@@ -58,6 +58,6 @@ export const tearDownConnections = (orms_out_or_done: Done | IOrmsOut, done?: Do
         : tearDownConns(orms_out_or_done as IOrmsOut, e => (done as Done)(e));
 
 export const closeApp = (app: Server) => (done: Done) =>
-    app.close(() => done(void 0));
+    app == null ? done(void 0) : app.close(() => done(void 0));
 
 // after('closeApp', done => (app as Server).close(() => done(void 0));
