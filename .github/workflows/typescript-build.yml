@@ -1,22 +1,24 @@
 name: TypeScript build
-on:
-    push:
-        branches:
-            - master
+
+on: [push]
+
 jobs:
-    name: TypeScript build
+  build-and-compile:
     runs-on: ubuntu-latest
+
     steps:
-        - name: Checkout repository
-          uses: actions/checkout@master
-        - name: Set up Node.js
-          uses: actions/setup-node@master
-          with:
-              node-version: '12.x'
-        - name: Install dependencies and compile
-          run: |
-              npm i -g npm && \
-              npm i -g typescript typings && \
-              typings i && \
-              npm ci && \
-              tsc
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Use Node.js 12.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+
+      - name: Install dependencies and compile
+        run: |
+          npm i -g npm && \
+          npm i -g typescript typings && \
+          typings i && \
+          npm ci && \
+          tsc
