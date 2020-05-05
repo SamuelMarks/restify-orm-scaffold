@@ -80,7 +80,7 @@ export const post = (req: UserBodyReq,
                 AccessToken
                     .get(req.getOrm().redis!.connection)
                     .add(_user.email, User.rolesAsStr(_user.roles), 'access',
-                        (err: Error, access_token: AccessTokenType) =>
+                        (err: Error | null, access_token: AccessTokenType) =>
                             err != null ? cb(err) : cb(void 0, Object.assign(_user, { access_token }))
                     )
         ], (error: Error | null | undefined | restify_errors.RestError, _user: User | undefined) => {
