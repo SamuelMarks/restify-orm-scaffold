@@ -52,6 +52,29 @@ Where `RDBMS_URI` and `REDIS_HOST` environment variables are set correctly for y
     export RDBMS_URI='postgres://username:password@hostname:port/database_name'
     export REDIS_HOST='host'
 
+## Configure a reverse proxy for server & static website files
+
+Use a long [nginxctl](https://github.com/offscale/nginxctl) CLI command to create an nginx config and server it:
+
+    python -m nginxctl serve --temp_dir '/tmp' -b 'server' --server_name 'localhost' --listen '8080' -b 'location' '/api' --proxy_pass 'http://localhost:3000' --proxy_redirect 'off' -} -b 'location' '/' --root '/tmp/wwwroot' --try_files '$uri$args $uri$args/ /index.html' -} -}
+
+Or just write a config (below is what the command generates… with 2 newlines thrown in):
+
+    server {
+        server_name localhost;
+        listen 8080;
+
+        location /api {
+            proxy_pass http://localhost:3000;
+            proxy_redirect off;
+        }
+
+        location / {
+            root /tmp/wwwroot;
+            try_files $uri$args $uri$args/ /index.html;
+        }
+    }
+
 ## Compile+run app
 
     tsc
