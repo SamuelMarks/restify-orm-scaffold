@@ -1,15 +1,11 @@
 import * as Logger from 'bunyan';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
+import { Options as SequelizeOptions } from 'sequelize';
 import { IOrmMwConfig, IOrmsOut } from '@offscale/orm-mw/interfaces';
-import { TApp } from '@offscale/routes-merger/interfaces';
+import { IRoutesMergerConfig } from '@offscale/routes-merger/interfaces';
 export declare const db_uri: string;
 export declare const typeorm_config: PostgresConnectionOptions;
-export declare const sequelize_config: {
-    dialect: import("sequelize/types").Dialect;
-    define: {
-        timestamps: boolean;
-    };
-};
+export declare const sequelize_config: SequelizeOptions;
 export declare const waterline_config: Readonly<{
     adapters: {
         url: string;
@@ -32,5 +28,5 @@ export declare const waterline_config: Readonly<{
 export declare const _orms_out: {
     orms_out: IOrmsOut;
 };
-export declare const getOrmMwConfig: (models: Map<string, any>, logger: Logger, cb: (err: Error | undefined, with_app?: ((app: TApp) => TApp) | undefined, orms_out?: IOrmsOut | undefined) => void) => IOrmMwConfig;
+export declare const getOrmMwConfig: (models: Map<string, any>, logger: Logger, cb: (err: Error | undefined, with_app?: IRoutesMergerConfig['with_app'], orms_out?: IOrmsOut | undefined) => void) => IOrmMwConfig;
 export declare const getPrivateIPAddress: () => string;

@@ -4,6 +4,7 @@ import * as Logger from 'bunyan';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import * as restify from 'restify';
 import { RequestHandler as RestifyRequestHandler } from 'restify';
+import { Options as SequelizeOptions } from 'sequelize';
 
 import { IOrmMwConfig, IOrmsOut, RequestHandler } from '@offscale/orm-mw/interfaces';
 import { uri_to_config } from '@offscale/nodejs-utils';
@@ -36,7 +37,7 @@ export const typeorm_config: PostgresConnectionOptions = Object.freeze(
 );
 
 // import * as sequelize from 'sequelize';
-export const sequelize_config /*: sequelize.Options*/ = {
+export const sequelize_config: SequelizeOptions = {
     dialect: 'postgres' as 'mysql' | 'postgres' | 'sqlite' | 'mariadb' | 'mssql' | 'mariadb',
     define: {
         timestamps: false

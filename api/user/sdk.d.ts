@@ -29,6 +29,6 @@ export declare const getAll: (req: IOrmReq) => Promise<{
 }>;
 export declare const update: (req: UserBodyUserReq) => Promise<User | User[]>;
 export declare const destroy: (req: IOrmReq & {
-    body?: User | undefined;
+    body?: User;
     user_id: string;
 }) => Promise<number>;

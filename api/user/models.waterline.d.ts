@@ -1,7 +1,7 @@
 import { IUser } from './models.waterline.interfaces.d';
 export declare const hash_password: (record: {
     password: string;
-    email?: string | undefined;
+    email?: string;
 }, callback: any) => void;
 export declare const verify_password: (hashed: string, password: string) => Promise<boolean>;
 export declare const User: {
@@ -29,14 +29,14 @@ export declare const User: {
     };
     beforeValidate: (record: {
         password: string;
-        email?: string | undefined;
+        email?: string;
     }, callback: any) => void;
     beforeCreate: (record: {
         password: string;
-        email?: string | undefined;
+        email?: string;
     }, callback: any) => void;
     beforeUpdate: (record: {
         password: string;
-        email?: string | undefined;
+        email?: string;
     }, callback: any) => void;
 };
