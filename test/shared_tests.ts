@@ -16,7 +16,7 @@ interface IResponse extends Response {
     readonly body: ReadableStream | null | any | {access_token: AccessTokenType};
 }
 
-export const create_and_auth_users = (user_mocks_subset: User[], auth_sdk: AuthTestSDK, done: MochaDone) => {
+export const create_and_auth_users = (user_mocks_subset: User[], auth_sdk: AuthTestSDK, done: Done) => {
     // TODO: Build bulk API endpoints so this can be done efficiently.
     forEachOfLimit(user_mocks_subset, 1, (user: User, idx: number | string, callback) =>
         auth_sdk.register_login(user)
