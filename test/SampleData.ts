@@ -97,7 +97,7 @@ export class SampleData implements ISampleData {
         httpDELETE(options, 'logout', (err, res) => {
             if (err != null) return callback(err);
             else if (res.headers == null) return callback(new HttpError('HTTP request failed'));
-            delete this.token;
+            delete (this as {token?: string}).token;
             return callback(err, this.token);
         });
     }
