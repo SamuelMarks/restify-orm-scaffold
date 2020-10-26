@@ -3,7 +3,7 @@ FROM node:lts-alpine as builder
 ENV NPM_CONFIG_PREFIX '/home/node/.npm-global'
 ENV PATH "${NPM_CONFIG_PREFIX}/bin:${PATH}"
 
-ADD https://raw.githubusercontent.com/wilsonsilva/wait-for/8b86892/wait-for /bin/wait_for_it.sh
+ADD https://raw.githubusercontent.com/fdemmer/wait-for/2c082fc/wait-for /bin/wait_for_it.sh
 
 # Install OS dependencies
 RUN apk --no-cache --virtual build-dependencies add \
