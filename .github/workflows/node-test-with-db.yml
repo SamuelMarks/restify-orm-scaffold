@@ -42,13 +42,14 @@ jobs:
             with:
               node-version: 12.x
 
-          - name: Install dependencies and compile
+          - name: Install dependencies, compile, and test
             run: |
               npm i -g npm && \
-              npm i -g typescript typings && \
+              npm i -g typescript typings mocha && \
               typings i && \
               npm ci && \
-              tsc
+              tsc &&
+              npm test
             env:
                 POSTGRES_HOST: localhost
                 POSTGRES_PORT: 5432
