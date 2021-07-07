@@ -2,35 +2,38 @@ import * as ts from 'typescript';
 import * as fs from 'fs';
 import * as path from 'path';
 
-interface IDocEntry {
+interface DocEntry {
     name?: string;
     fileName?: string;
     documentation?: string;
     type?: string;
-    constructors?: IDocEntry[];
-    parameters?: IDocEntry[];
-    decorators?: IDocEntry[];
+    constructors?: DocEntry[];
+    parameters?: DocEntry[];
     returnType?: string;
 }
 
 /** Generate documentation for all classes in a set of .ts files */
-function generateDocumentation(fileNames: string[], options: ts.CompilerOptions): void {
+function generateDocumentation(
+    fileNames: string[],
+    options: ts.CompilerOptions
+): void {
     // Build a program using the set of root file names in fileNames
-    const program = ts.createProgram(fileNames, options);
+    let program = ts.createProgram(fileNames, options);
 
     // Get the checker, we will use it to find more about classes
-    const checker = program.getTypeChecker();
-
-    const output: IDocEntry[] = [];
+    let checker = program.getTypeChecker();
+    let output: DocEntry[] = [];
 
     // Visit every sourceFile in the program
     for (const sourceFile of program.getSourceFiles()) {
-        // Walk the tree to search for classes
-        ts.forEachChild(sourceFile, visit);
+        if (!sourceFile.isDeclarationFile) {
+            // Walk the tree to search for classes
+            ts.forEachChild(sourceFile, visit);
+        }
     }
 
     // print out the doc
-    fs.writeFileSync('classes.json', JSON.stringify(output, undefined, 4));
+    fs.writeFileSync("classes.json", JSON.stringify(output, undefined, 4));
 
     return;
 
@@ -41,47 +44,43 @@ function generateDocumentation(fileNames: string[], options: ts.CompilerOptions)
             return;
         }
 
-        if (node.kind === ts.SyntaxKind.ClassDeclaration) {
+        if (ts.isClassDeclaration(node) && node.name) {
             // This is a top level class, get its symbol
-
-            output.push(serializeClass(node as ts.ClassDeclaration));
+            let symbol = checker.getSymbolAtLocation(node.name);
+            if (symbol) {
+                output.push(serializeClass(symbol));
+            }
             // No need to walk any further, class expressions/inner declarations
             // cannot be exported
-        } else if (node.kind === ts.SyntaxKind.ModuleDeclaration) {
+        } else if (ts.isModuleDeclaration(node)) {
             // This is a namespace, visit its children
             ts.forEachChild(node, visit);
         }
     }
 
     /** Serialize a symbol into a json object */
-    function serializeSymbol(symbol: ts.Symbol): IDocEntry {
+    function serializeSymbol(symbol: ts.Symbol): DocEntry {
         return {
             name: symbol.getName(),
-            documentation: ts.displayPartsToString(symbol.getDocumentationComment(void 0)),
-            type: checker.typeToString(checker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration))
+            documentation: ts.displayPartsToString(symbol.getDocumentationComment(checker)),
+            type: checker.typeToString(
+                checker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration!)
+            )
         };
     }
 
     /** Serialize a class symbol information */
-    function serializeClass(node: ts.ClassDeclaration) {
-        const symbol = checker.getSymbolAtLocation(node.name!);
+    function serializeClass(symbol: ts.Symbol) {
+        let details = serializeSymbol(symbol);
 
-        const details = serializeSymbol(symbol!);
-        if (!details.decorators) return details;
         // Get the construct signatures
-        details.decorators = node.decorators!.map(serializeDecorator);
-        const constructorType = checker.getTypeOfSymbolAtLocation(symbol!, symbol!.valueDeclaration);
-        details.constructors = constructorType.getConstructSignatures().map(serializeSignature);
-
-        return details;
-    }
-
-    function serializeDecorator(decorator: ts.Decorator) {
-        // @ts-ignore
-        const symbol = checker.getSymbolAtLocation(decorator.expression.getFirstToken());
-        const decoratorType = checker.getTypeOfSymbolAtLocation(symbol!, symbol!.valueDeclaration);
-        const details = serializeSymbol(symbol!);
-        details.constructors = decoratorType.getCallSignatures().map(serializeSignature);
+        let constructorType = checker.getTypeOfSymbolAtLocation(
+            symbol,
+            symbol.valueDeclaration!
+        );
+        details.constructors = constructorType
+            .getConstructSignatures()
+            .map(serializeSignature);
         return details;
     }
 
@@ -90,17 +89,23 @@ function generateDocumentation(fileNames: string[], options: ts.CompilerOptions)
         return {
             parameters: signature.parameters.map(serializeSymbol),
             returnType: checker.typeToString(signature.getReturnType()),
-            documentation: ts.displayPartsToString(signature.getDocumentationComment(void 0))
+            documentation: ts.displayPartsToString(signature.getDocumentationComment(checker))
         };
     }
 
     /** True if this is visible outside this file, false otherwise */
     function isNodeExported(node: ts.Node): boolean {
-        /* tslint:disable:no-bitwise */
-        return (node.flags & ts.NodeFlags.ExportContext) !== 0
-            || (node.parent && node.parent.kind === ts.SyntaxKind.SourceFile);
+        return (
+            (ts.getCombinedModifierFlags(node as ts.Declaration) & ts.ModifierFlags.Export) !== 0 ||
+            (!!node.parent && node.parent.kind === ts.SyntaxKind.SourceFile)
+        );
     }
 }
+
+generateDocumentation(process.argv.slice(2), {
+    target: ts.ScriptTarget.ES5,
+    module: ts.ModuleKind.CommonJS
+});
 
 if (require.main === module) {
     generateDocumentation([path.join(__dirname, 'api', 'user', 'models.ts')], {
