@@ -100,8 +100,8 @@ export const post = (req: UserBodyReq,
 export const get = (req: UserBodyUserReq): Promise<User> => new Promise<User>((resolve, reject) =>
     req.getOrm().typeorm!.connection
         .getRepository(User)
-        .findOne({ email: req.user_id })
-        .then((user: User | undefined) =>
+        .findOneBy({ email: req.user_id })
+        .then((user: User | null) =>
             user == null ? reject(new NotFoundError('User'))
                 : resolve(user)
         )
@@ -141,8 +141,8 @@ export const update = (req: UserBodyUserReq): Promise<User | User[]> => new Prom
                     .catch(cb),
             cb =>
                 req.getOrm().typeorm!.connection.getRepository(User)
-                    .findOne({ email: req.user_id })
-                    .then((user: User | undefined) => cb(void 0, user))
+                    .findOneBy({ email: req.user_id })
+                    .then((user: User | null) => cb(void 0, user))
                     .catch(cb)
         ], (error, update_user) =>
             error == null ?

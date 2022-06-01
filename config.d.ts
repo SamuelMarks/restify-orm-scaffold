@@ -28,5 +28,5 @@ export declare const waterline_config: Readonly<{
 export declare const _orms_out: {
     orms_out: IOrmsOut;
 };
-export declare const getOrmMwConfig: (models: Map<string, any>, logger: Logger, cb: (err: Error | undefined, with_app?: IRoutesMergerConfig['with_app'], orms_out?: IOrmsOut | undefined) => void) => IOrmMwConfig;
+export declare const getOrmMwConfig: (models: Map<string, any>, logger: Logger, cb: (err: Error | undefined, with_app?: IRoutesMergerConfig['with_app'], orms_out?: IOrmsOut) => void) => IOrmMwConfig;
 export declare const getPrivateIPAddress: () => string;

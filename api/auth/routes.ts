@@ -26,7 +26,7 @@ export const login = (app: restify.Server, namespace: string = ''): void => {
                         select: ['password', 'email', 'roles'],
                         where: { email: req.body.email }
                     })
-                    .then((user: User | undefined) => {
+                    .then((user: User | null) => {
                         if (user == null) return cb(new NotFoundError('User'));
                         return cb(void 0, user);
                     })
