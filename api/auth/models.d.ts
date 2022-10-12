@@ -16,6 +16,6 @@ export declare class AccessToken {
     findOne(access_token: AccessTokenType): Promise<string>;
     deleteOne(access_token: AccessTokenType): Promise<number>;
     logout(arg: LogoutArg, callback: (err?: Error | RestError) => void): void;
-    add(user_id: string, roles: string, scope: 'access', callback: (err: Error | null, access_token: AccessTokenType) => void): void;
+    add(user_id: string, roles: string, scope: 'access', callback: (err: Error | undefined | null, access_token: AccessTokenType) => void): void;
 }
 export {};
