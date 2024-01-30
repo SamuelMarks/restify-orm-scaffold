@@ -3,13 +3,16 @@ import * as argon2 from 'argon2';
 import { IUser } from './models.waterline.interfaces.d';
 import { argon2_options } from './utils';
 
-export const hash_password = (record: {password: string, email?: string}, callback): void => {
-    const hash = cb => argon2.hash(record.password, argon2_options).then(hashed => {
+export const hash_password = (record: {
+    password: string,
+    email?: string
+}, callback: (error?: Error) => void): void => {
+    const hash = (cb: typeof callback) => argon2.hash(record.password, argon2_options).then(hashed => {
         record.password = hashed;
         return cb();
     }).catch(cb);
 
-    return record != null && record.password != null && !record.password.startsWith('$argon2') ?
+    record != null && record.password != null && !record.password.startsWith('$argon2') ?
         hash(callback) : callback();
 };
 
@@ -43,9 +46,11 @@ export const User = {
         toJSON: function toJSON() {
             // @ts-ignore
             const user: IUser = this.toObject();
-            User._omit.map(k => delete user[k]);
+            User._omit.map(k => delete (user as { [key: string]: any })[k]);
             for (const key in user)
-                if (user.hasOwnProperty(key) && user[key] == null) delete user[key];
+                if (user.hasOwnProperty(key) && (user as { [key: string]: any })[key] == null) delete (user as {
+                    [key: string]: any
+                })[key];
             return user;
         }
     },

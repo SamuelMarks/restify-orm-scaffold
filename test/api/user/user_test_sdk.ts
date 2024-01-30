@@ -76,7 +76,7 @@ export class UserTestSDK {
                     try {
                         expect(res.body).to.be.an('object');
                         Object.keys(expected_user).map(
-                            attr => expect(expected_user[attr] === res.body[attr])
+                            attr => expect((expected_user as User & { [key: string]: string })[attr] === res.body[attr])
                         );
                         expect(removeNullProperties(res.body)).to.be.jsonSchema(user_schema);
                     } catch (e) {
@@ -114,7 +114,9 @@ export class UserTestSDK {
                         expect(res.status).to.be.equal(200);
                         expect(res.body).to.be.an('object');
                         expect(removeNullProperties(res.body)).to.be.jsonSchema(user_schema);
-                        Object.keys(user).forEach(k => expect(user[k]).to.be.eql(res.body[k]));
+                        Object.keys(user).forEach(k => expect((user as User & {
+                            [key: string]: string
+                        })[k]).to.be.eql(res.body[k]));
                     } catch (e) {
                         return reject(e as Chai.AssertionError);
                     }
@@ -140,7 +142,7 @@ export class UserTestSDK {
                         expect(res.body).to.be.an('object');
                         expect(res.body).to.have.property('users');
                         expect(res.body.users).to.be.an('array');
-                        res.body.users.map(user =>
+                        res.body.users.map((user: { [key: string]: unknown }) =>
                             expect(removeNullProperties(user)).to.be.jsonSchema(user_schema)
                         );
                     } catch (e) {
@@ -151,7 +153,7 @@ export class UserTestSDK {
         });
     }
 
-    public unregister(ident: {access_token?: string, user_id?: string}) {
+    public unregister(ident: { access_token?: string, user_id?: string }) {
         return new Promise<Response>((resolve, reject) => {
             if (ident == null) return reject(new TypeError('`ident` argument to `unregister` must be defined'));
 

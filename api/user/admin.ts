@@ -34,7 +34,7 @@ export const read = (app: restify.Server, namespace: string = '') =>
                         .get(req.getOrm().redis!.connection)
                         .add(user.email, User.rolesAsStr(user.roles), 'access', (err, at) => {
                             user.access_token = at;
-                            User._omit.forEach(attr => delete user[attr]);
+                            User._omit.forEach(attr => delete (user as {[key: string]: any})[attr]);
                             if (err != null) return next(fmtError(err));
                             res.setHeader('X-Access-Token', at);
                             res.json(201, user);

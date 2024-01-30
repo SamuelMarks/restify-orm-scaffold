@@ -37,12 +37,15 @@ describe('User::admin::routes', () => {
     before(done =>
         waterfall([
                 tearDownConnections,
-                cb => typeof AccessToken.reset() === 'undefined' && cb(void 0),
-                cb => setupOrmApp(model_route_to_map(models_and_routes), { logger, connection_name },
+                (cb: (err: Error | undefined) => void) => {
+                    AccessToken.reset();
+                    return cb(void 0)
+                },
+                (cb: (err: Error | undefined) => void) => setupOrmApp(model_route_to_map(models_and_routes), { logger, connection_name },
                     { skip_start_app: true, app_name: tapp_name, logger },
                     cb
                 ),
-                (_app: Server, orms_out: IOrmsOut, cb) => {
+                (_app: Server, orms_out: IOrmsOut, cb: (err: Error | undefined) => void) => {
                     app = _app;
                     _orms_out.orms_out = orms_out;
 

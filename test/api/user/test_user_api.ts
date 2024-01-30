@@ -41,13 +41,18 @@ describe('User::routes', () => {
     before('app & db', done => {
         waterfall([
                 tearDownConnections,
-                cb => typeof AccessToken.reset() === 'undefined' && cb(void 0),
-                cb => setupOrmApp(model_route_to_map(models_and_routes),
-                    { logger, connection_name },
+                (cb: (err: Error | undefined) => void) => {
+                    AccessToken.reset();
+                    return cb(void 0)
+                },
+                (cb: (err: Error | undefined) => void) => setupOrmApp(model_route_to_map(models_and_routes), {
+                        logger,
+                        connection_name
+                    },
                     { skip_start_app: true, app_name: tapp_name, logger },
                     cb
                 ),
-                (_app: Server, orms_out: IOrmsOut, cb) => {
+                (_app: Server, orms_out: IOrmsOut, cb: (err: Error | undefined) => void) => {
                     app = _app;
                     _orms_out.orms_out = orms_out;
 
@@ -56,7 +61,7 @@ describe('User::routes', () => {
 
                     return cb(void 0);
                 },
-                cb => unregister_all(auth_sdk, mocks).then(() => cb(void 0)).catch(cb)
+                (cb: (err: Error | undefined) => void) => unregister_all(auth_sdk, mocks).then(() => cb(void 0)).catch(cb)
             ],
             done
         );

@@ -14,8 +14,8 @@ import { User } from './models';
 /* tslint:disable:no-var-requires */
 export const schema: JsonSchema = require('./../../test/api/user/schema');
 
-export type UserBodyReq = Request & IOrmReq & {body?: User};
-export type UserBodyUserReq = UserBodyReq & {user_id: string};
+export type UserBodyReq = Request & IOrmReq & { body?: User };
+export type UserBodyUserReq = UserBodyReq & { user_id: string };
 
 export interface IUserConfig {
     public_registration: boolean;
@@ -48,16 +48,16 @@ export class UserConfig implements IUserConfig {
 export const post = (req: UserBodyReq,
                      config: UserConfig): Promise<User> => new Promise<User>((resolve, reject) => {
     const user = new User();
-    Object.keys(req.body).map(k => user[k] = req.body[k]);
+    Object.keys(req.body).map(k => (user as { [key: string]: any })[k] = req.body[k]);
 
     waterfall([
-            cb => cb(config.public_registration ? void 0 : new GenericError({
+            (cb: (error?: Error) => void) => cb(config.public_registration ? void 0 : new GenericError({
                 statusCode: 401,
                 name: 'Registration',
                 message: 'public registration disabled; contact the administrator for an account'
             })),
             // Horrible hack; outside a transaction; TODO: remove
-            cb =>
+        (cb: (error?: Error) => void) =>
                 get(Object.assign(req, { user_id: req.body.email }))
                     .then(() => cb(new GenericError({
                         statusCode: 401,
@@ -76,7 +76,7 @@ export const post = (req: UserBodyReq,
                     .then((_user: User) => cb(void 0, _user))
                     .catch(cb),
                     console.info('post::waterfall::before AccessToken.get, user=', user, ';')*/
-            (_user: User, cb) =>
+            (_user: User, cb: (error?: Error, user?: User) => void) =>
                 AccessToken
                     .get(req.getOrm().redis!.connection)
                     .add(_user.email, User.rolesAsStr(_user.roles), 'access',
@@ -108,8 +108,8 @@ export const get = (req: UserBodyUserReq): Promise<User> => new Promise<User>((r
         .catch(reject)
 );
 
-export const getAll = (req: IOrmReq): Promise<{users: User[]}> =>
-    new Promise<{users: User[]}>((resolve, reject) =>
+export const getAll = (req: IOrmReq): Promise<{ users: User[] }> =>
+    new Promise<{ users: User[] }>((resolve, reject) =>
         req.getOrm().typeorm!.connection
             .getRepository(User)
             .find({
@@ -153,7 +153,7 @@ export const update = (req: UserBodyUserReq): Promise<User | User[]> => new Prom
     );
 });
 
-export const destroy = (req: IOrmReq & {body?: User, user_id: string}): Promise<number> =>
+export const destroy = (req: IOrmReq & { body?: User, user_id: string }): Promise<number> =>
     new Promise<number>((resolve, reject) => {
         series([
                 cb =>

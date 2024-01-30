@@ -23,7 +23,7 @@ export const create_and_auth_users = (user_mocks_subset: User[], auth_sdk: AuthT
             .then((access_token: AccessTokenType) => {
                 if (access_token == null) return callback(new NotFoundError('AccessToken'));
                 user.access_token = access_token;
-                user_mocks_subset[idx] = user;
+                user_mocks_subset[idx as number] = user;
                 return callback();
             })
             .catch(callback), done

@@ -15,6 +15,7 @@ import { User } from './api/user/models';
 import { post as register_user, UserBodyReq, UserConfig } from './api/user/sdk';
 import * as config from './config';
 import { getOrmMwConfig, getPrivateIPAddress } from './config';
+import { NextFunction } from "express";
 
 /* tslint:disable:no-var-requires */
 export const package_ = Object.freeze(require('./package'));
@@ -31,8 +32,15 @@ export const setupOrmApp = (models_and_routes: Map<string, any>,
                             mergeRoutesConfig: Partial<IRoutesMergerConfig>,
                             callback: (err: Error, app?: TApp, orms_out?: IOrmsOut) => void) =>
     waterfall([
-            cb => ormMw(Object.assign({}, getOrmMwConfig(models_and_routes, logger, cb), mergeOrmMw)),
-            (with_app: IRoutesMergerConfig['with_app'], orms_out: IOrmsOut, cb) =>
+            (cb: (err: (Error | undefined),
+                  with_app?: IRoutesMergerConfig["with_app"],
+                  orms_out?: IOrmsOut) => void) =>
+                ormMw(Object.assign({}, getOrmMwConfig(models_and_routes, logger, cb), mergeOrmMw)),
+            (with_app: IRoutesMergerConfig['with_app'],
+             orms_out: IOrmsOut,
+             cb: (err: Error | undefined,
+                  app?: TApp,
+                  orms_out?: IOrmsOut) => void) =>
                 routesMerger(Object.assign({}, {
                     routes: models_and_routes,
                     server_type: 'restify',
@@ -46,7 +54,11 @@ export const setupOrmApp = (models_and_routes: Map<string, any>,
                     version_routes_kwargs: { private_ip: getPrivateIPAddress() },
                     with_app,
                     logger,
-                    onServerStart: (uri: string, app: Server, next) => {
+                    onServerStart: (uri: string,
+                                    app: Server,
+                                    next: (err: (Error | undefined),
+                                           app?: TApp,
+                                           orms_out?: IOrmsOut) => void) => {
                         AccessToken.reset();
 
                         const authSdk = new AuthTestSDK(app);
@@ -64,14 +76,14 @@ export const setupOrmApp = (models_and_routes: Map<string, any>,
                         series({
                                 unregister: callb => authSdk.unregister_all([default_admin])
                                     .then(() => callb())
-                                    .catch((err: Error & {status: number}) =>
+                                    .catch((err: Error & { status: number }) =>
                                         callb(err != null && err.status !== 404 ? err : void 0,
                                             'removed default user; next: adding')),
                                 prepare_user: callb => register_user({
                                     getOrm: () => config._orms_out.orms_out,
                                     orms_out: config._orms_out.orms_out,
                                     body: default_admin
-                                } as IOrmReq & {body?: User} as UserBodyReq, UserConfig.default())
+                                } as IOrmReq & { body?: User } as UserBodyReq, UserConfig.default())
                                     .then(() => callb())
                                     .catch(callb),
                                 register_user: callb => {

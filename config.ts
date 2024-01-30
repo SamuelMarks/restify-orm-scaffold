@@ -68,7 +68,7 @@ export const waterline_config /*: ConfigOptions*/ = Object.freeze({
 } /* as any as ConfigOptions */);
 
 // ONLY USE `_orms_out` FOR TESTS!
-export const _orms_out: {orms_out: IOrmsOut} = { orms_out: undefined as any };
+export const _orms_out: { orms_out: IOrmsOut } = { orms_out: undefined as any };
 
 export const getOrmMwConfig = (models: Map<string, any>, logger: Logger,
                                cb: (err: Error | undefined,
@@ -104,7 +104,7 @@ export const getOrmMwConfig = (models: Map<string, any>, logger: Logger,
         }
         _orms_out.orms_out = orms_out!;
         return cb(void 0, (_app: TApp) => {
-            if (_app['use'])
+            if ((_app as typeof _app & { use: boolean })['use'])
                 (_app as restify.Server).use(mw as RestifyRequestHandler);
             // import { Next, Server } from 'restify';
             // import { WaterlineError } from '@offscale/custom-restify-errors';

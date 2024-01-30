@@ -12,7 +12,7 @@ let accessToken: AccessToken | undefined;
 export class AccessToken {
     public static reset() {
         accessToken = undefined;
-        delete global['accessToken'];
+        delete (global as {[key: string]: any})['accessToken'];
     }
 
     public static get(cursor: Redis): AccessToken {
@@ -46,7 +46,7 @@ export class AccessToken {
                 (this['redis'] as any)
                     ['multi']()
                     ['del'](...access_tokens)
-                    ['exec'](errors =>
+                    ['exec']((errors: Error[]) =>
                     callback(errors != null && errors['length'] ? new GenericError({
                         statusCode: 400,
                         name: 'LogoutErrors',

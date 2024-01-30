@@ -60,10 +60,10 @@ describe('User::sdk', () => {
     before(done =>
         waterfall([
                 tearDownConnections,
-                cb => typeof AccessToken.reset() === 'undefined' && cb(void 0),
-                cb => ormMw(Object.assign({}, getOrmMwConfig(model_route_to_map(models_and_routes), logger, cb),
+                (cb: (err: Error | undefined) => void) => typeof AccessToken.reset() === 'undefined' && cb(void 0),
+                (cb: (err: Error | undefined) => void) => ormMw(Object.assign({}, getOrmMwConfig(model_route_to_map(models_and_routes), logger, cb),
                     { connection_name, logger })),
-                (with_app: IRoutesMergerConfig['with_app'], orms_out: IOrmsOut, cb) => {
+                (with_app: IRoutesMergerConfig['with_app'], orms_out: IOrmsOut, cb: (err: Error | undefined) => void) => {
                     _orms_out.orms_out = orms_out;
                     return cb(void 0);
                 }
@@ -81,11 +81,11 @@ describe('User::sdk', () => {
         afterEach(async () => await unregister_user(user));
 
         it('POST should create user', async () => {
-                const user_res = await post(
+                const user_res: User = await post(
                     { body: user, getOrm: () => _orms_out.orms_out } as unknown as UserBodyReq,
                     UserConfig.instance
                 );
-                expect(removeNullProperties(user_res)).to.be.jsonSchema(user_schema);
+                expect(removeNullProperties(user_res as User & { [key: string]: unknown })).to.be.jsonSchema(user_schema);
             }
         );
 

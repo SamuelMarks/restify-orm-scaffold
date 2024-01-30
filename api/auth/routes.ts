@@ -15,12 +15,14 @@ import { AccessToken } from './models';
 /* tslint:disable:no-var-requires */
 const user_schema: JsonSchema = require('./../../test/api/user/schema');
 
+type TUserCallback = (error?: Error | null, user?: User) => void;
+
 export const login = (app: restify.Server, namespace: string = ''): void => {
     app.post(namespace, has_body, mk_valid_body_mw(user_schema),
         (request: restify.Request, res: restify.Response, next: restify.Next) => {
             const req = request as unknown as IOrmReq & restify.Request;
             waterfall([
-                cb => req.getOrm().typeorm!.connection
+                (cb: TUserCallback) => req.getOrm().typeorm!.connection
                     .getRepository(User)
                     .findOne({
                         select: ['password', 'email', 'roles'],
@@ -31,16 +33,16 @@ export const login = (app: restify.Server, namespace: string = ''): void => {
                         return cb(void 0, user);
                     })
                     .catch(cb),
-                (user: User, cb) =>
+                (user: User, cb: TUserCallback) =>
                     argon2
                         .verify(user.password, req.body.password)
                         .then(valid => cb(valid ? null : new AuthError('Password invalid'), user)),
-                (user: User, cb) =>
+                (user: User, cb: TUserCallback) =>
                     AccessToken
                         .get(req.getOrm().redis!.connection)
                         .add(user.email, User.rolesAsStr(user.roles), 'access', (err, at) => {
                             user.access_token = at;
-                            User._omit.forEach(attr => delete user[attr]);
+                            User._omit.forEach(attr => delete (user as { [key: string]: any })[attr]);
                             return cb(err, user);
                         })
             ], (error: any, user: User | undefined) => {
