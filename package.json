@@ -1,6 +1,6 @@
 {
   "name": "restify-orm-scaffold",
-  "version": "0.0.55",
+  "version": "0.0.56",
   "description": "Sample REST API scaffold built on Node.JS in TypeScript with restify and TypeORM (with Waterline and Sequelize support also).",
   "keywords": [
     "restify",
@@ -21,7 +21,7 @@
   "scripts": {
     "with_bunyan": "node main.js | bunyan",
     "start": "node main.js",
-    "test": "nyc mocha --require ts-node/register --require source-map-support/register --recursive",
+    "test": "tsx --test test/api/**/test_*.ts",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "nyc": {
@@ -38,11 +38,11 @@
     "all": true
   },
   "dependencies": {
-    "@offscale/custom-restify-errors": "^0.0.20",
-    "@offscale/nodejs-utils": "^0.0.26",
-    "@offscale/orm-mw": "^0.0.27",
-    "@offscale/restify-validators": "^0.0.18",
-    "@offscale/routes-merger": "^0.0.22",
+    "@offscale/custom-restify-errors": "^0.0.21",
+    "@offscale/nodejs-utils": "^0.0.28",
+    "@offscale/orm-mw": "^0.0.28",
+    "@offscale/restify-validators": "^0.0.19",
+    "@offscale/routes-merger": "^0.0.23",
     "argon2": "0.31.2",
     "async": "^3.2.5",
     "bunyan": "^1.8.15",
@@ -61,12 +61,10 @@
     "@faker-js/faker": "^8.4.0",
     "@types/async": "^3.2.24",
     "@types/bunyan": "1.8.11",
-    "@types/chai": "^4.3.11",
     "@types/connect": "^3.4.38",
     "@types/express": "^4.17.21",
     "@types/ioredis": "4.28.10",
-    "@types/mocha": "^10.0.6",
-    "@types/node": "^20.11.10",
+    "@types/node": "^20.11.16",
     "@types/redis": "^4.0.10",
     "@types/restify": "^8.5.12",
     "@types/restify-errors": "^4.3.8",
@@ -75,16 +73,12 @@
     "@types/tv4": "^1.2.33",
     "@types/uuid": "^9.0.8",
     "ajv": "^8.12.0",
-    "chai": "^5.0.3",
-    "chai-json-schema": "^1.5.1",
-    "chai-json-schema-ajv": "^5.2.4",
     "coveralls": "^3.1.1",
-    "mocha": "^10.2.0",
-    "mocha-pretty-bunyan": "^1.1.1",
     "nyc": "^15.1.0",
     "source-map-support": "^0.5.21",
     "supertest": "^6.3.4",
     "ts-node": "^10.9.2",
+    "tsx": "^4.7.0",
     "typescript": "~5.3.3"
   }
 }

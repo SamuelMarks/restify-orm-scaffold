@@ -1,7 +1,4 @@
 {
-  "globalDependencies": {
-    "chai-json-schema": "github:SamuelMarks/cust_typings/chai-json-schema/chai-json-schema.d.ts"
-  },
   "dependencies": {
     "waterline": "github:SamuelMarks/cust_typings/waterline/waterline.d.ts",
     "waterline-postgresql": "github:SamuelMarks/cust_typings/waterline-postgresql/waterline-postgresql.d.ts"

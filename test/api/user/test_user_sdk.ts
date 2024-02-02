@@ -1,10 +1,13 @@
+import assert from "node:assert/strict";
+import * as path from 'node:path';
+import { basename } from 'node:path';
+import { describe, after, before, it, beforeEach, afterEach } from "node:test";
+
 // tslint:disable-next-line:no-var-requires
 import { IRoutesMergerConfig } from '@offscale/routes-merger/interfaces';
 
 import { waterfall } from 'async';
 import { createLogger } from 'bunyan';
-import * as path from 'path';
-import { basename } from 'path';
 
 import { model_route_to_map, sanitiseSchema } from '@offscale/nodejs-utils';
 import { ormMw } from '@offscale/orm-mw';
@@ -19,19 +22,10 @@ import { destroy, post, UserBodyReq, UserConfig } from '../../../api/user/sdk';
 import { tearDownConnections } from '../../shared_tests';
 import { user_mocks } from './user_mocks';
 import { removeNullProperties } from '../../../utils';
-
-// tslint:disable-next-line:no-var-requires
-const chai = require('chai');
-
-// tslint:disable-next-line:no-var-requires
-const chaiJsonSchema = require('chai-json-schema');
+import Ajv from "ajv";
 
 // tslint:disable-next-line:no-var-requires
 const user_schema = sanitiseSchema(require('./../user/schema.json'), User._omit);
-
-// @ts-ignore
-chai.use(chaiJsonSchema);
-const expect = chai.expect;
 
 const models_and_routes: IModelRoute = {
     user: all_models_and_routes_as_mr['user'],
@@ -53,14 +47,17 @@ const unregister_user = async (user: User) => {
         getOrm: () => _orms_out.orms_out,
         orms_out: _orms_out.orms_out
     });
-    expect(server_res).to.equal(204);
+    assert.strictEqual(server_res, 204);
 };
 
 describe('User::sdk', () => {
-    before(done =>
+    before((t, done) =>
         waterfall([
                 tearDownConnections,
-                (cb: (err: Error | undefined) => void) => typeof AccessToken.reset() === 'undefined' && cb(void 0),
+                (cb: (err: Error | undefined) => void) => {
+                    AccessToken.reset();
+                    return cb(void 0);
+                },
                 (cb: (err: Error | undefined) => void) => ormMw(Object.assign({}, getOrmMwConfig(model_route_to_map(models_and_routes), logger, cb),
                     { connection_name, logger })),
                 (with_app: IRoutesMergerConfig['with_app'], orms_out: IOrmsOut, cb: (err: Error | undefined) => void) => {
@@ -72,7 +69,7 @@ describe('User::sdk', () => {
         )
     );
 
-    after(tearDownConnections);
+    after((t, done) => tearDownConnections(done));
 
     describe('/api/user', () => {
         const user: User = mocks[3];
@@ -85,7 +82,11 @@ describe('User::sdk', () => {
                     { body: user, getOrm: () => _orms_out.orms_out } as unknown as UserBodyReq,
                     UserConfig.instance
                 );
-                expect(removeNullProperties(user_res as User & { [key: string]: unknown })).to.be.jsonSchema(user_schema);
+                const validate = new Ajv({allErrors: true}).compile(user_schema);
+                assert.ok(
+                    validate(removeNullProperties(user_res as User & { [key: string]: unknown })),
+                    validate.errors?.toString()
+                );
             }
         );
 

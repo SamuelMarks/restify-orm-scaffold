@@ -1,4 +1,4 @@
-import { networkInterfaces } from 'os';
+import { networkInterfaces } from 'node:os';
 
 import * as Logger from 'bunyan';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';

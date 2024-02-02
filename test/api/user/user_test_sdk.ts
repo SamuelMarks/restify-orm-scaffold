@@ -1,5 +1,6 @@
-// tslint:disable-next-line:no-var-requires
-import chai = require('chai');
+import assert from "node:assert/strict";
+
+import Ajv from "ajv"
 import supertest, { Response } from 'supertest';
 import { Server } from 'restify';
 
@@ -14,10 +15,7 @@ import { removeNullProperties } from '../../../utils';
 /* tslint:disable:no-var-requires */
 const user_schema = sanitiseSchema(require('./../user/schema.json'), User._omit);
 
-/* tslint:disable-next-line:no-var-requires */
-chai.use(require('chai-json-schema-ajv'));
-
-const expect: Chai.ExpectStatic = chai.expect;
+const ajv = new Ajv({ allErrors: true });
 
 export class UserTestSDK {
     constructor(public app: Server) {
@@ -27,7 +25,7 @@ export class UserTestSDK {
         return new Promise<Response>((resolve, reject) => {
             if (user == null) return reject(new TypeError('`user` argument to `register` must be defined'));
 
-            expect(user_routes.create).to.be.an.instanceOf(Function);
+            assert.ok(user_routes.create instanceof Function);
             supertest(this.app)
                 .post('/api/user')
                 .send(user)
@@ -38,11 +36,15 @@ export class UserTestSDK {
                     else if (res.error) return reject(getError(res.error));
 
                     try {
-                        expect(res.status).to.be.equal(201);
-                        expect(res.body).to.be.an('object');
-                        expect(removeNullProperties(res.body)).to.be.jsonSchema(user_schema);
+                        assert.strictEqual(res.status, 201);
+                        assert.ok(res.body instanceof Object);
+                        const user_schema_validator = ajv.compile(user_schema);
+                        assert.ok(
+                            user_schema_validator(removeNullProperties(res.body)),
+                            user_schema_validator.errors?.toString()
+                        );
                     } catch (e) {
-                        return reject(e as Chai.AssertionError);
+                        return reject(e);
                     }
 
                     if (res.header['x-access-token'] == null)
@@ -61,8 +63,8 @@ export class UserTestSDK {
             else if (expected_user == null)
                 return reject(TypeError('`expected_user` argument to `get_user` must be defined'));
 
-            expect(user_routes.read).to.be.an.instanceOf(Function);
-            expect(user_admin_routes.read).to.be.an.instanceOf(Function);
+            assert.ok(user_routes.read instanceof Function);
+            assert.ok(user_admin_routes.read instanceof Function);
 
             const is_admin: boolean = access_token.indexOf('admin') > -1;
 
@@ -74,13 +76,19 @@ export class UserTestSDK {
                     else if (res.error) return reject(res.error);
 
                     try {
-                        expect(res.body).to.be.an('object');
+                        assert.ok(res.body instanceof Object);
                         Object.keys(expected_user).map(
-                            attr => expect((expected_user as User & { [key: string]: string })[attr] === res.body[attr])
+                            attr => assert.strictEqual((expected_user as User & {
+                                [key: string]: string
+                            })[attr], res.body[attr])
                         );
-                        expect(removeNullProperties(res.body)).to.be.jsonSchema(user_schema);
+                        const user_schema_validator = ajv.compile(user_schema);
+                        assert.ok(
+                            user_schema_validator(removeNullProperties(res.body)),
+                            user_schema_validator.errors?.toString()
+                        );
                     } catch (e) {
-                        return reject(e as Chai.AssertionError);
+                        return reject(e);
                     }
 
                     if (res.header['x-access-token'] == null)
@@ -97,8 +105,8 @@ export class UserTestSDK {
             else if (access_token == null || !access_token.length)
                 return reject(new TypeError('`access_token` argument to `update` must be defined'));
 
-            expect(user_routes.update).to.be.an.instanceOf(Function);
-            expect(user_admin_routes.update).to.be.an.instanceOf(Function);
+            assert.ok(user_routes.update instanceof Function);
+            assert.ok(user_admin_routes.update instanceof Function);
 
             supertest(this.app)
                 .put(`/api/user${access_token.indexOf('admin') > -1 && user_id ? '/' + user_id : ''}`)
@@ -111,14 +119,18 @@ export class UserTestSDK {
                     else if (res.error) return reject(getError(res.error));
 
                     try {
-                        expect(res.status).to.be.equal(200);
-                        expect(res.body).to.be.an('object');
-                        expect(removeNullProperties(res.body)).to.be.jsonSchema(user_schema);
-                        Object.keys(user).forEach(k => expect((user as User & {
+                        assert.strictEqual(res.status, 200);
+                        assert.ok(res.body instanceof Object);
+                        const user_schema_validator = ajv.compile(user_schema);
+                        assert.ok(
+                            user_schema_validator(removeNullProperties(res.body)),
+                            user_schema_validator.errors?.toString()
+                        );
+                        Object.keys(user).forEach(k => assert.strictEqual((user as User & {
                             [key: string]: string
-                        })[k]).to.be.eql(res.body[k]));
+                        })[k], res.body[k]));
                     } catch (e) {
-                        return reject(e as Chai.AssertionError);
+                        return reject(e);
                     }
                     return resolve(res);
                 });
@@ -130,7 +142,7 @@ export class UserTestSDK {
             if (access_token == null || !access_token.length)
                 return reject(new TypeError('`access_token` argument to `get_all` must be defined'));
 
-            expect(user_admin_routes.readAll).to.be.an.instanceOf(Function);
+            assert.ok(user_admin_routes.readAll instanceof Function);
             supertest(this.app)
                 .get('/api/users')
                 .set('X-Access-Token', access_token)
@@ -139,14 +151,19 @@ export class UserTestSDK {
                     if (err != null) return reject(supertestGetError(err, res));
                     else if (res.error) return reject(getError(res.error));
                     try {
-                        expect(res.body).to.be.an('object');
-                        expect(res.body).to.have.property('users');
-                        expect(res.body.users).to.be.an('array');
-                        res.body.users.map((user: { [key: string]: unknown }) =>
-                            expect(removeNullProperties(user)).to.be.jsonSchema(user_schema)
+                        assert.ok(res.body instanceof Object);
+                        assert.ok(res.body.hasOwnProperty('users'));
+                        assert.ok(Array.isArray(res.body.users));
+                        res.body.users.map((user: { [key: string]: unknown }) => {
+                                const user_schema_validator = ajv.compile(user_schema);
+                                assert.ok(
+                                    user_schema_validator(removeNullProperties(res.body)),
+                                    user_schema_validator.errors?.toString()
+                                );
+                            }
                         );
                     } catch (e) {
-                        return reject(e as Chai.AssertionError);
+                        return reject(e);
                     }
                     return resolve(res);
                 });
@@ -157,7 +174,7 @@ export class UserTestSDK {
         return new Promise<Response>((resolve, reject) => {
             if (ident == null) return reject(new TypeError('`ident` argument to `unregister` must be defined'));
 
-            expect(user_routes.del).to.be.an.instanceOf(Function);
+            assert.ok(user_routes.del instanceof Function);
             if (ident.access_token != null && ident.access_token.length > 0)
                 supertest(this.app)
                     .delete('/api/user')

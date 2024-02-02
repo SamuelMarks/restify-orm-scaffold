@@ -1,3 +1,5 @@
+import { ReadableStream } from 'node:stream/web';
+
 import { forEachOfLimit, map } from 'async';
 import { Response } from 'supertest';
 import { Server } from 'restify';
@@ -10,11 +12,12 @@ import { IOrmsOut } from '@offscale/orm-mw/interfaces';
 import { User } from '../api/user/models';
 import { AuthTestSDK } from './api/auth/auth_test_sdk';
 import { _orms_out } from '../config';
-import Done = Mocha.Done;
 
 interface IResponse extends Response {
     readonly body: ReadableStream | null | any | {access_token: AccessTokenType};
 }
+
+type Done = (err: Error | undefined | null, res?: unknown) => void;
 
 export const create_and_auth_users = (user_mocks_subset: User[], auth_sdk: AuthTestSDK, done: Done) => {
     // TODO: Build bulk API endpoints so this can be done efficiently.

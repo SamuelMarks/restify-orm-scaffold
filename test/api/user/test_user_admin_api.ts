@@ -1,7 +1,9 @@
+import * as path from 'node:path';
+import { basename } from 'node:path';
+import { describe, after, before, it } from "node:test";
+
 import { map, waterfall } from 'async';
 import { createLogger } from 'bunyan';
-import * as path from 'path';
-import { basename } from 'path';
 import { Server } from 'restify';
 
 import { exceptionToErrorResponse, model_route_to_map } from '@offscale/nodejs-utils';
@@ -16,6 +18,7 @@ import { closeApp, tearDownConnections, unregister_all } from '../../shared_test
 import { AuthTestSDK } from '../auth/auth_test_sdk';
 import { user_mocks } from './user_mocks';
 import { UserTestSDK } from './user_test_sdk';
+import { Response } from "supertest";
 
 const models_and_routes: IModelRoute = {
     user: all_models_and_routes_as_mr['user'],
@@ -34,7 +37,7 @@ describe('User::admin::routes', () => {
     let auth_sdk: AuthTestSDK;
     let app: Server;
 
-    before(done =>
+    before((t, done) =>
         waterfall([
                 tearDownConnections,
                 (cb: (err: Error | undefined) => void) => {
@@ -59,8 +62,8 @@ describe('User::admin::routes', () => {
         )
     );
 
-    after(tearDownConnections);
-    after(done => closeApp(app)(done));
+    after((t, done) => tearDownConnections(done));
+    after((t, done) => closeApp(app)(done));
 
     /*
     after('destroy objects', done => {
@@ -70,7 +73,8 @@ describe('User::admin::routes', () => {
      */
 
     describe('ADMIN /api/user/:email', () => {
-        before('register_all', done => map(mocks, (user, cb) =>
+        // register_all
+        before((t, done) => map(mocks, (user, cb) =>
                 sdk.register(user)
                     .then(res => {
                         user.access_token = res!.header['x-access-token'];
@@ -82,7 +86,7 @@ describe('User::admin::routes', () => {
         after(async () => await unregister_all(auth_sdk, mocks));
 
         it('GET should retrieve other user', async () =>
-            await sdk.read(mocks[0].access_token!, mocks[1])
+            await (sdk.read as unknown as ((access_token: AccessTokenType, expected_user: User) => Promise<void>))(mocks[0].access_token!, mocks[1])
         );
 
         it('PUT should update other user', async () => {
@@ -91,7 +95,7 @@ describe('User::admin::routes', () => {
         });
 
         it('GET /api/users should get all users', async () =>
-            await sdk.get_all(mocks[4].access_token!)
+            await (sdk.get_all as unknown as ((access_token: string) => Promise<void>))(mocks[4].access_token!)
         );
 
         it('DELETE should unregister other user', async () => {

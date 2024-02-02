@@ -1,7 +1,8 @@
-import * as chai from 'chai';
-import { expect } from 'chai';
+import assert from "node:assert/strict";
+
 import { Server } from 'restify';
 import supertest, { Response } from 'supertest';
+import Ajv from "ajv"
 
 import { getError, sanitiseSchema, supertestGetError } from '@offscale/nodejs-utils';
 import { AccessTokenType } from '@offscale/nodejs-utils/interfaces';
@@ -11,17 +12,12 @@ import { User } from '../../../api/user/models';
 import { user_mocks } from '../user/user_mocks';
 import { UserTestSDK } from '../user/user_test_sdk';
 import { removeNullProperties } from '../../../utils';
-// tslint:disable-next-line:no-var-requires
-const chaiJsonSchema = require('chai-json-schema');
 // import { saltSeeker } from '../../../api/user/utils';
 // import { saltSeekerCb } from '../../../main';
 
 /* tslint:disable:no-var-requires */
 const user_schema = sanitiseSchema(require('./../user/schema.json'), User._omit);
 const auth_schema = require('./schema.json');
-
-// @ts-ignore
-chai.use(chaiJsonSchema);
 
 export class AuthTestSDK {
     private user_sdk: UserTestSDK;
@@ -34,7 +30,7 @@ export class AuthTestSDK {
         return new Promise<Response>((resolve, reject) => {
             if (user == null) return reject(new TypeError('`user` argument to `login` must be defined'));
 
-            expect(auth_routes.login).to.be.an.instanceOf(Function);
+            assert.ok(auth_routes.login instanceof Function);
             supertest(this.app)
                 .post('/api/auth')
                 .send(user)
@@ -45,13 +41,14 @@ export class AuthTestSDK {
                     if (err != null) return reject(supertestGetError(err, res));
                     else if (res.error) return reject(getError(res.error));
                     try {
-                        expect(res.body).to.be.an('object');
-                        expect(res.body).to.have.property('access_token');
-                        expect(res.body.access_token).to.have.lengthOf.at.least(1);
-                        expect(res.header['x-access-token']).to.eql(res.body.access_token);
-                        expect(removeNullProperties(res.body)).to.be.jsonSchema(auth_schema);
+                        assert.ok(res.body instanceof Object);
+                        assert.ok(res.body.hasOwnProperty('access_token'));
+                        assert.ok(res.body.access_token.length > 0);
+                        assert.strictEqual(res.header['x-access-token'], res.body.access_token);
+                        const validate = new Ajv({allErrors: true}).compile(auth_schema);
+                        assert.ok(validate(removeNullProperties(res.body)), validate.errors?.toString());
                     } catch (e) {
-                        return reject(e as Chai.AssertionError);
+                        return reject(e);
                     }
                     return resolve(res);
                 });

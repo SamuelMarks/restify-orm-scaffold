@@ -1,9 +1,10 @@
-import * as path from 'path';
-import { basename } from 'path';
+import assert from "node:assert/strict";
+import * as path from 'node:path';
+import { basename } from 'node:path';
+import { describe, after, before, it } from "node:test";
 
 import { asyncify, map, waterfall } from 'async';
 import { createLogger } from 'bunyan';
-import { expect } from 'chai';
 import { Server } from 'restify';
 
 import { exceptionToErrorResponse, model_route_to_map } from '@offscale/nodejs-utils';
@@ -38,7 +39,8 @@ describe('User::routes', () => {
     let auth_sdk: AuthTestSDK;
     let app: Server;
 
-    before('app & db', done => {
+    // app & db
+    before((t, done) => {
         waterfall([
                 tearDownConnections,
                 (cb: (err: Error | undefined) => void) => {
@@ -67,13 +69,16 @@ describe('User::routes', () => {
         );
     });
 
-    after('unregister_all', async () => unregister_all(auth_sdk, mocks));
-    after('tearDownConnections', done => tearDownConnections(_orms_out.orms_out, done));
-    after('closeApp', done => closeApp(sdk.app)(done));
+    // unregister_all
+    after( async () => unregister_all(auth_sdk, mocks));
+    // tearDownConnections
+    after((t, done) => tearDownConnections(_orms_out.orms_out, done));
+    // closeApp
+    after((t, done) => closeApp(sdk.app)(done));
 
     describe('/api/user', () => {
-        it('POST should create user', async () =>
-            await sdk.register(mocks[0])
+        it('POST should create user', {}, async () =>
+            await (sdk.register as unknown as ((user: User) => Promise<void>))(mocks[0])
         );
 
         it('POST should fail to register user twice', async () => {
@@ -81,7 +86,7 @@ describe('User::routes', () => {
             try {
                 await auth_sdk.login(user_mock);
             } catch (e) {
-                expect(exceptionToErrorResponse(e).code).to.eql('NotFoundError');
+                assert.strictEqual(exceptionToErrorResponse(e).code, 'NotFoundError');
                 await sdk.register(user_mock);
             }
 
@@ -92,8 +97,8 @@ describe('User::routes', () => {
             } catch (err) {
                 has_error = true;
                 const error_obj = exceptionToErrorResponse(err);
-                expect(error_obj).to.have.property('error');
-                expect(error_obj.error).to.eql(expected_err);
+                assert.ok(error_obj.hasOwnProperty('error'));
+                assert.strictEqual(error_obj.error, expected_err);
             }
             if (!has_error) throw Error(`Expected ${expected_err} error`);
         });
@@ -112,7 +117,7 @@ describe('User::routes', () => {
             await sdk.read(access_token, resp.body);
         });
 
-        it('GET /users should get all users', done =>
+        it('GET /users should get all users', (t, done) =>
             map(mocks.slice(4, 10), asyncify(auth_sdk.register_login.bind(auth_sdk)),
                 (err: Error | IncomingMessageError | null | undefined,
                  res: undefined | Array<AccessTokenType | undefined>) =>

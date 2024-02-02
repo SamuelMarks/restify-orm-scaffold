@@ -1,7 +1,9 @@
+import * as path from 'node:path';
+import { basename } from 'node:path';
+import { describe, before, after, it } from 'node:test';
+
 import { waterfall } from 'async';
 import { createLogger } from 'bunyan';
-import * as path from 'path';
-import { basename } from 'path';
 
 import { Server } from 'restify';
 
@@ -31,18 +33,18 @@ const connection_name = `${tapp_name}::${path.basename(__filename).replace(/\./g
 
 const logger = createLogger({ name: tapp_name });
 
-describe('Auth::routes', () => {
+describe('Auth::routes', (t) => {
     let sdk: AuthTestSDK;
 
-    before(done =>
+    before((t, done) =>
         waterfall([
                 tearDownConnections,
                 (cb: (err: Error | undefined) => void) => {
                     AccessToken.reset();
                     return cb(void 0);
                 },
-            (cb: (err: Error | undefined) => void) => setupOrmApp(
-                model_route_to_map(models_and_routes), { connection_name, logger },
+                (cb: (err: Error | undefined) => void) => setupOrmApp(
+                    model_route_to_map(models_and_routes), { connection_name, logger },
                     { skip_start_app: true, app_name: tapp_name, logger },
                     cb
                 ),
@@ -57,15 +59,22 @@ describe('Auth::routes', () => {
         )
     );
 
-    after('deregister_all', async () => await unregister_all(sdk, mocks));
-    after('tearDownConnections', tearDownConnections);
-    after('closeApp', done => closeApp(sdk!.app)(done));
+    // deregister_all
+    after(async () => await unregister_all(sdk, mocks));
+
+    // tearDownConnections
+    after((t, done) => tearDownConnections(done));
+
+    // closeApp
+    after((t, done) => closeApp(sdk!.app)(done));
 
     describe('/api/auth', () => {
         before(async () => await unregister_all(sdk, mocks));
         after(async () => await unregister_all(sdk, mocks));
 
-        it('POST should login user', async () => await sdk.register_login(mocks[1]));
+        // POST should login user
+        it((t, done) =>
+            sdk.register_login(mocks[1]).then(e => done(void 0)).catch(done));
 
         it('DELETE should logout user', async () => {
             const user_mock = mocks[2];
