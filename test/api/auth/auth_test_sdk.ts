@@ -12,6 +12,7 @@ import { User } from '../../../api/user/models';
 import { user_mocks } from '../user/user_mocks';
 import { UserTestSDK } from '../user/user_test_sdk';
 import { removeNullProperties } from '../../../utils';
+import { map } from "async";
 // import { saltSeeker } from '../../../api/user/utils';
 // import { saltSeekerCb } from '../../../main';
 
@@ -71,23 +72,19 @@ export class AuthTestSDK {
 
     public unregister_all(users: User[]): Promise<Response[]> {
         return new Promise<Response[]>((resolve, reject) => {
-            const errors: number[] = [];
-            const successes: Response[] = [];
-            users.forEach((user, idx) =>
+            const unregister_user = (user: User, callback: (err: Error | undefined, response?: Response) => void): void => {
                 this.login(user)
                     .then(res =>
                         this.user_sdk
                             .unregister({ access_token: res!.header['x-access-token'] })
-                            .then(response => {
-                                delete users[idx].access_token;
-                                successes.push(response);
-                            })
-                            .catch(errors.push.bind(errors))
+                            .then(response => callback(void 0, response))
+                            .catch(callback)
                     )
-                    .catch(errors.push.bind(errors))
-            );
-            if (errors.length) return reject(errors);
-            return resolve(successes);
+                    .catch(callback)
+            };
+            return map(users, unregister_user,
+                (e: Error | undefined | null, r: (Response | undefined)[] | undefined) =>
+                    r == null ? reject(e) : resolve(r as Response[]));
         });
     }
 

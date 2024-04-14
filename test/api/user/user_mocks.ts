@@ -14,7 +14,7 @@ export const user_mocks: {successes: User[], failures: Array<{}>} = {
         .map((_, idx) => {
             const user = new User();
 
-            user.title = faker.name.jobTitle();
+            user.title = faker.person.jobTitle();
             user.email = faker.internet.email();
             user.password = faker.internet.password();
             /* tslint:disable:no-bitwise */
