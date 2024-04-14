@@ -1,5 +1,5 @@
 import { series, waterfall } from 'async';
-import Logger, { createLogger } from 'bunyan';
+import { pino, Logger } from 'pino';
 import { default as restify, Server } from 'restify';
 
 import { get_models_routes, populateModelRoutes, raise } from '@offscale/nodejs-utils';
@@ -19,7 +19,7 @@ import { NextFunction } from "express";
 
 /* tslint:disable:no-var-requires */
 export const package_ = Object.freeze(require('./package'));
-export const logger: Logger = createLogger({ name: 'main' });
+export const logger: Logger = pino({ name: 'main' });
 
 /* tslint:disable:no-unused-expression */
 process.env['NO_DEBUG'] || logger.info(Object.keys(process.env).sort().map(k => ({ [k]: process.env[k] })));

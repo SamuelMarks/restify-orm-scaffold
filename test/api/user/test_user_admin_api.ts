@@ -3,7 +3,7 @@ import { basename } from 'node:path';
 import { describe, after, before, it } from "node:test";
 
 import { map, waterfall } from 'async';
-import { createLogger } from 'bunyan';
+import { pino, Logger } from 'pino';
 import { Server } from 'restify';
 
 import { exceptionToErrorResponse, model_route_to_map } from '@offscale/nodejs-utils';
@@ -30,7 +30,7 @@ process.env['NO_SAMPLE_DATA'] = 'true';
 const mocks: User[] = user_mocks.successes.slice(24, 36);
 const tapp_name = `test::${basename(__dirname)}`;
 const connection_name = `${tapp_name}::${path.basename(__filename).replace(/\./g, '-')}`;
-const logger = createLogger({ name: tapp_name });
+const logger: Logger = pino({ name: tapp_name });
 
 describe('User::admin::routes', () => {
     let sdk: UserTestSDK;
@@ -45,7 +45,7 @@ describe('User::admin::routes', () => {
                     return cb(void 0)
                 },
                 (cb: (err: Error | undefined) => void) => setupOrmApp(model_route_to_map(models_and_routes), { logger, connection_name },
-                    { skip_start_app: true, app_name: tapp_name, logger },
+                    { skip_start_app: true, app_name: tapp_name, logger: logger as (Logger | undefined) },
                     cb
                 ),
                 (_app: Server, orms_out: IOrmsOut, cb: (err: Error | undefined) => void) => {

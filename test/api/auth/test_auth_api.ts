@@ -3,7 +3,7 @@ import { basename } from 'node:path';
 import { describe, before, after, it } from 'node:test';
 
 import { waterfall } from 'async';
-import { createLogger } from 'bunyan';
+import { pino, Logger } from 'pino';
 
 import { Server } from 'restify';
 
@@ -31,7 +31,7 @@ const mocks: User[] = user_mocks.successes.slice(0, 12);
 const tapp_name = `test::${basename(__dirname)}`;
 const connection_name = `${tapp_name}::${path.basename(__filename).replace(/\./g, '-')}`;
 
-const logger = createLogger({ name: tapp_name });
+const logger: Logger = pino({ name: tapp_name });
 
 describe('Auth::routes', (t) => {
     let sdk: AuthTestSDK;

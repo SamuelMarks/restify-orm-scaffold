@@ -7,7 +7,7 @@ import { describe, after, before, it, beforeEach, afterEach } from "node:test";
 import { IRoutesMergerConfig } from '@offscale/routes-merger/interfaces';
 
 import { waterfall } from 'async';
-import { createLogger } from 'bunyan';
+import { pino, Logger } from 'pino';
 
 import { model_route_to_map, sanitiseSchema } from '@offscale/nodejs-utils';
 import { ormMw } from '@offscale/orm-mw';
@@ -38,7 +38,7 @@ const mocks: User[] = user_mocks.successes.slice(36, 48);
 
 const tapp_name = `test::${basename(__dirname)}`;
 const connection_name = `${tapp_name}::${path.basename(__filename).replace(/\./g, '-')}`;
-const logger = createLogger({ name: tapp_name });
+const logger: Logger = pino({ name: tapp_name });
 
 const unregister_user = async (user: User) => {
     const server_res = await destroy({

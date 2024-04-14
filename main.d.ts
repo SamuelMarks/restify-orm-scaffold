@@ -1,4 +1,4 @@
-import Logger from 'bunyan';
+import { Logger } from 'pino';
 import { IModelRoute } from '@offscale/nodejs-utils/interfaces';
 import { IOrmMwConfig, IOrmsOut } from '@offscale/orm-mw/interfaces';
 import { IRoutesMergerConfig, TApp } from '@offscale/routes-merger/interfaces';

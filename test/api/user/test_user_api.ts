@@ -4,7 +4,7 @@ import { basename } from 'node:path';
 import { describe, after, before, it } from "node:test";
 
 import { asyncify, map, waterfall } from 'async';
-import { createLogger } from 'bunyan';
+import { pino, Logger } from 'pino';
 import { Server } from 'restify';
 
 import { exceptionToErrorResponse, model_route_to_map } from '@offscale/nodejs-utils';
@@ -32,7 +32,7 @@ const mocks: User[] = user_mocks.successes.slice(12, 24);
 const tapp_name = `test::${basename(__dirname)}`;
 const connection_name = `${tapp_name}::${path.basename(__filename).replace(/\./g, '-')}`;
 
-const logger = createLogger({ name: tapp_name });
+const logger: Logger = pino({ name: tapp_name });
 
 describe('User::routes', () => {
     let sdk: UserTestSDK;

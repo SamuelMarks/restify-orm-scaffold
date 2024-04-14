@@ -1,6 +1,6 @@
 import { networkInterfaces } from 'node:os';
 
-import * as Logger from 'bunyan';
+import { Logger } from 'pino';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import * as restify from 'restify';
 import { RequestHandler as RestifyRequestHandler } from 'restify';

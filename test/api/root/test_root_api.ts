@@ -1,7 +1,7 @@
 import { basename } from 'node:path';
 import { describe, after, before, it } from "node:test";
 
-import { createLogger } from 'bunyan';
+import { pino, Logger } from 'pino';
 import supertest, { Response } from 'supertest';
 import { Server } from 'restify';
 
@@ -12,7 +12,7 @@ import { closeApp } from '../../shared_tests';
 import assert from "node:assert/strict";
 
 const tapp_name = `test::${basename(__dirname)}`;
-const logger = createLogger({ name: tapp_name });
+const logger: Logger = pino({ name: tapp_name });
 
 describe('Root::routes', () => {
     let app: Server;

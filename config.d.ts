@@ -1,4 +1,4 @@
-import * as Logger from 'bunyan';
+import { Logger } from 'pino';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { Options as SequelizeOptions } from 'sequelize';
 import { IOrmMwConfig, IOrmsOut } from '@offscale/orm-mw/interfaces';
