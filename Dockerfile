@@ -8,9 +8,9 @@ ADD https://raw.githubusercontent.com/fdemmer/wait-for/2c082fc/wait-for /bin/wai
 # Install OS dependencies
 RUN apk --no-cache --virtual build-dependencies add \
     git \
-    python \
+    python3 \
     build-base \
-    openssl \
+    libcrypto3 \
     netcat-openbsd \
     && printf '%s' "${NODE_VERSION}" > /env.node
 
@@ -33,8 +33,7 @@ RUN npm i -g npm \
     typings \
     typescript \
     && typings install \
-    && rm -rf node_modules \
-    && npm install \
+    && npm ci \
     && tsc
 
 FROM alpine:latest as app
@@ -49,7 +48,7 @@ COPY --from=builder /env.node /env.node
 
 RUN addgroup -S node -g 998 \
     && adduser -S -G node -u 998 node \
-    && apk --no-cache add nodejs="`cat /env.node`-r0"
+    && apk --no-cache add nodejs  # ="`cat /env.node`-r0"
 
 USER node
 

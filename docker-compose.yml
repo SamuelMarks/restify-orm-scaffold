@@ -1,9 +1,9 @@
 version: '2'
 services:
-    redis:
-        image: redis:alpine
+    valkey:
+        image: valkey/valkey:7.2.5
     postgres:
-        image: postgres:13-alpine
+        image: 16.3-alpine3.20
         environment:
             POSTGRES_USER: rest_api_user
             POSTGRES_PASSWORD: rest_api_pass
@@ -17,7 +17,7 @@ services:
             - /rest-api/node_modules
         depends_on:
             - postgres
-            - redis
+            - valkey
         environment:
             RDBMS_URI: postgres://rest_api_user:rest_api_pass@postgres/rest_api_db
             REDIS_HOST: redis

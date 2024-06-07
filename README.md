@@ -22,11 +22,15 @@ Simple baseline scaffold to get you started using [TypeORM](https://github.com/t
   - Redis. Set `REDIS_URL` env var accordingly; otherwise defaults are used.
   - Set: `DEFAULT_ADMIN_EMAIL` and `DEFAULT_ADMIN_PASSWORD` env vars
 
-## Docker
+## Docker / Podman
 
 Alternatively there is a `Dockerfile` and `docker-compose.yml`, so rather than installing dependencies (other than [Docker](https://docs.docker.com/install/#supported-platforms)), you can run:
 
-### Docker Compose
+### 0. Build image for this repo
+
+    docker build -t restify-orm-scaffold_api_1 .
+
+### 1. Docker Compose
 
     docker-compose up
 
